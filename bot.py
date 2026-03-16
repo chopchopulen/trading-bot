@@ -71,6 +71,15 @@ STOCK_NAMES = {
     "NKE": "Nike", "INTC": "Intel", "QCOM": "Qualcomm",
     "UBER": "Uber", "COIN": "Coinbase", "HOOD": "Robinhood",
     "SPOT": "Spotify",
+    "AVGO": "Broadcom", "LLY": "Eli Lilly",
+    "MA": "Mastercard", "PANW": "Palo Alto Networks",
+    "CRWD": "CrowdStrike", "SNOW": "Snowflake",
+    "DDOG": "Datadog", "NET": "Cloudflare",
+    "ADBE": "Adobe", "NOW": "ServiceNow",
+    "ORCL": "Oracle", "MS": "Morgan Stanley",
+    "BLK": "BlackRock", "SCHW": "Charles Schwab",
+    "HD": "Home Depot", "MCD": "McDonalds",
+    "SBUX": "Starbucks",
 }
 
 # ── Strategy parameters (defaults, overridden by walk-forward results) ──

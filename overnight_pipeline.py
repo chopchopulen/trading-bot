@@ -60,7 +60,11 @@ ORIGINAL_26 = [
 NEW_STOCKS = ["UBER", "PLTR", "COIN", "SHOP", "SQ", "ROKU", "ABNB", "PYPL", "SPOT", "ZM", "HOOD"]
 
 # Pipeline candidates — new stocks to test for universe expansion
-PIPELINE_STOCKS = ["AVGO", "LLY", "MA", "PANW", "CRWD", "SNOW"]
+PIPELINE_STOCKS = [
+    "AVGO", "LLY", "MA", "PANW", "CRWD", "SNOW",
+    "DDOG", "NET", "ADBE", "NOW", "ORCL",
+    "MS", "BLK", "SCHW", "HD", "MCD", "SBUX",
+]
 
 ALL_STOCKS = ORIGINAL_26 + NEW_STOCKS + PIPELINE_STOCKS
 
@@ -103,7 +107,12 @@ SPREAD_ESTIMATES = {
     "INTC": 0.02, "QCOM": 0.03,
     "UBER": 0.03, "PLTR": 0.02, "COIN": 0.05, "SHOP": 0.04,
     "SQ": 0.04, "ROKU": 0.04, "ABNB": 0.04, "PYPL": 0.03,
-    "SPOT": 0.04, "ZM": 0.04, "HOOD": 0.03
+    "SPOT": 0.04, "ZM": 0.04, "HOOD": 0.03,
+    "AVGO": 0.05, "LLY": 0.08, "MA": 0.03, "PANW": 0.05,
+    "CRWD": 0.05, "SNOW": 0.05, "DDOG": 0.04, "NET": 0.03,
+    "ADBE": 0.05, "NOW": 0.05, "ORCL": 0.03, "MS": 0.03,
+    "BLK": 0.08, "SCHW": 0.02, "HD": 0.03, "MCD": 0.03,
+    "SBUX": 0.02,
 }
 DEFAULT_SPREAD = 0.03
 SLIPPAGE_MULT = 0.5

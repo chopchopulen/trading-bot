@@ -63,7 +63,12 @@ SPREAD_ESTIMATES = {
     "GS": 0.05, "V": 0.03, "SPY": 0.01, "QQQ": 0.01,
     "XOM": 0.02, "CVX": 0.02, "JNJ": 0.02, "PFE": 0.01,
     "UNH": 0.05, "WMT": 0.02, "COST": 0.05, "NKE": 0.03,
-    "INTC": 0.02, "QCOM": 0.03
+    "INTC": 0.02, "QCOM": 0.03,
+    "AVGO": 0.05, "LLY": 0.08, "MA": 0.03, "PANW": 0.05,
+    "CRWD": 0.05, "SNOW": 0.05, "DDOG": 0.04, "NET": 0.03,
+    "ADBE": 0.05, "NOW": 0.05, "ORCL": 0.03, "MS": 0.03,
+    "BLK": 0.08, "SCHW": 0.02, "HD": 0.03, "MCD": 0.03,
+    "SBUX": 0.02,
 }
 DEFAULT_SPREAD = 0.03
 SLIPPAGE_MULT = 0.5     # 50% additional slippage on top of spread

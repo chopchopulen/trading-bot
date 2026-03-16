@@ -64,8 +64,12 @@ SPREAD_ESTIMATES = {
     "SQ": 0.03, "ROKU": 0.04, "ABNB": 0.04, "PYPL": 0.03,
     "SPOT": 0.03, "ZM": 0.04, "HOOD": 0.02,
     # Pipeline candidates
-    "AVGO": 0.05, "LLY": 0.04, "MA": 0.03,
-    "PANW": 0.04, "CRWD": 0.04, "SNOW": 0.04,
+    "AVGO": 0.05, "LLY": 0.08, "MA": 0.03,
+    "PANW": 0.05, "CRWD": 0.05, "SNOW": 0.05,
+    "DDOG": 0.04, "NET": 0.03, "ADBE": 0.05,
+    "NOW": 0.05, "ORCL": 0.03, "MS": 0.03,
+    "BLK": 0.08, "SCHW": 0.02, "HD": 0.03,
+    "MCD": 0.03, "SBUX": 0.02,
 }
 DEFAULT_SPREAD = 0.03
 SLIPPAGE_MULT = 0.5
