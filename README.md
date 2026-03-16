@@ -9,27 +9,27 @@ The bot trades **26 stocks** across 7 sectors on 1-minute bars during market hou
 ## Architecture
 
 ```
-bot.py              ← Live trading engine (runs during market hours)
-dashboard.py        ← Flask web dashboard (portfolio, positions, trades)
-walk_forward.py     ← Walk-forward parameter optimizer
-backtest_minutes.py ← Minute-bar backtester with charting
-backtest.py         ← Daily-bar backtester with grid search
-diagnose_signals.py ← Signal diagnostics & debugging tool
+bot.py                ← Live trading engine (runs during market hours)
+dashboard.py          ← Flask web dashboard (portfolio, positions, trades)
+walk_forward.py       ← Walk-forward parameter optimizer (3,312 combos/stock)
+permutation_test.py   ← Statistical significance testing (day-block shuffle)
+backtest_minutes.py   ← Minute-bar backtester with charting
+backtest.py           ← Daily-bar backtester with grid search
+diagnose_signals.py   ← Signal diagnostics & debugging tool
 ```
 
 ## Signal Chain
 
-Every buy signal must pass **all** of these filters (AND logic):
+Every buy signal must pass **all** of these filters:
 
 1. **SPY Regime Filter** — SPY must be above its 50-period EMA (uptrend)
-2. **EMA Crossover** — Fast EMA (6) > Slow EMA (10) for buys
-3. **RSI OR Bollinger Bands** — RSI(7) < 35 (oversold) **OR** price <= BB lower band (period 15, std 1.5)
-4. **MACD** — MACD(12/26/9) bullish crossover for buys
-5. **VWAP** — Price must be below VWAP (buying below fair value)
+2. **EMA Crossover** — Fast EMA > Slow EMA (per-stock optimized)
+3. **RSI OR Bollinger Bands** — RSI oversold **OR** price <= BB lower band
+4. **MACD OR VWAP** — MACD bullish crossover **OR** price below VWAP
 
-> **Design note:** RSI and BB use OR logic because both measure "oversold" conditions. Requiring both simultaneously (AND) on 1-minute bars produces zero signals — diagnosed via `diagnose_signals.py` which showed the progressive AND elimination: `Regime+EMA → 700 bars → +RSI → 30 bars → +BB → 0 bars`.
+> **Design note:** RSI and BB use OR logic because both measure "oversold" conditions. MACD and VWAP use OR logic because requiring both simultaneously contradicts — VWAP wants price below fair value while MACD confirms upward momentum, which rarely coexist on 1-minute bars. Each pair requires at least one confirmation signal.
 
-Sell signals mirror this with reversed conditions (EMA bearish, RSI > 55 OR price >= BB upper, MACD bearish, price > VWAP).
+Sell signals mirror this with reversed conditions. Parameters are **per-stock optimized** via the walk-forward optimizer — the bot loads each stock's best EMA, RSI, and BB settings from `walk_forward_results/`.
 
 ## Risk Management
 
@@ -67,12 +67,35 @@ The bot uses **NewsAPI + VADER** to score each stock's news sentiment:
 ## Walk-Forward Optimizer
 
 `walk_forward.py` prevents overfitting by splitting data into training and test windows:
-- **Train:** 20 days of 1-minute bars — find best parameters from 3,312 combinations
-- **Test:** Next 10 days — validate on unseen data
+- **Train:** 40 days of 1-minute bars — find best parameters from 3,312 combinations
+- **Test:** Next 20 days — validate on unseen data
 - **Pass criteria:** Test return > 0%, trades >= 2, Sharpe > 1.0
-- **Parameter grid:** EMA fast/slow, RSI buy/sell thresholds, BB period/std
+- **Parameter grid:** EMA fast/slow (24 combos), RSI buy/sell thresholds, BB period/std
+- **All 26 stocks** tested with per-stock JSON output to `walk_forward_results/`
+- **Results:** 9/26 stocks PASS, all 26 generate trades
 
-Includes a transaction cost model (spread, slippage, SEC fees) for realistic results.
+Includes a transaction cost model (per-stock spread estimates, slippage, SEC fees) for realistic results.
+
+## Permutation Test (Statistical Validation)
+
+`permutation_test.py` answers: **"Is this strategy's performance real or just luck?"**
+
+- **Method:** Day-block shuffle — randomly reorder entire trading days (1,000 permutations per stock), keeping intraday price structure intact but destroying inter-day trends
+- **Metric:** Sharpe ratio — if the real Sharpe beats 99%+ of permuted Sharpes, the edge is real
+- **Multiple testing:** Bonferroni correction (alpha = 0.05/26 = 0.00192) to account for testing 26 stocks
+- **Aggregation:** Fisher's method combines per-stock p-values into a single portfolio-level number
+
+### Latest Results
+
+| Verdict | Stocks |
+|---------|--------|
+| **Marginal** (p < 0.05) | META (p=0.010), GS (p=0.011) |
+| **Promising** (p < 0.20) | COST, WMT, NFLX, TSLA, MSFT |
+| **No signal** (p > 0.30) | 15 other stocks |
+
+**Fisher combined p-value: 0.071** — the strategy shows suggestive but not yet statistically significant edge at the portfolio level. META and GS show the strongest individual signals.
+
+Output: per-stock histograms, summary chart, and JSON results in `permutation_test_results/`.
 
 ## Dashboard
 
@@ -91,7 +114,7 @@ Flask-based web dashboard at `http://127.0.0.1:5000` with auto-refresh every 30 
 ### Installation
 
 ```bash
-pip install alpaca-trade-api pandas numpy python-dotenv flask newsapi-python vaderSentiment matplotlib schedule
+pip install alpaca-trade-api pandas numpy python-dotenv flask newsapi-python vaderSentiment matplotlib schedule scipy
 ```
 
 ### Configuration
@@ -122,6 +145,12 @@ python3 walk_forward.py
 
 # Diagnose signal issues
 python3 diagnose_signals.py
+
+# Permutation test (statistical validation, ~30-45 min for all stocks)
+python3 permutation_test.py
+
+# Quick test on specific stocks
+python3 permutation_test.py --stocks META,GS --perms 100
 ```
 
 ## Project Journey
@@ -146,19 +175,28 @@ Integrated **NewsAPI + VADER sentiment analysis** with time-weighted scoring and
 ### Phase 6: Walk-Forward Optimization
 Built a walk-forward optimizer to find optimal parameters without overfitting. Discovered that 6 AND conditions on 1-minute bars produce zero signals — **the progressive AND elimination problem**. Fixed by switching RSI and Bollinger Bands from AND to OR logic (both measure oversold, only one needs to trigger).
 
-### Phase 7: Expansion (Planned)
-- Re-run optimizer on all 26 stocks (only 10 tested so far)
-- Optimize stop/profit multipliers per stock
+### Phase 7: Signal Relaxation & Full Expansion
+Relaxed MACD + VWAP from AND to OR logic (same reasoning as RSI/BB — requiring both contradicts on 1-min bars). Extended data window from 30 to 60 days, widened RSI grid, reduced trade cooldown from 5 to 2 bars. Expanded optimizer to all 26 stocks with **per-stock JSON output** — bot now loads each stock's best parameters on startup. Results: **9/26 stocks PASS** (up from 1/10), all 26 generate trades (up from 5/10).
+
+### Phase 8: Statistical Validation (Permutation Testing)
+Built a **permutation test module** to determine if strategy performance is real or data-mining luck. Uses day-block shuffling (1,000 permutations), Bonferroni correction for 26 stocks, and Fisher's method to combine p-values. Results: **Fisher combined p = 0.071** — suggestive but not yet significant. META and GS showed strongest individual signals (p ~ 0.01). Key finding: most "PASS" stocks had too few trades (2-5) for statistical significance on a 20-day test window.
+
+### Phase 9: Next Steps
+- Extend test window to 30 days for more trades per stock
+- Trim universe to statistically promising stocks (META, GS, WMT, COST, TSLA, MSFT, NFLX)
+- Test simpler signal chain (EMA + RSI only) to increase trade frequency
 - VIX regime filter (reduce size in high-volatility markets)
 - Pairs trading (statistical arbitrage between correlated stocks)
-- Expand to 36 stocks across 10 sectors
 
-## Backtest Results
+## Results & Output Files
 
-Charts from backtesting are saved as PNG files:
-- `backtest_results.png` — Daily bar backtest equity curve
-- `backtest_minutes.png` — Minute bar backtest equity curve
-- `performance.png` — Strategy performance analysis
+```
+walk_forward_results/       ← Per-stock optimized parameters (JSON)
+permutation_test_results/   ← Statistical validation (JSON + PNG charts)
+  summary.png               ← All stocks' p-values at a glance
+  {STOCK}_histogram.png     ← Per-stock Sharpe distribution vs actual
+  combined.json             ← Fisher combined p-value and all results
+```
 
 ## Disclaimer
 
