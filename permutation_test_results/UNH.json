@@ -1,11 +1,15 @@
 {
   "stock": "UNH",
-  "actual_sharpe": -2.058696344545292,
-  "p_value": 0.47952047952047955,
-  "mean_perm_sharpe": -5.976174603224166,
-  "std_perm_sharpe": 16.02839136084033,
-  "n_perms": 1000,
-  "significant": false,
+  "actual_sharpe": -2.3059402541078295,
   "wf_status": "WEAK",
-  "timestamp": "2026-03-15T22:37:41.607543"
+  "wf_trades": 9,
+  "day_shuffle_p": 0.7085828343313373,
+  "day_shuffle_mean": -1.5703465065407003,
+  "day_shuffle_std": 1.3905575661987,
+  "signal_shift_p": 0.5409181636726547,
+  "signal_shift_mean": -2.1384043537996686,
+  "signal_shift_std": 7.216118584515043,
+  "combined_p": 0.5409181636726547,
+  "timestamp": "2026-03-16T16:02:34.526328",
+  "signal_mode": "full"
 }

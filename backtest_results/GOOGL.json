@@ -1,12 +1,12 @@
 {
   "stock": "GOOGL",
-  "total_return": 0.056223789109993955,
-  "profit_factor": 1.4726766873810253,
-  "sharpe": 2.0623067917593327,
-  "win_rate": 43.75,
-  "max_drawdown": 3.4570088832442956,
-  "trades": 16,
-  "edge_survives_costs": true,
+  "total_return": -0.34019656658003805,
+  "profit_factor": 0.8355494848587671,
+  "sharpe": -0.9826261874131227,
+  "win_rate": 40.26845637583892,
+  "max_drawdown": 3.536299999999901,
+  "trades": 298,
+  "edge_survives_costs": false,
   "best_params": {
     "fast": 6,
     "slow": 10,
@@ -14,5 +14,5 @@
     "rsi_buy": 30,
     "rsi_sell": 60
   },
-  "timestamp": "2026-03-16T02:12:23.983103"
+  "timestamp": "2026-03-16T15:02:07.261259"
 }

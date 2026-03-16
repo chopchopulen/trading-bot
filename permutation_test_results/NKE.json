@@ -1,11 +1,15 @@
 {
   "stock": "NKE",
-  "actual_sharpe": -16.607960731972057,
-  "p_value": 0.8721278721278721,
-  "mean_perm_sharpe": -10.105057298894026,
-  "std_perm_sharpe": 20.28821172544819,
-  "n_perms": 1000,
-  "significant": false,
+  "actual_sharpe": -4.535768349675557,
   "wf_status": "WEAK",
-  "timestamp": "2026-03-15T22:39:31.493776"
+  "wf_trades": 10,
+  "day_shuffle_p": 0.998003992015968,
+  "day_shuffle_mean": -0.9867567189446453,
+  "day_shuffle_std": 1.2248881297937462,
+  "signal_shift_p": 0.40718562874251496,
+  "signal_shift_mean": -6.596271396517663,
+  "signal_shift_std": 7.488229567696386,
+  "combined_p": 0.40718562874251496,
+  "timestamp": "2026-03-16T15:54:52.127378",
+  "signal_mode": "full"
 }

@@ -1,11 +1,15 @@
 {
   "stock": "JPM",
-  "actual_sharpe": -3.6979920335073886,
-  "p_value": 0.3596403596403596,
-  "mean_perm_sharpe": -6.054666016383557,
-  "std_perm_sharpe": 10.867299209738501,
-  "n_perms": 1000,
-  "significant": false,
+  "actual_sharpe": -103.2079949521388,
   "wf_status": "WEAK",
-  "timestamp": "2026-03-15T22:32:55.408390"
+  "wf_trades": 3,
+  "day_shuffle_p": 1.0,
+  "day_shuffle_mean": -0.2827162294594938,
+  "day_shuffle_std": 1.1840810256024854,
+  "signal_shift_p": 0.9620758483033932,
+  "signal_shift_mean": -14.146721979740702,
+  "signal_shift_std": 52.57731268422475,
+  "combined_p": 0.9620758483033932,
+  "timestamp": "2026-03-16T15:52:22.951011",
+  "signal_mode": "full"
 }

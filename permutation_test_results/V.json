@@ -1,11 +1,15 @@
 {
   "stock": "V",
-  "actual_sharpe": -18.121510081024688,
-  "p_value": 0.916083916083916,
-  "mean_perm_sharpe": -6.306767950620293,
-  "std_perm_sharpe": 8.588200155418761,
-  "n_perms": 1000,
-  "significant": false,
+  "actual_sharpe": -5.780082389686203,
   "wf_status": "WEAK",
-  "timestamp": "2026-03-15T22:34:50.011016"
+  "wf_trades": 8,
+  "day_shuffle_p": 1.0,
+  "day_shuffle_mean": -0.9730798043451846,
+  "day_shuffle_std": 1.0065095020556374,
+  "signal_shift_p": 0.6526946107784432,
+  "signal_shift_mean": -4.749590816816974,
+  "signal_shift_std": 11.800442976162369,
+  "combined_p": 0.6526946107784432,
+  "timestamp": "2026-03-16T16:03:09.611027",
+  "signal_mode": "full"
 }

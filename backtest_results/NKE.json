@@ -1,18 +1,18 @@
 {
   "stock": "NKE",
-  "total_return": 0.0043523735100170595,
-  "profit_factor": 1.0887725616645452,
-  "sharpe": 0.520218144567568,
-  "win_rate": 35.0,
-  "max_drawdown": 0.6754537970909575,
-  "trades": 20,
-  "edge_survives_costs": true,
+  "total_return": -0.375232441099899,
+  "profit_factor": 0.39908673264080446,
+  "sharpe": -4.884467297016009,
+  "win_rate": 29.757785467128027,
+  "max_drawdown": 0.7323039458742333,
+  "trades": 289,
+  "edge_survives_costs": false,
   "best_params": {
-    "fast": 2,
-    "slow": 13,
+    "fast": 6,
+    "slow": 10,
     "rsi_period": 7,
-    "rsi_buy": 35,
-    "rsi_sell": 55
+    "rsi_buy": 30,
+    "rsi_sell": 60
   },
-  "timestamp": "2026-03-16T02:12:09.181650"
+  "timestamp": "2026-03-16T15:01:58.221802"
 }

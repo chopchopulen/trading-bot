@@ -1,0 +1,15 @@
+{
+  "stock": "PLTR",
+  "actual_sharpe": -0.9846753688228779,
+  "wf_status": "WEAK",
+  "wf_trades": 78,
+  "day_shuffle_p": 0.4810379241516966,
+  "day_shuffle_mean": -1.0222795116097605,
+  "day_shuffle_std": 1.4897769202949012,
+  "signal_shift_p": 0.6147704590818364,
+  "signal_shift_mean": 0.2735829314011016,
+  "signal_shift_std": 4.282861136268296,
+  "combined_p": 0.4810379241516966,
+  "timestamp": "2026-03-16T15:56:43.835825",
+  "signal_mode": "full"
+}

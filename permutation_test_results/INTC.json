@@ -1,11 +1,15 @@
 {
   "stock": "INTC",
-  "actual_sharpe": -12.13734888073939,
-  "p_value": 0.8501498501498501,
-  "mean_perm_sharpe": 0.10516020596850649,
-  "std_perm_sharpe": 116.35733965347148,
-  "n_perms": 1000,
-  "significant": false,
+  "actual_sharpe": -9.312500078111018,
   "wf_status": "WEAK",
-  "timestamp": "2026-03-15T22:40:15.276825"
+  "wf_trades": 6,
+  "day_shuffle_p": 1.0,
+  "day_shuffle_mean": -0.8651455004889599,
+  "day_shuffle_std": 1.2132537883529662,
+  "signal_shift_p": 0.8762475049900199,
+  "signal_shift_mean": -1.5451134313199035,
+  "signal_shift_std": 6.4916103171874955,
+  "combined_p": 0.8762475049900199,
+  "timestamp": "2026-03-16T15:51:48.506148",
+  "signal_mode": "full"
 }

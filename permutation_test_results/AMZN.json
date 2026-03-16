@@ -3,13 +3,13 @@
   "actual_sharpe": 4.99247543987441,
   "wf_status": "PASS",
   "wf_trades": 5,
-  "day_shuffle_p": 0.2055888223552894,
-  "day_shuffle_mean": -2.8695179713552026,
-  "day_shuffle_std": 32.761972143142984,
-  "signal_shift_p": 0.19560878243512975,
-  "signal_shift_mean": -3.1311934733093767,
-  "signal_shift_std": 12.908398558740668,
-  "combined_p": 0.19560878243512975,
-  "timestamp": "2026-03-16T01:36:01.986871",
-  "signal_mode": "simple"
+  "day_shuffle_p": 0.001996007984031936,
+  "day_shuffle_mean": -1.8407876091834177,
+  "day_shuffle_std": 1.1377329172987185,
+  "signal_shift_p": 0.2215568862275449,
+  "signal_shift_mean": -4.435691427524041,
+  "signal_shift_std": 15.462746893979661,
+  "combined_p": 0.001996007984031936,
+  "timestamp": "2026-03-16T15:46:37.429028",
+  "signal_mode": "full"
 }
