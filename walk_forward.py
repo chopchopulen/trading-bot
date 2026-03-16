@@ -47,7 +47,7 @@ SIMPLE_SIGNAL_MODE = False
 # ── Fine grained parameter ranges ────────────────────────────────
 # ── Stage 1 — EMA + RSI (coarse) ─────────────────────────────────
 EMA_FAST_RANGE = range(2, 10, 2)      # 2, 4, 6, 8
-EMA_SLOW_RANGE = range(7, 25, 3)      # 7, 10, 13, 16, 19, 22
+EMA_SLOW_RANGE = range(7, 25, 4)      # 7, 11, 15, 19, 23
 RSI_BUY_RANGE = range(30, 50, 5)      # 30, 35, 40, 45
 RSI_SELL_RANGE = range(50, 70, 5)     # 50, 55, 60, 65
 RSI_PERIOD = 7
@@ -57,7 +57,7 @@ BB_PERIOD_RANGE = [15, 20, 25]
 BB_STD_RANGE = [1.5, 2.0, 2.5]
 
 # ── Score threshold range ─────────────────────────────────────────
-SCORE_THRESHOLD_RANGE = [4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0]
+SCORE_THRESHOLD_RANGE = [5.5, 6.0, 6.5, 7.0, 7.5]
 
 # ── Transaction cost model ───────────────────────────────────────
 COST_MODEL_ENABLED = True
@@ -302,17 +302,36 @@ def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_st
 
     total_return = ((cash - STARTING_CASH) / STARTING_CASH) * 100
     wins = [p for p in pnls if p > 0]
+    losses = [p for p in pnls if p <= 0]
     win_rate = len(wins) / len(pnls) * 100 if pnls else 0
     sharpe = 0
     if len(pnls) > 1 and np.std(pnls) > 0:
         sharpe = (np.mean(pnls) / np.std(pnls)) * np.sqrt(252)
 
+    gross_profit = sum(wins) if wins else 0
+    gross_loss = abs(sum(losses)) if losses else 0.001
+    profit_factor = gross_profit / gross_loss if gross_loss > 0 else 0
+
+    # Quality gates — disqualify bad parameter sets
+    num_trades = len(pnls)
+    if num_trades < 5:
+        score = -999       # Not enough data
+    elif num_trades > 150:
+        score = -999       # Over-trading
+    elif profit_factor < 1.2:
+        score = -999       # Losing strategy
+    elif win_rate < 42:
+        score = -999       # Too many losers
+    else:
+        score = sharpe
+
     return {
         "return": total_return,
         "sharpe": sharpe,
         "win_rate": win_rate,
-        "trades": len(pnls),
-        "score": sharpe if len(pnls) >= 3 else -999
+        "trades": num_trades,
+        "profit_factor": profit_factor,
+        "score": score
     }
 
 # ── Split data ────────────────────────────────────────────────────
