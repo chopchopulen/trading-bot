@@ -23,24 +23,18 @@ api = tradeapi.REST(API_KEY, SECRET_KEY, BASE_URL)
 newsapi = NewsApiClient(api_key=NEWS_API_KEY)
 analyzer = SentimentIntensityAnalyzer()
 
-STOCKS = [
-    # Tech
-    "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN",
-    "TSLA", "META", "AMD", "NFLX", "CRM",
-    # Finance
-    "JPM", "BAC", "GS", "V",
-    # ETFs
-    "SPY", "QQQ",
-    # Energy
-    "XOM", "CVX",
-    # Healthcare
-    "JNJ", "PFE", "UNH",
-    # Consumer
-    "WMT", "COST", "NKE",
-    # Semiconductor
-    "INTC", "QCOM"
-]
+# ── Tiered stock universe (validated by permutation test + backtest) ──
+# Tier 1 — Full size (proven edge)
+TIER1_STOCKS = ["META", "SPY", "AMD", "GS"]
+
+# Tier 2 — Reduced size (promising)
+TIER2_STOCKS = ["WMT", "COST", "MSFT", "NFLX", "QCOM",
+                "AAPL", "CRM", "TSLA"]
+
+STOCKS = TIER1_STOCKS + TIER2_STOCKS
 WATCHLIST = []
+
+TIER2_SIZE_FACTOR = 0.5  # Tier 2 stocks get 50% of ATR sizing
 
 STOCK_NAMES = {
     # Tech
@@ -79,11 +73,11 @@ STOCK_NAMES = {
 }
 
 # ── Strategy parameters (defaults, overridden by walk-forward results) ──
-FAST_MA = 6
+FAST_MA = 4
 SLOW_MA = 10
 RSI_PERIOD = 7
-RSI_OVERSOLD = 35
-RSI_OVERBOUGHT = 55
+RSI_OVERSOLD = 30
+RSI_OVERBOUGHT = 65
 BB_PERIOD = 15
 BB_STD = 1.5
 
@@ -96,6 +90,14 @@ for _stock in STOCKS:
             _data = json.load(_f)
             if _data.get("status") in ("PASS", "WEAK"):
                 STOCK_PARAMS[_stock] = _data["best_params"]
+
+# ── Load overnight backtest results for additional filtering ──
+BACKTEST_RESULTS = {}
+for _stock in STOCKS:
+    _path = f"backtest_results/{_stock}.json"
+    if os.path.exists(_path):
+        with open(_path) as _f:
+            BACKTEST_RESULTS[_stock] = json.load(_f)
 
 def get_params(stock):
     """Return per-stock params if available, otherwise defaults."""
@@ -345,7 +347,7 @@ def get_vwap(stock):
         return None
 
 # ── ATR-based position sizing ─────────────────────────────────────
-def get_atr_qty(price, atr):
+def get_atr_qty(stock, price, atr):
     try:
         account = api.get_account()
         portfolio_value = float(account.portfolio_value)
@@ -361,6 +363,11 @@ def get_atr_qty(price, atr):
 
         # Qty = Dollar Risk / Stop Distance
         qty = int(dollar_risk / stop_distance)
+
+        # Tier 2 stocks get reduced size
+        if stock in TIER2_STOCKS:
+            qty = int(qty * TIER2_SIZE_FACTOR)
+
         qty = max(MIN_QTY, min(qty, MAX_QTY))
         return qty
 
@@ -610,7 +617,7 @@ def run_bot():
             if position > 0:
                 PENDING_ORDERS.discard(stock)  # Order filled, clear pending
             price = get_price(stock)
-            qty = get_atr_qty(price, atr)
+            qty = get_atr_qty(stock, price, atr)
             sentiment = get_sentiment(stock)
             vwap = get_vwap(stock)
 
@@ -621,8 +628,9 @@ def run_bot():
             sentiment_emoji = "😊" if sentiment > 0.15 else "😐" if sentiment > -0.15 else "😟"
             macd_emoji = "📈" if macd_bullish else "📉"
             vwap_str = f"${vwap:.2f}" if vwap else "N/A"
+            tier_label = "T1" if stock in TIER1_STOCKS else "T2"
 
-            print(f"  {stock} | RSI: {rsi:.1f} | "
+            print(f"  {stock} [{tier_label}] | RSI: {rsi:.1f} | "
                   f"MACD: {macd_emoji} {macd_line:.3f}/{signal_line:.3f} | "
                   f"ATR: {atr:.2f} | VWAP: {vwap_str} | "
                   f"Sentiment: {sentiment:.3f} {sentiment_emoji} | "
@@ -658,6 +666,16 @@ def run_bot():
                     PENDING_ORDERS.discard(stock)
                     continue
 
+            # ── Backtest quality check ──────────────────────────
+            # Only buy if backtest shows profit_factor > 1.0
+            # OR no backtest result exists yet (don't block untested stocks)
+            bt = BACKTEST_RESULTS.get(stock, {})
+            bt_ok = bt.get("profit_factor", 999) > 1.0
+            if not bt_ok:
+                if position == 0:
+                    print(f"  ⚠️ {stock} skipped — backtest profit factor < 1.0")
+                continue
+
             # ── Buy: regime + EMA + (RSI OR BB) + (MACD OR VWAP) ─
             if (uptrend and
                 not buys_blocked and
@@ -684,7 +702,7 @@ def run_bot():
                          atr, qty, sentiment, est_cost)
                 stop = price - (ATR_STOP_MULT * atr)
                 target = price + (ATR_PROFIT_MULT * atr)
-                print(f"  ✅ {stock} BUY | "
+                print(f"  ✅ {stock} [{tier_label}] BUY | "
                       f"Qty: {qty} (ATR sized) | "
                       f"${price:.2f} | "
                       f"Stop: ${stop:.2f} | "
@@ -752,15 +770,42 @@ schedule.every().friday.at("15:55").do(show_positions)
 
 schedule.every(1).minutes.do(run_bot)
 
-print("🚀 Bot: EMA + RSI + BB + MACD + ATR Sizing + Sentiment + Kelly + Stop Loss + Regime!")
-print(f"   Default EMA: {FAST_MA}/{SLOW_MA} | RSI: {RSI_OVERSOLD}/{RSI_OVERBOUGHT} | "
-      f"BB: {BB_PERIOD}/{BB_STD} | MACD: {MACD_FAST}/{MACD_SLOW}/{MACD_SIGNAL}")
+# ── Startup summary ──────────────────────────────────────────────
+print(f"\n{'='*60}")
+print("🚀 TRADING BOT — STARTUP SUMMARY")
+print(f"{'='*60}")
+print(f"\n  Signal: EMA + RSI + BB + MACD + ATR + Sentiment + Regime")
+print(f"  Defaults: EMA {FAST_MA}/{SLOW_MA} | RSI {RSI_OVERSOLD}/{RSI_OVERBOUGHT} | "
+      f"BB {BB_PERIOD}/{BB_STD}")
+print(f"  Risk: Stop {ATR_STOP_MULT}x ATR | Target {ATR_PROFIT_MULT}x ATR | "
+      f"Max {MAX_POSITIONS} positions | Daily limit ${DAILY_LOSS_LIMIT}")
+
+print(f"\n  Tier 1 — Full size ({len(TIER1_STOCKS)} stocks):")
+print(f"    {', '.join(TIER1_STOCKS)}")
+print(f"\n  Tier 2 — Half size ({len(TIER2_STOCKS)} stocks, {TIER2_SIZE_FACTOR:.0%} qty):")
+print(f"    {', '.join(TIER2_STOCKS)}")
+
+print(f"\n  Walk-forward params loaded: {len(STOCK_PARAMS)} stocks")
 if STOCK_PARAMS:
-    print(f"   📊 Per-stock optimized params loaded for {len(STOCK_PARAMS)} stocks: {', '.join(STOCK_PARAMS.keys())}")
+    print(f"    {', '.join(STOCK_PARAMS.keys())}")
 else:
-    print("   ⚠️ No walk-forward results found, using default params for all stocks")
-print("Checks every minute during market hours.")
-print("Press Ctrl+C to stop.")
+    print("    ⚠️ None — using defaults for all stocks")
+
+print(f"\n  Backtest results loaded: {len(BACKTEST_RESULTS)} stocks")
+if BACKTEST_RESULTS:
+    for s, r in BACKTEST_RESULTS.items():
+        pf = r.get("profit_factor", 0)
+        pf_str = f"PF={pf:.2f}" if pf < 100 else "PF=N/A"
+        ok = "✅" if pf > 1.0 else "❌"
+        print(f"    {ok} {s}: {pf_str}")
+else:
+    print("    ⚠️ None — no backtest filtering active")
+
+print(f"\n  Total stocks monitored: {len(STOCKS)}")
+print(f"{'='*60}")
+print("  Checks every minute during market hours.")
+print("  Press Ctrl+C to stop.")
+print(f"{'='*60}\n")
 
 run_premarket_scan()
 run_bot()
