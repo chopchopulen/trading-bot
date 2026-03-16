@@ -1,0 +1,18 @@
+{
+  "stock": "PFE",
+  "total_return": -0.0015521577400359093,
+  "profit_factor": 0.8563042268947757,
+  "sharpe": -0.8919151869853102,
+  "win_rate": 33.33333333333333,
+  "max_drawdown": 0.27508225719441676,
+  "trades": 21,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 2,
+    "slow": 22,
+    "rsi_period": 7,
+    "rsi_buy": 25,
+    "rsi_sell": 55
+  },
+  "timestamp": "2026-03-16T02:11:54.545891"
+}

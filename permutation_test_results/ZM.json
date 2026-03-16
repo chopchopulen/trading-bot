@@ -1,0 +1,15 @@
+{
+  "stock": "ZM",
+  "actual_sharpe": -7.4046983625212235,
+  "wf_status": "WEAK",
+  "wf_trades": 4,
+  "day_shuffle_p": 0.8323353293413174,
+  "day_shuffle_mean": -2.137829977693419,
+  "day_shuffle_std": 5.477605820614775,
+  "signal_shift_p": 0.5469061876247505,
+  "signal_shift_mean": -8.583101133851065,
+  "signal_shift_std": 19.461264864871858,
+  "combined_p": 0.5469061876247505,
+  "timestamp": "2026-03-16T02:42:24.446017",
+  "signal_mode": "full"
+}

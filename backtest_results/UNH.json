@@ -1,0 +1,18 @@
+{
+  "stock": "UNH",
+  "total_return": -0.029362455769980443,
+  "profit_factor": 0.6889929671353971,
+  "sharpe": -2.6725249680935703,
+  "win_rate": 27.27272727272727,
+  "max_drawdown": 3.4814571900191806,
+  "trades": 11,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 2,
+    "slow": 22,
+    "rsi_period": 7,
+    "rsi_buy": 25,
+    "rsi_sell": 55
+  },
+  "timestamp": "2026-03-16T02:12:01.731302"
+}

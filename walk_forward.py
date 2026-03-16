@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import matplotlib.pyplot as plt
 from collections import Counter
+import signals
 
 load_dotenv()
 
@@ -243,18 +244,16 @@ def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_st
                 last_trade = i
                 continue
 
-        # Buy signal
-        if SIMPLE_SIGNAL_MODE:
-            buy_signal = (uptrend and
-                          fast_ema.iloc[i] > slow_ema.iloc[i] and
-                          rsi.iloc[i] < rsi_buy)
-        else:
-            buy_signal = (uptrend and
-                          fast_ema.iloc[i] > slow_ema.iloc[i] and
-                          (rsi.iloc[i] < rsi_buy or price <= bb_lower.iloc[i]) and
-                          (macd_bullish or (pd.isna(cur_vwap) or price < cur_vwap)))
-
-        if (buy_signal and
+        # Buy signal (weighted scoring)
+        buy_score, _ = signals.calculate_buy_score(
+            fast_ema.iloc[i], slow_ema.iloc[i],
+            rsi.iloc[i], rsi_buy,
+            price, bb_lower.iloc[i],
+            macd_line.iloc[i], signal_line.iloc[i],
+            cur_vwap, uptrend, 0
+        )
+        # Use T1 threshold for backtesting (most permissive)
+        if (buy_score >= signals.BUY_THRESHOLD_T1 and
             position == 0 and cash >= price * QUANTITY and
             not pd.isna(atr.iloc[i])):
             buy_cost = calculate_trade_cost(STOCK, price, QUANTITY, "buy")
@@ -265,17 +264,16 @@ def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_st
             buy_cost_stored = buy_cost
             last_trade = i
 
-        # Sell signal
+        # Sell signal (weighted scoring)
         elif position > 0:
-            if SIMPLE_SIGNAL_MODE:
-                sell_signal = (fast_ema.iloc[i] < slow_ema.iloc[i] and
-                               rsi.iloc[i] > rsi_sell)
-            else:
-                sell_signal = (fast_ema.iloc[i] < slow_ema.iloc[i] and
-                               (rsi.iloc[i] > rsi_sell or price >= bb_upper.iloc[i]) and
-                               (macd_bearish or (pd.isna(cur_vwap) or price > cur_vwap)))
-
-            if not sell_signal:
+            sell_score, _ = signals.calculate_sell_score(
+                fast_ema.iloc[i], slow_ema.iloc[i],
+                rsi.iloc[i], rsi_sell,
+                price, bb_upper.iloc[i],
+                macd_line.iloc[i], signal_line.iloc[i],
+                cur_vwap
+            )
+            if sell_score < signals.SELL_THRESHOLD_T1:
                 continue
             sell_cost = calculate_trade_cost(STOCK, price, position, "sell")
             pnl = (price - buy_price) * position - buy_cost_stored - sell_cost

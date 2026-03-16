@@ -1,0 +1,18 @@
+{
+  "stock": "SPY",
+  "total_return": 0.13553589318005835,
+  "profit_factor": 1.795822533680936,
+  "sharpe": 3.343775224449753,
+  "win_rate": 50.0,
+  "max_drawdown": 6.973811091332006,
+  "trades": 32,
+  "edge_survives_costs": true,
+  "best_params": {
+    "fast": 6,
+    "slow": 7,
+    "rsi_period": 7,
+    "rsi_buy": 35,
+    "rsi_sell": 55
+  },
+  "timestamp": "2026-03-16T02:12:43.362727"
+}

@@ -1,0 +1,18 @@
+{
+  "stock": "META",
+  "total_return": -1.0235730212999334,
+  "profit_factor": 0.760620676206126,
+  "sharpe": -1.4808103965950614,
+  "win_rate": 42.35668789808918,
+  "max_drawdown": 7.534617170276041,
+  "trades": 314,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 4,
+    "slow": 10,
+    "rsi_period": 7,
+    "rsi_buy": 35,
+    "rsi_sell": 55
+  },
+  "timestamp": "2026-03-16T14:42:55.420311"
+}

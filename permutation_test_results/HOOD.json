@@ -1,0 +1,15 @@
+{
+  "stock": "HOOD",
+  "actual_sharpe": 8.151495558337253,
+  "wf_status": "PASS",
+  "wf_trades": 11,
+  "day_shuffle_p": 0.021956087824351298,
+  "day_shuffle_mean": -1.235180558773489,
+  "day_shuffle_std": 5.601215260059492,
+  "signal_shift_p": 0.0499001996007984,
+  "signal_shift_mean": -1.2649555371126218,
+  "signal_shift_std": 6.28354170570208,
+  "combined_p": 0.021956087824351298,
+  "timestamp": "2026-03-16T02:40:34.875425",
+  "signal_mode": "full"
+}

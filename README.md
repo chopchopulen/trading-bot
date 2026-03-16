@@ -4,57 +4,121 @@ A fully automated intraday trading bot running on **Alpaca Paper Trading** ($100
 
 ## What It Does
 
-The bot trades a **tiered stock universe** (12 validated stocks across 2 tiers) on 1-minute bars during market hours (9:45 AM - 3:45 PM ET). It combines multiple technical indicators with sentiment analysis to generate buy/sell signals, manages risk with ATR-based position sizing and dynamic stop losses, and serves a real-time dashboard. Stocks are validated through a 3-stage pipeline: backtest → walk-forward optimization → permutation test.
+The bot trades a **tiered stock universe** (18 validated stocks across 3 tiers) on 1-minute bars during market hours (9:45 AM - 3:45 PM ET). It uses a **weighted signal scoring system** to generate buy, sell, short, and cover signals, manages risk with ATR-based position sizing and dynamic stop losses, supports **short selling in downtrends**, and serves a real-time dashboard. Stocks are validated through a 3-stage pipeline: backtest -> walk-forward optimization -> permutation test.
 
 ## Architecture
 
 ```
-bot.py                ← Live trading engine (tiered stocks, ATR sizing)
-overnight_pipeline.py ← Master overnight test runner (4 phases)
-dashboard.py          ← Flask web dashboard (portfolio, positions, trades)
-walk_forward.py       ← Walk-forward parameter optimizer (3,312 combos/stock)
-permutation_test.py   ← Statistical significance testing (dual methods)
-backtest_minutes.py   ← Minute-bar backtester with charting
-backtest.py           ← Daily-bar backtester with grid search
-diagnose_signals.py   ← Signal diagnostics & debugging tool
+signals.py            <- Shared signal module (scoring, indicators, thresholds)
+bot.py                <- Live trading engine (scoring, shorts, tiered stocks)
+overnight_pipeline.py <- Master overnight test runner (4 phases)
+dashboard.py          <- Flask web dashboard (portfolio, positions, trades)
+walk_forward.py       <- Walk-forward parameter optimizer (3,312 combos/stock)
+permutation_test.py   <- Statistical significance testing (dual methods)
+backtest_minutes.py   <- Minute-bar backtester with charting
+backtest.py           <- Daily-bar backtester with grid search
+diagnose_signals.py   <- Signal diagnostics & debugging tool
 ```
 
-## Signal Chain
+## Signal Scoring System
 
-Every buy signal must pass **all** of these filters:
+The bot uses a **weighted scoring system** instead of strict AND conditions. Each indicator contributes a weight, and the total score must exceed a tier-based threshold to trigger a trade.
 
-1. **SPY Regime Filter** — SPY must be above its 50-period EMA (uptrend)
-2. **EMA Crossover** — Fast EMA > Slow EMA (per-stock optimized)
-3. **RSI OR Bollinger Bands** — RSI oversold **OR** price <= BB lower band
-4. **MACD OR VWAP** — MACD bullish crossover **OR** price below VWAP
+### Buy Signal Weights
 
-> **Design note:** RSI and BB use OR logic because both measure "oversold" conditions. MACD and VWAP use OR logic because requiring both simultaneously contradicts — VWAP wants price below fair value while MACD confirms upward momentum, which rarely coexist on 1-minute bars. Each pair requires at least one confirmation signal.
+| Signal | Weight | Condition |
+|--------|--------|-----------|
+| EMA Trend | 3.0 | Fast EMA > Slow EMA |
+| RSI Oversold | 2.0 | RSI < buy threshold |
+| Bollinger Band | 2.0 | Price <= BB lower band |
+| MACD Bullish | 1.5 | MACD line > signal line |
+| VWAP | 1.0 | Price < VWAP |
+| Regime (Uptrend) | 2.5 | SPY > 50 EMA |
+| Sentiment | 0.5 | News sentiment > 0.15 |
 
-Sell signals mirror this with reversed conditions. Parameters are **per-stock optimized** via the walk-forward optimizer — the bot loads each stock's best EMA, RSI, and BB settings from `walk_forward_results/`.
+**Max possible score: 12.5**
+
+### Thresholds by Tier
+
+| Tier | Buy | Sell | Short Entry | Short Cover |
+|------|-----|------|-------------|-------------|
+| Tier 1 (proven) | 6.0 | 5.5 | 7.0 | 5.5 |
+| Tier 2 (promising) | 7.0 | 6.0 | 8.0 | 6.0 |
+| Tier 3 (monitoring) | 8.0 | 7.0 | disabled | disabled |
+
+**Key design decision:** The SPY regime filter is a **soft signal** (2.5 points), not a hard gate. In strong downtrends, longs can still fire if other signals are overwhelmingly bullish. This also enables short selling when the regime is bearish.
+
+All scoring logic lives in `signals.py` — a single source of truth shared by the live bot, backtester, walk-forward optimizer, and overnight pipeline.
+
+## Short Selling
+
+When the market is in a **downtrend** (SPY < 50 EMA), the bot can short highly liquid stocks:
+
+```
+SHORT_ELIGIBLE = AAPL, MSFT, META, AMD, TSLA, NFLX, NVDA, AMZN, GS
+```
+
+### Short Signals (inverted buy signals)
+
+| Signal | Weight | Condition |
+|--------|--------|-----------|
+| EMA Bearish | 3.0 | Fast EMA < Slow EMA |
+| RSI Overbought | 2.0 | RSI > sell threshold |
+| BB Upper | 2.0 | Price >= BB upper band |
+| MACD Bearish | 1.5 | MACD < signal line |
+| Above VWAP | 1.0 | Price > VWAP |
+| Regime (Downtrend) | 2.5 | SPY < 50 EMA |
+| Negative Sentiment | 0.5 | Sentiment < -0.15 |
+
+### Short Risk Guardrails
+
+| Feature | Setting |
+|---------|---------|
+| Max short positions | 3 |
+| Short daily loss limit | -$300 |
+| Hard stop | 5% above entry (force close) |
+| ATR stop loss | Entry + 1.5x ATR |
+| ATR take profit | Entry - 3.0x ATR |
+| Regime switch | Auto-cover all shorts if SPY flips to uptrend |
 
 ## Risk Management
 
 | Feature | Implementation |
 |---------|---------------|
-| **Position Sizing** | ATR-based: `qty = (portfolio * 1%) / ATR(14)` — Tier 1 full size, Tier 2 at 50% |
-| **Stop Loss** | Dynamic: `entry - 1.5 * ATR(14)` — adapts to each stock's volatility |
-| **Take Profit** | Dynamic: `entry + 3.0 * ATR(14)` — 1:2 risk/reward ratio |
-| **Max Positions** | 5 concurrent positions |
-| **Daily Loss Limit** | -$500 — stops all new buys if hit |
-| **Market Window** | Only trades 9:45 AM - 3:45 PM ET (avoids open/close volatility) |
-| **Regime Filter** | No buys when SPY < 50 EMA (bear market protection) |
+| **Position Sizing** | ATR-based: `qty = (portfolio * 1%) / ATR(14)` — T1 full, T2 50%, T3 25% |
+| **Stop Loss** | Dynamic: `entry - 1.5 * ATR(14)` (longs) / `entry + 1.5 * ATR` (shorts) |
+| **Take Profit** | Dynamic: `entry + 3.0 * ATR(14)` (longs) / `entry - 3.0 * ATR` (shorts) |
+| **Max Positions** | 5 concurrent (longs) + 3 concurrent (shorts) |
+| **Daily Loss Limit** | -$500 (longs), -$300 (shorts) |
+| **Market Window** | Only trades 9:45 AM - 3:45 PM ET |
 | **Backtest Gate** | No buys if stock's backtest profit factor < 1.0 |
+| **Sector Limits** | Max 2 positions per sector |
+| **Anti-Whipsaw** | 5-bar cooldown after trades, 10-min minimum hold |
+
+### Sector Diversification
+
+```
+tech:     MSFT, META, AAPL, AMZN, NFLX, CRM
+semi:     AMD, NVDA, QCOM
+finance:  GS, COIN, HOOD
+consumer: WMT, COST, TSLA, UBER
+etf:      SPY
+other:    SPOT
+```
 
 ## Stock Universe (Tiered)
 
-Stocks are assigned to tiers based on permutation test p-values and backtest profit factors:
+Stocks are assigned to tiers based on permutation test p-values and backtest performance:
 
 | Tier | Sizing | Stocks | Criteria |
 |------|--------|--------|----------|
-| **Tier 1** | Full ATR size | META, SPY, AMD, GS | p < 0.05, proven edge |
-| **Tier 2** | 50% ATR size | WMT, COST, MSFT, NFLX, QCOM, AAPL, CRM, TSLA | p < 0.15, promising |
+| **Tier 1** | Full ATR | MSFT, META, AMD, SPY | p < 0.05, proven edge |
+| **Tier 2** | 50% ATR | AAPL, TSLA, NFLX, WMT, COST, GS, HOOD, UBER, COIN | p < 0.15, promising |
+| **Tier 3** | 25% ATR | SPOT, CRM, QCOM, AMZN, NVDA | Monitoring, higher thresholds |
 
-The overnight pipeline can expand this universe by testing additional stocks (UBER, PLTR, COIN, SHOP, SQ, ROKU, ABNB, PYPL, SPOT, ZM, HOOD) and promoting them to the appropriate tier.
+**Pipeline candidates** (tested overnight, not yet traded): AVGO, LLY, MA, PANW, CRWD, SNOW
+
+The overnight pipeline auto-classifies stocks into tiers based on p-values and profit factors.
 
 ## Sentiment Analysis
 
@@ -98,11 +162,9 @@ Includes a transaction cost model (per-stock spread estimates, slippage, SEC fee
 
 | Verdict | Stocks |
 |---------|--------|
-| **Strong** (p < 0.05) | META (p=0.012), GS (p=0.002), AMD (p=0.002), SPY (p=0.002) |
-| **Promising** (p < 0.15) | WMT (p=0.072), COST (p=0.092), MSFT (p=0.026), NFLX (p=0.064) |
-| **Weak** (p < 0.30) | AAPL, QCOM, CRM, TSLA, AMZN, NVDA |
-
-Output: per-stock histograms (day shuffle + signal shift), summary chart, and JSON results in `permutation_test_results/`.
+| **Strong** (p < 0.05) | META (p=0.012), GS (p=0.002), AMD (p=0.002), SPY (p=0.002), HOOD (p=0.022), SPOT (p=0.020) |
+| **Promising** (p < 0.15) | WMT (p=0.072), COST (p=0.092), MSFT (p=0.026), NFLX (p=0.064), UBER (p=0.106), QCOM (p=0.104), COIN (p=0.122), CRM (p=0.136) |
+| **Weak** (p < 0.30) | AAPL, TSLA, AMZN, NVDA |
 
 ## Overnight Pipeline
 
@@ -111,7 +173,7 @@ Output: per-stock histograms (day shuffle + signal shift), summary chart, and JS
 | Phase | What | Output |
 |-------|------|--------|
 | **Phase 1** | Backtest all stocks (grid search, 10 param sets) | `backtest_results/{STOCK}.json` |
-| **Phase 2** | Walk-forward on untested stocks (UBER, PLTR, COIN, etc.) | `walk_forward_results/{STOCK}.json` |
+| **Phase 2** | Walk-forward on untested stocks | `walk_forward_results/{STOCK}.json` |
 | **Phase 3** | Permutation test on profitable stocks (500 perms) | `permutation_test_results/{STOCK}.json` |
 | **Phase 4** | Master summary report with tiered recommendations | `results/overnight_summary.txt` |
 
@@ -127,8 +189,8 @@ Features: skips stocks with recent results, catches exceptions per-stock (won't 
 
 Flask-based web dashboard at `http://127.0.0.1:5000` with auto-refresh every 30 seconds:
 - Portfolio value, cash, total return, alpha vs S&P 500
-- Open positions with P&L
-- Recent trade log
+- Open positions with P&L and LONG/SHORT labels
+- Recent trade log with color-coded actions (BUY, SELL, SHORT, COVER)
 
 ## Setup
 
@@ -187,8 +249,6 @@ python3 overnight_pipeline.py --dry-run
 
 ## Project Journey
 
-This project evolved through several phases:
-
 ### Phase 1: Basic EMA Crossover
 Started with a simple EMA crossover strategy on daily bars. Single stock (TSLA), fixed position sizes, no risk management.
 
@@ -208,47 +268,43 @@ Integrated **NewsAPI + VADER sentiment analysis** with time-weighted scoring and
 Built a walk-forward optimizer to find optimal parameters without overfitting. Discovered that 6 AND conditions on 1-minute bars produce zero signals — **the progressive AND elimination problem**. Fixed by switching RSI and Bollinger Bands from AND to OR logic (both measure oversold, only one needs to trigger).
 
 ### Phase 7: Signal Relaxation & Full Expansion
-Relaxed MACD + VWAP from AND to OR logic (same reasoning as RSI/BB — requiring both contradicts on 1-min bars). Extended data window from 30 to 60 days, widened RSI grid, reduced trade cooldown from 5 to 2 bars. Expanded optimizer to all 26 stocks with **per-stock JSON output** — bot now loads each stock's best parameters on startup. Results: **9/26 stocks PASS** (up from 1/10), all 26 generate trades (up from 5/10).
+Relaxed MACD + VWAP from AND to OR logic. Extended data window from 30 to 60 days, widened RSI grid, reduced trade cooldown from 5 to 2 bars. Expanded optimizer to all 26 stocks with **per-stock JSON output**. Results: **9/26 stocks PASS** (up from 1/10).
 
 ### Phase 8: Statistical Validation (Permutation Testing)
-Built a **permutation test module** to determine if strategy performance is real or data-mining luck. Uses day-block shuffling (1,000 permutations), Bonferroni correction for 26 stocks, and Fisher's method to combine p-values. Initial results: **Fisher combined p = 0.071** — suggestive but not yet significant. META and GS showed strongest individual signals (p ~ 0.01). Key finding: most "PASS" stocks had too few trades (2-5) for statistical significance on a 20-day test window.
+Built a **permutation test module** to determine if strategy performance is real or data-mining luck. Uses day-block shuffling (1,000 permutations), Bonferroni correction for 26 stocks, and Fisher's method to combine p-values.
 
 ### Phase 9: Enhanced Validation & Tiered Trading
-- Extended data windows: lookback 90 days, train 60 days, test 30 days
-- Added **dual-method permutation test**: day-block shuffle + signal-shift test
-- Fixed Sharpe explosion (cap at 0 when trades < 2)
-- Added **White's Reality Check** adjustment for data mining bias
-- Added **simple signal mode** flag (EMA + RSI only) for 10-20x more trades
-- Tiered summary with actionable recommendations per stock
-- Round 2 results: META p=0.012, GS p=0.002, AMD p=0.002, SPY p=0.002
+Extended data windows (90-day lookback, 60-day train, 30-day test). Added dual-method permutation test, White's Reality Check, simple signal mode, Sharpe cap, and tiered summary.
 
 ### Phase 10: Overnight Pipeline & Live Trading Prep
-- Built `overnight_pipeline.py` — runs backtest, walk-forward, and permutation test sequentially overnight
-- **Tiered stock universe**: Tier 1 (META, SPY, AMD, GS) at full size, Tier 2 (8 stocks) at 50% size
-- **Backtest quality gate**: bot skips stocks with profit factor < 1.0
-- **Backtest results loader**: bot reads `backtest_results/` at startup for filtering
-- **Expansion candidates**: 11 new stocks (UBER, PLTR, COIN, etc.) ready for pipeline testing
+Built `overnight_pipeline.py`. First live paper trading day: 0 trades fired — market in sustained downtrend (tariff sell-off), SPY regime filter blocked all buys. Bot correctly preserved capital (+0.03%).
 
-### Phase 11: Next Steps
-- Live paper trading with tiered universe (validate real-time performance)
-- Run overnight pipeline to test 11 new stocks and refresh all results
+### Phase 11: Weighted Scoring, Short Selling & Universe Expansion
+Three major upgrades to address Day 1's 0-trade problem:
+- **Weighted signal scoring** — replaced strict AND conditions with weighted scores. Regime filter changed from hard gate to 2.5-point soft signal. Shared `signals.py` module eliminates duplication across 4 files.
+- **Short selling** — bot can now short eligible stocks in downtrends with full risk management (ATR stops, hard 5% cap, regime-switch auto-cover, separate position/loss limits).
+- **Expanded universe** — 18 active stocks across 3 tiers (up from 12 across 2 tiers). Added Tier 3 at 25% sizing for monitoring stocks. 6 pipeline candidates for future testing.
+
+### Next Steps
+- Live paper trading with scoring + shorts (validate real-time performance)
+- Run overnight pipeline with expanded universe
+- Tune scoring thresholds based on live results
+- Permutation test on short signals
 - VIX regime filter (reduce size in high-volatility markets)
-- Pairs trading (statistical arbitrage between correlated stocks)
-- Multi-timeframe confirmation (5-min + 1-min signals)
 
 ## Results & Output Files
 
 ```
-backtest_results/           ← Per-stock backtest results (JSON)
-walk_forward_results/       ← Per-stock optimized parameters (JSON)
-permutation_test_results/   ← Statistical validation (JSON + PNG charts)
-  summary.png               ← All stocks' p-values at a glance
-  {STOCK}_day_shuffle.png   ← Day-shuffle Sharpe distribution vs actual
-  {STOCK}_signal_shift.png  ← Signal-shift Sharpe distribution vs actual
-  combined.json             ← Fisher combined p-value and all results
-results/                    ← Overnight pipeline output
-  overnight_summary.txt     ← Master report with tiered recommendations
-  overnight_summary.json    ← Machine-readable summary
+backtest_results/           <- Per-stock backtest results (JSON)
+walk_forward_results/       <- Per-stock optimized parameters (JSON)
+permutation_test_results/   <- Statistical validation (JSON + PNG charts)
+  summary.png               <- All stocks' p-values at a glance
+  {STOCK}_day_shuffle.png   <- Day-shuffle Sharpe distribution vs actual
+  {STOCK}_signal_shift.png  <- Signal-shift Sharpe distribution vs actual
+  combined.json             <- Fisher combined p-value and all results
+results/                    <- Overnight pipeline output
+  overnight_summary.txt     <- Master report with tiered recommendations
+  overnight_summary.json    <- Machine-readable summary
 ```
 
 ## Disclaimer

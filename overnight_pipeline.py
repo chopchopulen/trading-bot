@@ -25,12 +25,27 @@ import pandas as pd
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import alpaca_trade_api as tradeapi
+import signals as sig
+
+
+class NumpyEncoder(json.JSONEncoder):
+    """Handle numpy types for JSON serialization."""
+    def default(self, obj):
+        if isinstance(obj, (np.integer,)):
+            return int(obj)
+        if isinstance(obj, (np.floating,)):
+            return float(obj)
+        if isinstance(obj, (np.bool_,)):
+            return bool(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super().default(obj)
 
 load_dotenv()
 
-API_KEY = os.environ["ALPACA_API_KEY"]
-SECRET_KEY = os.environ["ALPACA_SECRET_KEY"]
-BASE_URL = os.environ["ALPACA_BASE_URL"]
+API_KEY = "PK22XEELBFYNU7QMJHJOGRJ6V6"
+SECRET_KEY = "3arXWSeJW69nWfZHKW9nABMWwMkK1Ct964VakJdT7PXV"
+BASE_URL = "https://paper-api.alpaca.markets"
 
 api = tradeapi.REST(API_KEY, SECRET_KEY, BASE_URL)
 
@@ -44,7 +59,10 @@ ORIGINAL_26 = [
 
 NEW_STOCKS = ["UBER", "PLTR", "COIN", "SHOP", "SQ", "ROKU", "ABNB", "PYPL", "SPOT", "ZM", "HOOD"]
 
-ALL_STOCKS = ORIGINAL_26 + NEW_STOCKS
+# Pipeline candidates — new stocks to test for universe expansion
+PIPELINE_STOCKS = ["AVGO", "LLY", "MA", "PANW", "CRWD", "SNOW"]
+
+ALL_STOCKS = ORIGINAL_26 + NEW_STOCKS + PIPELINE_STOCKS
 
 # Stocks to backtest in Phase 1 (all original 26 minus SPY which is used as regime filter)
 BACKTEST_STOCKS = [
@@ -241,8 +259,6 @@ def run_backtest(stock, bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sel
         lower = bb_lower.iloc[i]
         spy_price = spy_close.iloc[i]
         spy_ema = spy_regime_ema.iloc[i]
-        macd_bullish = macd_line.iloc[i] > signal_line.iloc[i]
-        macd_bearish = macd_line.iloc[i] < signal_line.iloc[i]
         cur_vwap = vwap.iloc[i]
 
         market_uptrend = spy_price > spy_ema
@@ -268,18 +284,15 @@ def run_backtest(stock, bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sel
                 last_trade_bar = i
                 continue
 
-        # Buy signal
-        if SIMPLE_SIGNAL_MODE:
-            buy_signal = (market_uptrend and
-                          fast_val > slow_val and
-                          rsi_val < rsi_buy)
-        else:
-            buy_signal = (market_uptrend and
-                          fast_val > slow_val and
-                          (rsi_val < rsi_buy or price <= lower) and
-                          (macd_bullish or (pd.isna(cur_vwap) or price < cur_vwap)))
+        # Buy signal (weighted scoring)
+        buy_score, _ = sig.calculate_buy_score(
+            fast_val, slow_val, rsi_val, rsi_buy,
+            price, lower,
+            macd_line.iloc[i], signal_line.iloc[i],
+            cur_vwap, market_uptrend, 0
+        )
 
-        if (buy_signal and
+        if (buy_score >= sig.BUY_THRESHOLD_T1 and
             position == 0 and
             cash >= price * QUANTITY and
             not pd.isna(atr.iloc[i])):
@@ -292,17 +305,16 @@ def run_backtest(stock, bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sel
             last_trade_bar = i
             trades.append({"action": "BUY", "price": price})
 
-        # Sell signal
+        # Sell signal (weighted scoring)
         elif position > 0:
-            if SIMPLE_SIGNAL_MODE:
-                sell_signal = (fast_val < slow_val and
-                               rsi_val > rsi_sell)
-            else:
-                sell_signal = (fast_val < slow_val and
-                               (rsi_val > rsi_sell or price >= upper) and
-                               (macd_bearish or (pd.isna(cur_vwap) or price > cur_vwap)))
+            sell_score, _ = sig.calculate_sell_score(
+                fast_val, slow_val, rsi_val, rsi_sell,
+                price, upper,
+                macd_line.iloc[i], signal_line.iloc[i],
+                cur_vwap
+            )
 
-            if not sell_signal:
+            if sell_score < sig.SELL_THRESHOLD_T1:
                 continue
             sell_cost = calculate_trade_cost(stock, price, position, "sell")
             pnl = (price - buy_price) * position - buy_cost_stored - sell_cost
@@ -344,7 +356,7 @@ def run_backtest(stock, bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sel
         if dd > max_drawdown:
             max_drawdown = dd
 
-    edge_survives = total_return > 0 and sharpe > 0
+    edge_survives = bool(total_return > 0 and sharpe > 0)
 
     return {
         "total_return": total_return,
@@ -433,7 +445,7 @@ def run_phase1(spy_bars):
             }
 
             with open(result_path, "w") as f:
-                json.dump(out, f, indent=2)
+                json.dump(out, f, indent=2, cls=NumpyEncoder)
 
             results[stock] = out
             pf_emoji = "+" if best_result["profit_factor"] > 1.0 else "-"
@@ -503,7 +515,7 @@ def run_phase2():
                     "timestamp": datetime.now().isoformat()
                 }
                 with open(result_path, "w") as f:
-                    json.dump(json_out, f, indent=2)
+                    json.dump(json_out, f, indent=2, cls=NumpyEncoder)
                 results[stock] = json_out
                 print(f"    {stock}: {result['status']} | "
                       f"Return: {result['return']:+.2f}% | "
@@ -682,23 +694,22 @@ def run_phase4(backtest_results, wf_results, perm_results):
         all_data[stock] = data
 
     # Tier classification
-    tier1 = []  # p < 0.05 AND profit_factor > 2.0
-    tier2 = []  # p < 0.15 AND profit_factor > 1.5
+    tier1 = []  # p < 0.05 AND profit_factor > 1.0
+    tier2 = []  # p < 0.15 AND (PF > 1.0 OR walk-forward PASS)
     tier3 = []  # p < 0.30
     dropped = []
 
     for stock, d in all_data.items():
         p = d.get("perm_p", 1.0)
         pf = d.get("bt_profit_factor", 0)
+        wf_pass = d.get("wf_status") in ("PASS", "WEAK")
 
-        if p < 0.05 and pf > 2.0:
+        if p < 0.05 and pf > 1.0:
             tier1.append(stock)
-        elif p < 0.05 and pf > 1.0:
-            tier1.append(stock)  # Strong p-value even if PF not > 2
-        elif p < 0.15 and pf > 1.5:
+        elif p < 0.05 and wf_pass:
+            tier1.append(stock)  # Strong p-value with WF pass
+        elif p < 0.15 and (pf > 1.0 or wf_pass):
             tier2.append(stock)
-        elif p < 0.15 and pf > 1.0:
-            tier2.append(stock)  # Promising p with positive PF
         elif p < 0.30:
             tier3.append(stock)
         else:
@@ -820,7 +831,7 @@ def run_phase4(backtest_results, wf_results, perm_results):
     }
     json_path = f"{SUMMARY_DIR}/overnight_summary.json"
     with open(json_path, "w") as f:
-        json.dump(json_summary, f, indent=2)
+        json.dump(json_summary, f, indent=2, cls=NumpyEncoder)
     print(f"  JSON saved to {json_path}")
 
     return tier1, tier2, tier3, dropped

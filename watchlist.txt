@@ -1,7 +1,5 @@
-AAPL
-SPY
-AMZN
-META
 AMD
 NFLX
-Last updated: Mar 13 2026, 03:59 PM
+WMT
+COST
+Last updated: Mar 16 2026, 01:08 PM

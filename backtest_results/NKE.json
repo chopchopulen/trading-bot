@@ -1,0 +1,18 @@
+{
+  "stock": "NKE",
+  "total_return": 0.0043523735100170595,
+  "profit_factor": 1.0887725616645452,
+  "sharpe": 0.520218144567568,
+  "win_rate": 35.0,
+  "max_drawdown": 0.6754537970909575,
+  "trades": 20,
+  "edge_survives_costs": true,
+  "best_params": {
+    "fast": 2,
+    "slow": 13,
+    "rsi_period": 7,
+    "rsi_buy": 35,
+    "rsi_sell": 55
+  },
+  "timestamp": "2026-03-16T02:12:09.181650"
+}

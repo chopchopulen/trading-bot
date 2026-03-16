@@ -1,0 +1,15 @@
+{
+  "stock": "PYPL",
+  "actual_sharpe": -8.323827827640756,
+  "wf_status": "WEAK",
+  "wf_trades": 3,
+  "day_shuffle_p": 0.42714570858283435,
+  "day_shuffle_mean": -24.63813241697599,
+  "day_shuffle_std": 87.81758370487584,
+  "signal_shift_p": 0.49500998003992014,
+  "signal_shift_mean": -27.52465813970857,
+  "signal_shift_std": 64.06028906702436,
+  "combined_p": 0.42714570858283435,
+  "timestamp": "2026-03-16T02:40:59.399010",
+  "signal_mode": "full"
+}

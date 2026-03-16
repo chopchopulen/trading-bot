@@ -1,0 +1,18 @@
+{
+  "stock": "TSLA",
+  "total_return": -0.39949366106012896,
+  "profit_factor": 0.8847370107240173,
+  "sharpe": -0.6935174404940301,
+  "win_rate": 40.3125,
+  "max_drawdown": 4.949202016566792,
+  "trades": 320,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 2,
+    "slow": 13,
+    "rsi_period": 7,
+    "rsi_buy": 35,
+    "rsi_sell": 55
+  },
+  "timestamp": "2026-03-16T14:43:30.806396"
+}

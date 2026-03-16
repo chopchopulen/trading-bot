@@ -1,0 +1,18 @@
+{
+  "stock": "AMZN",
+  "total_return": -0.283667685989989,
+  "profit_factor": 0.7892517931737226,
+  "sharpe": -1.464556227810221,
+  "win_rate": 40.44943820224719,
+  "max_drawdown": 2.5525143824906182,
+  "trades": 267,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 8,
+    "slow": 22,
+    "rsi_period": 7,
+    "rsi_buy": 25,
+    "rsi_sell": 70
+  },
+  "timestamp": "2026-03-16T14:43:35.142990"
+}

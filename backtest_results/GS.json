@@ -1,0 +1,18 @@
+{
+  "stock": "GS",
+  "total_return": -0.029508439799959887,
+  "profit_factor": 0.9939631362387801,
+  "sharpe": -0.031577694677925205,
+  "win_rate": 39.50617283950617,
+  "max_drawdown": 10.01517224522404,
+  "trades": 243,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 2,
+    "slow": 13,
+    "rsi_period": 7,
+    "rsi_buy": 35,
+    "rsi_sell": 55
+  },
+  "timestamp": "2026-03-16T14:43:06.782514"
+}

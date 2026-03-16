@@ -1,0 +1,15 @@
+{
+  "stock": "COIN",
+  "actual_sharpe": 5.001494214734549,
+  "wf_status": "PASS",
+  "wf_trades": 7,
+  "day_shuffle_p": 0.1217564870259481,
+  "day_shuffle_mean": -4.6808677645129855,
+  "day_shuffle_std": 10.508878854300423,
+  "signal_shift_p": 0.313373253493014,
+  "signal_shift_mean": 1.1959298219335053,
+  "signal_shift_std": 7.159679850283702,
+  "combined_p": 0.1217564870259481,
+  "timestamp": "2026-03-16T02:39:46.697933",
+  "signal_mode": "full"
+}

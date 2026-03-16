@@ -12,64 +12,65 @@ from dotenv import load_dotenv
 from newsapi import NewsApiClient
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 
+import signals
+
 load_dotenv()
 
-API_KEY = os.environ["ALPACA_API_KEY"]
-SECRET_KEY = os.environ["ALPACA_SECRET_KEY"]
-BASE_URL = os.environ["ALPACA_BASE_URL"]
-NEWS_API_KEY = os.environ["NEWS_API_KEY"]
+API_KEY = "PK22XEELBFYNU7QMJHJOGRJ6V6"
+SECRET_KEY = "3arXWSeJW69nWfZHKW9nABMWwMkK1Ct964VakJdT7PXV"
+BASE_URL = "https://paper-api.alpaca.markets"
+NEWS_API_KEY = "801fe14f0cdc4eac8344f9b7ae242e66"
 
 api = tradeapi.REST(API_KEY, SECRET_KEY, BASE_URL)
 newsapi = NewsApiClient(api_key=NEWS_API_KEY)
 analyzer = SentimentIntensityAnalyzer()
 
-# ── Tiered stock universe (validated by permutation test + backtest) ──
-# Tier 1 — Full size (proven edge)
-TIER1_STOCKS = ["META", "SPY", "AMD", "GS"]
+# ── Tiered Stock Universe ───────────────────────────────────────────
+# Tier 1 — Full size (proven edge, p < 0.05)
+TIER1_STOCKS = ["MSFT", "META", "AMD", "SPY"]
+# Tier 2 — Half size (promising, p < 0.15 or strong walk-forward)
+TIER2_STOCKS = ["AAPL", "TSLA", "NFLX", "WMT", "COST",
+                "GS", "HOOD", "UBER", "COIN"]
+# Tier 3 — Quarter size (monitoring, accumulating data)
+TIER3_STOCKS = ["SPOT", "CRM", "QCOM", "AMZN", "NVDA"]
 
-# Tier 2 — Reduced size (promising)
-TIER2_STOCKS = ["WMT", "COST", "MSFT", "NFLX", "QCOM",
-                "AAPL", "CRM", "TSLA"]
-
-STOCKS = TIER1_STOCKS + TIER2_STOCKS
+STOCKS = TIER1_STOCKS + TIER2_STOCKS + TIER3_STOCKS
 WATCHLIST = []
 
-TIER2_SIZE_FACTOR = 0.5  # Tier 2 stocks get 50% of ATR sizing
+TIER1_SIZE_FACTOR = 1.0
+TIER2_SIZE_FACTOR = 0.5
+TIER3_SIZE_FACTOR = 0.25
+
+# ── Short selling configuration ─────────────────────────────────────
+SHORT_ELIGIBLE = ["AAPL", "MSFT", "META", "AMD", "TSLA", "NFLX",
+                  "NVDA", "AMZN", "GS"]
+MAX_SHORT_POSITIONS = 3
+SHORT_DAILY_LOSS_LIMIT = -300
+SHORT_MAX_LOSS_PCT = 0.05  # Force close if stock rises 5% above short entry
+
+# ── Sector diversification ──────────────────────────────────────────
+SECTOR_MAP = {
+    "tech":     ["MSFT", "META", "AAPL", "AMZN", "NFLX", "CRM"],
+    "semi":     ["AMD", "NVDA", "QCOM"],
+    "finance":  ["GS", "COIN", "HOOD"],
+    "consumer": ["WMT", "COST", "TSLA", "UBER"],
+    "etf":      ["SPY"],
+    "other":    ["SPOT"],
+}
+MAX_POSITIONS_PER_SECTOR = 2
 
 STOCK_NAMES = {
-    # Tech
-    "AAPL": "Apple",
-    "MSFT": "Microsoft",
-    "NVDA": "Nvidia",
-    "GOOGL": "Google",
-    "AMZN": "Amazon",
-    "TSLA": "Tesla",
-    "META": "Meta",
-    "AMD": "AMD",
-    "NFLX": "Netflix",
-    "CRM": "Salesforce",
-    # Finance
-    "JPM": "JPMorgan",
-    "BAC": "Bank of America",
-    "GS": "Goldman Sachs",
-    "V": "Visa",
-    # ETFs
-    "SPY": "S&P 500",
-    "QQQ": "Nasdaq",
-    # Energy
-    "XOM": "Exxon",
-    "CVX": "Chevron",
-    # Healthcare
-    "JNJ": "Johnson and Johnson",
-    "PFE": "Pfizer",
-    "UNH": "UnitedHealth",
-    # Consumer
-    "WMT": "Walmart",
-    "COST": "Costco",
-    "NKE": "Nike",
-    # Semiconductor
-    "INTC": "Intel",
-    "QCOM": "Qualcomm"
+    "AAPL": "Apple", "MSFT": "Microsoft", "NVDA": "Nvidia",
+    "GOOGL": "Google", "AMZN": "Amazon", "TSLA": "Tesla",
+    "META": "Meta", "AMD": "AMD", "NFLX": "Netflix",
+    "CRM": "Salesforce", "JPM": "JPMorgan", "BAC": "Bank of America",
+    "GS": "Goldman Sachs", "V": "Visa", "SPY": "S&P 500",
+    "QQQ": "Nasdaq", "XOM": "Exxon", "CVX": "Chevron",
+    "JNJ": "Johnson and Johnson", "PFE": "Pfizer",
+    "UNH": "UnitedHealth", "WMT": "Walmart", "COST": "Costco",
+    "NKE": "Nike", "INTC": "Intel", "QCOM": "Qualcomm",
+    "UBER": "Uber", "COIN": "Coinbase", "HOOD": "Robinhood",
+    "SPOT": "Spotify",
 }
 
 # ── Strategy parameters (defaults, overridden by walk-forward results) ──
@@ -124,36 +125,14 @@ ATR_STOP_MULT = 1.5           # Stop loss = entry - 1.5 * ATR
 ATR_PROFIT_MULT = 3.0         # Take profit = entry + 3.0 * ATR
 REGIME_EMA = 50
 DAILY_LOSS_LIMIT = -500       # Stop buying if daily P&L drops below this
-MAX_POSITIONS = 5             # Maximum simultaneous open positions
+MAX_POSITIONS = 5             # Maximum simultaneous open positions (longs)
 
 # ── Transaction cost model ───────────────────────────────────────
 COST_MODEL_ENABLED = True
 
-# Estimated half-spread per stock (dollars) — typical IEX minute bar fills
-SPREAD_ESTIMATES = {
-    "AAPL": 0.02, "MSFT": 0.02, "NVDA": 0.03, "GOOGL": 0.05,
-    "AMZN": 0.04, "TSLA": 0.05, "META": 0.03, "AMD": 0.03,
-    "NFLX": 0.05, "CRM": 0.04, "JPM": 0.02, "BAC": 0.01,
-    "GS": 0.05, "V": 0.03, "SPY": 0.01, "QQQ": 0.01,
-    "XOM": 0.02, "CVX": 0.02, "JNJ": 0.02, "PFE": 0.01,
-    "UNH": 0.05, "WMT": 0.02, "COST": 0.05, "NKE": 0.03,
-    "INTC": 0.02, "QCOM": 0.03
-}
-DEFAULT_SPREAD = 0.03
-SLIPPAGE_MULT = 0.5     # 50% additional slippage on top of spread
-SEC_FEE_RATE = 0.0000278 # SEC fee on sells: $0.00278 per $100
-
 def calculate_trade_cost(stock, price, quantity, side):
     """Calculate total transaction cost for a single trade."""
-    if not COST_MODEL_ENABLED:
-        return 0.0
-    half_spread = SPREAD_ESTIMATES.get(stock, DEFAULT_SPREAD)
-    spread_cost = half_spread * quantity
-    slippage_cost = spread_cost * SLIPPAGE_MULT
-    sec_fee = 0.0
-    if side == "sell":
-        sec_fee = price * quantity * SEC_FEE_RATE
-    return spread_cost + slippage_cost + sec_fee
+    return signals.calculate_trade_cost(stock, price, quantity, side, COST_MODEL_ENABLED)
 
 # ── Account settings ──────────────────────────────────────────────
 STARTING_CASH = 100000
@@ -247,105 +226,6 @@ def market_is_uptrend():
         print(f"  Regime check error: {e}")
         return True
 
-# ── EMA Crossover ─────────────────────────────────────────────────
-def get_moving_averages(bars, fast_span=None, slow_span=None):
-    fast_span = fast_span or FAST_MA
-    slow_span = slow_span or SLOW_MA
-    if len(bars) < slow_span:
-        return None, None
-    close = bars["close"]
-    fast = close.ewm(span=fast_span, adjust=False).mean().iloc[-1]
-    slow = close.ewm(span=slow_span, adjust=False).mean().iloc[-1]
-    return fast, slow
-
-# ── RSI ───────────────────────────────────────────────────────────
-def get_rsi(bars):
-    if len(bars) < RSI_PERIOD + 1:
-        return None
-    close = bars["close"]
-    delta = close.diff()
-    gain = delta.where(delta > 0, 0)
-    loss = -delta.where(delta < 0, 0)
-    avg_gain = gain.rolling(window=RSI_PERIOD).mean().iloc[-1]
-    avg_loss = loss.rolling(window=RSI_PERIOD).mean().iloc[-1]
-    if avg_loss == 0:
-        return 100
-    rs = avg_gain / avg_loss
-    return 100 - (100 / (1 + rs))
-
-# ── Bollinger Bands ───────────────────────────────────────────────
-def get_bollinger_bands(bars, bb_period=None, bb_std=None):
-    bb_period = bb_period or BB_PERIOD
-    bb_std = bb_std or BB_STD
-    if len(bars) < bb_period:
-        return None, None, None
-    close = bars["close"]
-    middle = close.rolling(window=bb_period).mean().iloc[-1]
-    std = close.rolling(window=bb_period).std().iloc[-1]
-    upper = middle + (bb_std * std)
-    lower = middle - (bb_std * std)
-    return upper, middle, lower
-
-# ── MACD ──────────────────────────────────────────────────────────
-def get_macd(bars):
-    if len(bars) < MACD_SLOW + MACD_SIGNAL:
-        return None, None, None
-    close = bars["close"]
-
-    ema_fast = close.ewm(span=MACD_FAST, adjust=False).mean()
-    ema_slow = close.ewm(span=MACD_SLOW, adjust=False).mean()
-    macd_line = ema_fast - ema_slow
-    signal_line = macd_line.ewm(span=MACD_SIGNAL, adjust=False).mean()
-    histogram = macd_line - signal_line
-
-    return (macd_line.iloc[-1],
-            signal_line.iloc[-1],
-            histogram.iloc[-1])
-
-# ── ATR (Average True Range) ──────────────────────────────────────
-def get_atr(bars):
-    if len(bars) < ATR_PERIOD + 1:
-        return None
-    high = bars["high"]
-    low = bars["low"]
-    close = bars["close"]
-
-    # True Range = max of:
-    # High - Low
-    # |High - Previous Close|
-    # |Low - Previous Close|
-    tr1 = high - low
-    tr2 = abs(high - close.shift(1))
-    tr3 = abs(low - close.shift(1))
-    true_range = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
-    atr = true_range.rolling(window=ATR_PERIOD).mean().iloc[-1]
-    return atr
-
-# ── VWAP (Volume Weighted Average Price) ─────────────────────────
-def get_vwap(stock):
-    try:
-        now = datetime.now()
-        today_open = now.replace(hour=9, minute=30, second=0, microsecond=0)
-        bars = api.get_bars(
-            stock,
-            tradeapi.rest.TimeFrame.Minute,
-            start=today_open.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            end=now.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            feed="iex"
-        ).df
-        if isinstance(bars.index, pd.MultiIndex):
-            bars = bars.xs(stock, level="symbol")
-        if len(bars) < 1:
-            return None
-        typical_price = (bars["high"] + bars["low"] + bars["close"]) / 3
-        cum_tp_vol = (typical_price * bars["volume"]).cumsum()
-        cum_vol = bars["volume"].cumsum()
-        vwap = cum_tp_vol / cum_vol
-        return vwap.iloc[-1]
-    except Exception as e:
-        print(f"  VWAP error for {stock}: {e}")
-        return None
-
 # ── ATR-based position sizing ─────────────────────────────────────
 def get_atr_qty(stock, price, atr):
     try:
@@ -355,17 +235,18 @@ def get_atr_qty(stock, price, atr):
         # Dollar risk per trade = 1% of portfolio
         dollar_risk = portfolio_value * ATR_RISK_PER_TRADE
 
-        # Stop distance = 1x ATR (how much the stock typically moves)
+        # Stop distance = 1x ATR
         stop_distance = atr
 
         if stop_distance <= 0:
             return MIN_QTY
 
-        # Qty = Dollar Risk / Stop Distance
         qty = int(dollar_risk / stop_distance)
 
-        # Tier 2 stocks get reduced size
-        if stock in TIER2_STOCKS:
+        # Tier-based sizing
+        if stock in TIER3_STOCKS:
+            qty = int(qty * TIER3_SIZE_FACTOR)
+        elif stock in TIER2_STOCKS:
             qty = int(qty * TIER2_SIZE_FACTOR)
 
         qty = max(MIN_QTY, min(qty, MAX_QTY))
@@ -417,6 +298,31 @@ def get_sentiment(stock):
         print(f"  Sentiment error for {stock}: {e}")
         return 0
 
+# ── VWAP (live — fetches today's bars) ────────────────────────────
+def get_vwap(stock):
+    try:
+        now = datetime.now()
+        today_open = now.replace(hour=9, minute=30, second=0, microsecond=0)
+        bars = api.get_bars(
+            stock,
+            tradeapi.rest.TimeFrame.Minute,
+            start=today_open.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            end=now.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            feed="iex"
+        ).df
+        if isinstance(bars.index, pd.MultiIndex):
+            bars = bars.xs(stock, level="symbol")
+        if len(bars) < 1:
+            return None
+        typical_price = (bars["high"] + bars["low"] + bars["close"]) / 3
+        cum_tp_vol = (typical_price * bars["volume"]).cumsum()
+        cum_vol = bars["volume"].cumsum()
+        vwap = cum_tp_vol / cum_vol
+        return vwap.iloc[-1]
+    except Exception as e:
+        print(f"  VWAP error for {stock}: {e}")
+        return None
+
 # ── Pre-market scan ───────────────────────────────────────────────
 def run_premarket_scan():
     global WATCHLIST
@@ -442,6 +348,7 @@ def run_premarket_scan():
 
 # ── Get current position ──────────────────────────────────────────
 def get_position(stock):
+    """Returns positive for long, negative for short, 0 for flat."""
     try:
         position = api.get_position(stock)
         return int(position.qty)
@@ -458,22 +365,34 @@ def get_price(stock):
 
 # ── Stop loss / take profit check ─────────────────────────────────
 def check_exit_conditions(stock, current_price, position):
+    """Check ATR-based stops for both long and short positions."""
     if stock not in ENTRY_PRICES or position == 0:
         return None
     data = ENTRY_PRICES[stock]
-    # Support both old format (float) and new format (dict)
     if isinstance(data, dict):
         entry = data["price"]
         entry_atr = data["atr"]
+        direction = data.get("direction", "long")
     else:
         entry = data
-        entry_atr = abs(entry * 0.005)  # Fallback: ~0.5% if no ATR saved
-    stop_price = entry - (ATR_STOP_MULT * entry_atr)
-    target_price = entry + (ATR_PROFIT_MULT * entry_atr)
-    if current_price <= stop_price:
-        return "STOP LOSS"
-    elif current_price >= target_price:
-        return "TAKE PROFIT"
+        entry_atr = abs(entry * 0.005)
+        direction = "long"
+
+    if direction == "long":
+        stop_price = entry - (ATR_STOP_MULT * entry_atr)
+        target_price = entry + (ATR_PROFIT_MULT * entry_atr)
+        if current_price <= stop_price:
+            return "STOP LOSS"
+        elif current_price >= target_price:
+            return "TAKE PROFIT"
+    else:  # short
+        stop_price = entry + (ATR_STOP_MULT * entry_atr)
+        target_price = entry - (ATR_PROFIT_MULT * entry_atr)
+        max_loss_price = entry * (1 + SHORT_MAX_LOSS_PCT)
+        if current_price >= stop_price or current_price >= max_loss_price:
+            return "SHORT STOP LOSS"
+        elif current_price <= target_price:
+            return "SHORT TAKE PROFIT"
     return None
 
 # ── Daily loss check ──────────────────────────────────────────────
@@ -481,11 +400,26 @@ def get_daily_pnl():
     try:
         account = api.get_account()
         equity = float(account.equity)
-        last_equity = float(account.last_equity)  # Previous day's close
+        last_equity = float(account.last_equity)
         return equity - last_equity
     except Exception as e:
         print(f"  Daily P&L check error: {e}")
         return 0
+
+# ── Sector check ──────────────────────────────────────────────────
+def get_stock_sector(stock):
+    for sector, stocks in SECTOR_MAP.items():
+        if stock in stocks:
+            return sector
+    return "other"
+
+def count_sector_positions(sector, open_positions):
+    """Count how many open positions are in the given sector."""
+    count = 0
+    for p in open_positions:
+        if get_stock_sector(p.symbol) == sector:
+            count += 1
+    return count
 
 # ── Positions summary ─────────────────────────────────────────────
 def show_positions():
@@ -498,28 +432,44 @@ def show_positions():
             print("  No open positions.")
         else:
             total_pnl = 0
+            long_count = 0
+            short_count = 0
             for p in positions:
+                qty = int(p.qty)
                 pnl = float(p.unrealized_pl)
                 pnl_pct = float(p.unrealized_plpc) * 100
                 total_pnl += pnl
+                is_short = qty < 0
+                if is_short:
+                    short_count += 1
+                else:
+                    long_count += 1
                 emoji = "🟢" if pnl >= 0 else "🔴"
+                direction_label = "SHORT" if is_short else "LONG"
                 data = ENTRY_PRICES.get(p.symbol)
                 if isinstance(data, dict):
                     entry = data["price"]
                     entry_atr = data["atr"]
+                    direction = data.get("direction", "long")
                 else:
                     entry = data if data else float(p.avg_entry_price)
                     entry_atr = abs(entry * 0.005)
-                stop = entry - (ATR_STOP_MULT * entry_atr)
-                target = entry + (ATR_PROFIT_MULT * entry_atr)
-                print(f"  {emoji} {p.symbol:6} | "
+                    direction = "long"
+                if direction == "long":
+                    stop = entry - (ATR_STOP_MULT * entry_atr)
+                    target = entry + (ATR_PROFIT_MULT * entry_atr)
+                else:
+                    stop = entry + (ATR_STOP_MULT * entry_atr)
+                    target = entry - (ATR_PROFIT_MULT * entry_atr)
+                print(f"  {emoji} {p.symbol:6} {direction_label:5} | "
                       f"Qty: {p.qty:>4} | "
                       f"Avg: ${float(p.avg_entry_price):>8.2f} | "
                       f"Current: ${float(p.current_price):>8.2f} | "
                       f"PnL: ${pnl:>+8.2f} ({pnl_pct:+.2f}%) | "
                       f"Stop: ${stop:.2f} | "
                       f"Target: ${target:.2f}")
-            print(f"\n  Total Unrealized PnL: ${total_pnl:+,.2f}")
+            print(f"\n  Longs: {long_count} | Shorts: {short_count} | "
+                  f"Total Unrealized PnL: ${total_pnl:+,.2f}")
     except Exception as e:
         print(f"  Error fetching positions: {e}")
 
@@ -544,7 +494,9 @@ def show_performance():
                 print(f"  Est. Costs:       ${total_est_costs:,.2f}")
             buys = trades[trades["action"] == "BUY"]
             sells = trades[trades["action"].isin(
-                ["SELL", "STOP LOSS", "TAKE PROFIT"])]
+                ["SELL", "STOP LOSS", "TAKE PROFIT",
+                 "SHORT STOP LOSS", "SHORT TAKE PROFIT", "SHORT COVER",
+                 "REGIME COVER"])]
             pairs = min(len(buys), len(sells))
             if pairs >= 3:
                 returns = []
@@ -580,17 +532,48 @@ def run_bot():
     if not is_safe_trading_window():
         return
 
-    # ── Risk guardrails ──────────────────────────────────────
+    # ── Regime switch: force-close all shorts if uptrend ──────
+    if uptrend:
+        try:
+            for pos in api.list_positions():
+                if int(pos.qty) < 0:
+                    cover_qty = abs(int(pos.qty))
+                    api.submit_order(
+                        symbol=pos.symbol,
+                        qty=cover_qty,
+                        side="buy",
+                        type="market",
+                        time_in_force="day"
+                    )
+                    print(f"  📈 REGIME SWITCH: Covering short {pos.symbol} ({cover_qty} shares)")
+                    est_cost = calculate_trade_cost(pos.symbol, float(pos.current_price), cover_qty, "buy")
+                    rsi_val = 50  # Approximate for logging
+                    log_trade(pos.symbol, "REGIME COVER", float(pos.current_price),
+                             rsi_val, 0, 0, 0, 0, 0, 0, cover_qty, 0, est_cost)
+                    ENTRY_PRICES.pop(pos.symbol, None)
+                    save_entry_prices()
+                    PENDING_ORDERS.discard(pos.symbol)
+        except Exception as e:
+            print(f"  Regime switch cover error: {e}")
+
+    # ── Risk guardrails ──────────────────────────────────
     daily_pnl = get_daily_pnl()
     buys_blocked = daily_pnl <= DAILY_LOSS_LIMIT
+    shorts_blocked = daily_pnl <= SHORT_DAILY_LOSS_LIMIT
     if buys_blocked:
         print(f"  🚫 Daily loss limit hit (${daily_pnl:+,.2f}) — no new buys today")
+    if shorts_blocked:
+        print(f"  🚫 Short loss limit hit (${daily_pnl:+,.2f}) — no new shorts today")
 
     open_positions = api.list_positions()
-    position_count = len(open_positions)
-    at_max_positions = position_count >= MAX_POSITIONS
-    if at_max_positions:
-        print(f"  🚫 Max positions reached ({position_count}/{MAX_POSITIONS}) — no new buys")
+    long_count = sum(1 for p in open_positions if int(p.qty) > 0)
+    short_count = sum(1 for p in open_positions if int(p.qty) < 0)
+    at_max_longs = long_count >= MAX_POSITIONS
+    at_max_shorts = short_count >= MAX_SHORT_POSITIONS
+    if at_max_longs:
+        print(f"  🚫 Max long positions ({long_count}/{MAX_POSITIONS})")
+    if at_max_shorts:
+        print(f"  🚫 Max short positions ({short_count}/{MAX_SHORT_POSITIONS})")
 
     active_stocks = WATCHLIST if WATCHLIST else STOCKS
 
@@ -601,12 +584,12 @@ def run_bot():
             # Get per-stock optimized parameters (or defaults)
             s_fast, s_slow, s_rsi_buy, s_rsi_sell, s_bb_period, s_bb_std = get_params(stock)
 
-            # Calculate all indicators
-            fast, slow = get_moving_averages(bars, s_fast, s_slow)
-            rsi = get_rsi(bars)
-            bb_upper, bb_middle, bb_lower = get_bollinger_bands(bars, s_bb_period, s_bb_std)
-            macd_line, signal_line, histogram = get_macd(bars)
-            atr = get_atr(bars)
+            # Calculate all indicators using signals module
+            fast, slow = signals.get_moving_averages(bars, s_fast, s_slow)
+            rsi = signals.get_rsi(bars)
+            bb_upper, bb_middle, bb_lower = signals.get_bollinger_bands(bars, s_bb_period, s_bb_std)
+            macd_line, signal_line, histogram = signals.get_macd(bars)
+            atr = signals.get_atr(bars)
 
             if any(v is None for v in [fast, slow, rsi, bb_upper,
                                         macd_line, atr]):
@@ -614,21 +597,25 @@ def run_bot():
                 continue
 
             position = get_position(stock)
-            if position > 0:
-                PENDING_ORDERS.discard(stock)  # Order filled, clear pending
+            if position != 0:
+                PENDING_ORDERS.discard(stock)
             price = get_price(stock)
             qty = get_atr_qty(stock, price, atr)
             sentiment = get_sentiment(stock)
             vwap = get_vwap(stock)
 
-            # MACD signal direction
-            macd_bullish = macd_line > signal_line
-            macd_bearish = macd_line < signal_line
+            # Determine tier label
+            if stock in TIER1_STOCKS:
+                tier_label = "T1"
+            elif stock in TIER2_STOCKS:
+                tier_label = "T2"
+            else:
+                tier_label = "T3"
 
+            macd_bullish = macd_line > signal_line
             sentiment_emoji = "😊" if sentiment > 0.15 else "😐" if sentiment > -0.15 else "😟"
             macd_emoji = "📈" if macd_bullish else "📉"
             vwap_str = f"${vwap:.2f}" if vwap else "N/A"
-            tier_label = "T1" if stock in TIER1_STOCKS else "T2"
 
             print(f"  {stock} [{tier_label}] | RSI: {rsi:.1f} | "
                   f"MACD: {macd_emoji} {macd_line:.3f}/{signal_line:.3f} | "
@@ -636,10 +623,52 @@ def run_bot():
                   f"Sentiment: {sentiment:.3f} {sentiment_emoji} | "
                   f"Qty: {qty}")
 
-            # ── Stop loss / take profit check ─────────────────
-            if position > 0:
+            # ═══════════════════════════════════════════════════
+            # 1. EXIT CHECKS (stop loss / take profit) — always first
+            # ═══════════════════════════════════════════════════
+            if position != 0:
                 exit_signal = check_exit_conditions(stock, price, position)
                 if exit_signal:
+                    exit_side = "sell" if position > 0 else "buy"
+                    exit_qty = abs(position)
+                    api.submit_order(
+                        symbol=stock,
+                        qty=exit_qty,
+                        side=exit_side,
+                        type="market",
+                        time_in_force="day"
+                    )
+                    est_cost = calculate_trade_cost(stock, price, exit_qty, exit_side)
+                    log_trade(stock, exit_signal, price, rsi,
+                             macd_line, fast, slow, bb_upper,
+                             bb_lower, atr, exit_qty, sentiment, est_cost)
+                    entry_data = ENTRY_PRICES.get(stock, {})
+                    entry_price = entry_data.get("price", price) if isinstance(entry_data, dict) else entry_data
+                    direction = entry_data.get("direction", "long") if isinstance(entry_data, dict) else "long"
+                    if "STOP LOSS" in exit_signal:
+                        print(f"  🛑 {stock} {exit_signal} | "
+                              f"${price:.2f} | Entry: ${entry_price:.2f} | "
+                              f"Dir: {direction}")
+                    else:
+                        print(f"  🎯 {stock} {exit_signal} | "
+                              f"${price:.2f} | Entry: ${entry_price:.2f} | "
+                              f"Dir: {direction}")
+                    ENTRY_PRICES.pop(stock, None)
+                    save_entry_prices()
+                    PENDING_ORDERS.discard(stock)
+                    continue
+
+            # ═══════════════════════════════════════════════════
+            # 2. SELL SIGNAL (close long via scoring)
+            # ═══════════════════════════════════════════════════
+            if position > 0:
+                sell_score, sell_bd = signals.calculate_sell_score(
+                    fast, slow, rsi, s_rsi_sell, price, bb_upper,
+                    macd_line, signal_line, vwap
+                )
+                sell_threshold = signals.get_sell_threshold(stock, TIER1_STOCKS, TIER2_STOCKS)
+
+                if sell_score >= sell_threshold:
                     api.submit_order(
                         symbol=stock,
                         qty=position,
@@ -648,106 +677,167 @@ def run_bot():
                         time_in_force="day"
                     )
                     est_cost = calculate_trade_cost(stock, price, position, "sell")
-                    log_trade(stock, exit_signal, price, rsi,
-                             macd_line, fast, slow, bb_upper,
-                             bb_lower, atr, position, sentiment, est_cost)
-                    entry_data = ENTRY_PRICES[stock]
-                    entry_price = entry_data["price"] if isinstance(entry_data, dict) else entry_data
-                    if exit_signal == "STOP LOSS":
-                        print(f"  🛑 {stock} STOP LOSS | "
-                              f"${price:.2f} | "
-                              f"Entry: ${entry_price:.2f}")
-                    else:
-                        print(f"  🎯 {stock} TAKE PROFIT | "
-                              f"${price:.2f} | "
-                              f"Entry: ${entry_price:.2f}")
+                    log_trade(stock, "SELL", price, rsi, macd_line,
+                             fast, slow, bb_upper, bb_lower,
+                             atr, position, sentiment, est_cost)
+                    print(f"  🔴 {stock} SELL score: {sell_score:.1f}/{sell_threshold} | "
+                          f"${price:.2f} | {sell_bd}")
                     ENTRY_PRICES.pop(stock, None)
                     save_entry_prices()
                     PENDING_ORDERS.discard(stock)
                     continue
 
-            # ── Backtest quality check ──────────────────────────
-            # Only buy if backtest shows profit_factor > 1.0
-            # OR no backtest result exists yet (don't block untested stocks)
-            bt = BACKTEST_RESULTS.get(stock, {})
-            bt_ok = bt.get("profit_factor", 999) > 1.0
-            if not bt_ok:
-                if position == 0:
+            # ═══════════════════════════════════════════════════
+            # 3. COVER SIGNAL (close short via scoring)
+            # ═══════════════════════════════════════════════════
+            if position < 0:
+                cover_score, cover_bd = signals.calculate_cover_score(
+                    fast, slow, rsi, s_rsi_buy, price, bb_lower,
+                    macd_line, signal_line, vwap
+                )
+                cover_threshold = signals.get_cover_threshold(stock, TIER1_STOCKS, TIER2_STOCKS)
+
+                if cover_score >= cover_threshold:
+                    cover_qty = abs(position)
+                    api.submit_order(
+                        symbol=stock,
+                        qty=cover_qty,
+                        side="buy",
+                        type="market",
+                        time_in_force="day"
+                    )
+                    est_cost = calculate_trade_cost(stock, price, cover_qty, "buy")
+                    log_trade(stock, "SHORT COVER", price, rsi, macd_line,
+                             fast, slow, bb_upper, bb_lower,
+                             atr, cover_qty, sentiment, est_cost)
+                    print(f"  📗 {stock} COVER score: {cover_score:.1f}/{cover_threshold} | "
+                          f"${price:.2f} | {cover_bd}")
+                    ENTRY_PRICES.pop(stock, None)
+                    save_entry_prices()
+                    PENDING_ORDERS.discard(stock)
+                    continue
+
+            # ═══════════════════════════════════════════════════
+            # 4. NEW ENTRY SIGNALS (only when flat)
+            # ═══════════════════════════════════════════════════
+            if position == 0 and stock not in PENDING_ORDERS:
+                # Backtest quality check
+                bt = BACKTEST_RESULTS.get(stock, {})
+                bt_ok = bt.get("profit_factor", 999) > 1.0
+                if not bt_ok:
                     print(f"  ⚠️ {stock} skipped — backtest profit factor < 1.0")
-                continue
+                    continue
 
-            # ── Buy: regime + EMA + (RSI OR BB) + (MACD OR VWAP) ─
-            if (uptrend and
-                not buys_blocked and
-                not at_max_positions and
-                fast > slow and
-                (rsi < s_rsi_buy or price <= bb_lower) and
-                (macd_bullish or (vwap is None or price < vwap)) and
-                position == 0 and
-                stock not in PENDING_ORDERS):
+                # Sector check
+                stock_sector = get_stock_sector(stock)
+                sector_count = count_sector_positions(stock_sector, open_positions)
 
-                api.submit_order(
-                    symbol=stock,
-                    qty=qty,
-                    side="buy",
-                    type="market",
-                    time_in_force="day"
+                # Calculate buy score
+                buy_score, buy_bd = signals.calculate_buy_score(
+                    fast, slow, rsi, s_rsi_buy, price, bb_lower,
+                    macd_line, signal_line, vwap, uptrend, sentiment
                 )
-                PENDING_ORDERS.add(stock)
-                ENTRY_PRICES[stock] = {"price": price, "atr": atr}
-                save_entry_prices()
-                est_cost = calculate_trade_cost(stock, price, qty, "buy")
-                log_trade(stock, "BUY", price, rsi, macd_line,
-                         fast, slow, bb_upper, bb_lower,
-                         atr, qty, sentiment, est_cost)
-                stop = price - (ATR_STOP_MULT * atr)
-                target = price + (ATR_PROFIT_MULT * atr)
-                print(f"  ✅ {stock} [{tier_label}] BUY | "
-                      f"Qty: {qty} (ATR sized) | "
-                      f"${price:.2f} | "
-                      f"Stop: ${stop:.2f} | "
-                      f"Target: ${target:.2f}")
+                buy_threshold = signals.get_buy_threshold(stock, TIER1_STOCKS, TIER2_STOCKS)
 
-            # ── Sell: EMA + (RSI OR BB) + (MACD OR VWAP) ────
-            elif (fast < slow and
-                  (rsi > s_rsi_sell or price >= bb_upper) and
-                  (macd_bearish or (vwap is None or price > vwap)) and
-                  position > 0):
-
-                api.submit_order(
-                    symbol=stock,
-                    qty=position,
-                    side="sell",
-                    type="market",
-                    time_in_force="day"
+                # Calculate short score
+                short_score, short_bd = signals.calculate_short_score(
+                    fast, slow, rsi, s_rsi_sell, price, bb_upper,
+                    macd_line, signal_line, vwap, not uptrend, sentiment
                 )
-                est_cost = calculate_trade_cost(stock, price, position, "sell")
-                log_trade(stock, "SELL", price, rsi, macd_line,
-                         fast, slow, bb_upper, bb_lower,
-                         atr, position, sentiment, est_cost)
-                print(f"  🔴 {stock} SELL SIGNAL | ${price:.2f}")
-                ENTRY_PRICES.pop(stock, None)
-                save_entry_prices()
-                PENDING_ORDERS.discard(stock)
+                short_threshold = signals.get_short_threshold(stock, TIER1_STOCKS, TIER2_STOCKS)
 
-            else:
-                if position > 0 and stock in ENTRY_PRICES:
-                    data = ENTRY_PRICES[stock]
-                    if isinstance(data, dict):
-                        entry = data["price"]
-                        entry_atr = data["atr"]
+                can_buy = (buy_score >= buy_threshold and
+                          not buys_blocked and
+                          not at_max_longs and
+                          sector_count < MAX_POSITIONS_PER_SECTOR)
+
+                can_short = (short_score >= short_threshold and
+                            not shorts_blocked and
+                            not at_max_shorts and
+                            not uptrend and
+                            stock in SHORT_ELIGIBLE and
+                            sector_count < MAX_POSITIONS_PER_SECTOR)
+
+                # If both qualify, pick the stronger signal
+                if can_buy and can_short:
+                    if buy_score - buy_threshold > short_score - short_threshold:
+                        can_short = False
                     else:
-                        entry = data
-                        entry_atr = abs(entry * 0.005)
+                        can_buy = False
+
+                if can_buy:
+                    api.submit_order(
+                        symbol=stock,
+                        qty=qty,
+                        side="buy",
+                        type="market",
+                        time_in_force="day"
+                    )
+                    PENDING_ORDERS.add(stock)
+                    ENTRY_PRICES[stock] = {"price": price, "atr": atr, "direction": "long"}
+                    save_entry_prices()
+                    est_cost = calculate_trade_cost(stock, price, qty, "buy")
+                    log_trade(stock, "BUY", price, rsi, macd_line,
+                             fast, slow, bb_upper, bb_lower,
+                             atr, qty, sentiment, est_cost)
+                    stop = price - (ATR_STOP_MULT * atr)
+                    target = price + (ATR_PROFIT_MULT * atr)
+                    print(f"  ✅ {stock} [{tier_label}] BUY score: {buy_score:.1f}/{buy_threshold} | "
+                          f"Qty: {qty} | ${price:.2f} | "
+                          f"Stop: ${stop:.2f} | Target: ${target:.2f} | {buy_bd}")
+
+                elif can_short:
+                    api.submit_order(
+                        symbol=stock,
+                        qty=qty,
+                        side="sell",
+                        type="market",
+                        time_in_force="day"
+                    )
+                    PENDING_ORDERS.add(stock)
+                    ENTRY_PRICES[stock] = {"price": price, "atr": atr, "direction": "short"}
+                    save_entry_prices()
+                    est_cost = calculate_trade_cost(stock, price, qty, "sell")
+                    log_trade(stock, "SHORT", price, rsi, macd_line,
+                             fast, slow, bb_upper, bb_lower,
+                             atr, qty, sentiment, est_cost)
+                    stop = price + (ATR_STOP_MULT * atr)
+                    target = price - (ATR_PROFIT_MULT * atr)
+                    print(f"  🔻 {stock} [{tier_label}] SHORT score: {short_score:.1f}/{short_threshold} | "
+                          f"Qty: {qty} | ${price:.2f} | "
+                          f"Stop: ${stop:.2f} | Target: ${target:.2f} | {short_bd}")
+
+                else:
+                    print(f"  ⏸ {stock} HOLD")
+
+            # ═══════════════════════════════════════════════════
+            # 5. HOLD — show position info
+            # ═══════════════════════════════════════════════════
+            elif position != 0 and stock in ENTRY_PRICES:
+                data = ENTRY_PRICES[stock]
+                if isinstance(data, dict):
+                    entry = data["price"]
+                    entry_atr = data["atr"]
+                    direction = data.get("direction", "long")
+                else:
+                    entry = data
+                    entry_atr = abs(entry * 0.005)
+                    direction = "long"
+                if direction == "long":
                     pnl_pct = (price - entry) / entry * 100
                     stop = entry - (ATR_STOP_MULT * entry_atr)
                     target = entry + (ATR_PROFIT_MULT * entry_atr)
-                    print(f"  ⏸ {stock} HOLD | "
-                          f"PnL: {pnl_pct:+.2f}% | "
-                          f"Stop: ${stop:.2f} | "
-                          f"Target: ${target:.2f}")
                 else:
-                    print(f"  ⏸ {stock} HOLD")
+                    pnl_pct = (entry - price) / entry * 100
+                    stop = entry + (ATR_STOP_MULT * entry_atr)
+                    target = entry - (ATR_PROFIT_MULT * entry_atr)
+                dir_label = "LONG" if direction == "long" else "SHORT"
+                print(f"  ⏸ {stock} HOLD {dir_label} | "
+                      f"PnL: {pnl_pct:+.2f}% | "
+                      f"Stop: ${stop:.2f} | "
+                      f"Target: ${target:.2f}")
+            else:
+                print(f"  ⏸ {stock} HOLD")
 
         except Exception as e:
             print(f"  Error with {stock}: {e}")
@@ -774,16 +864,24 @@ schedule.every(1).minutes.do(run_bot)
 print(f"\n{'='*60}")
 print("🚀 TRADING BOT — STARTUP SUMMARY")
 print(f"{'='*60}")
-print(f"\n  Signal: EMA + RSI + BB + MACD + ATR + Sentiment + Regime")
+print(f"\n  Signal Mode: WEIGHTED SCORING (signals.py)")
 print(f"  Defaults: EMA {FAST_MA}/{SLOW_MA} | RSI {RSI_OVERSOLD}/{RSI_OVERBOUGHT} | "
       f"BB {BB_PERIOD}/{BB_STD}")
 print(f"  Risk: Stop {ATR_STOP_MULT}x ATR | Target {ATR_PROFIT_MULT}x ATR | "
-      f"Max {MAX_POSITIONS} positions | Daily limit ${DAILY_LOSS_LIMIT}")
+      f"Max {MAX_POSITIONS} longs, {MAX_SHORT_POSITIONS} shorts | "
+      f"Daily limit ${DAILY_LOSS_LIMIT}")
 
 print(f"\n  Tier 1 — Full size ({len(TIER1_STOCKS)} stocks):")
 print(f"    {', '.join(TIER1_STOCKS)}")
+print(f"    Buy threshold: {signals.BUY_THRESHOLD_T1} | Short threshold: {signals.SHORT_THRESHOLD_T1}")
 print(f"\n  Tier 2 — Half size ({len(TIER2_STOCKS)} stocks, {TIER2_SIZE_FACTOR:.0%} qty):")
 print(f"    {', '.join(TIER2_STOCKS)}")
+print(f"    Buy threshold: {signals.BUY_THRESHOLD_T2} | Short threshold: {signals.SHORT_THRESHOLD_T2}")
+print(f"\n  Tier 3 — Quarter size ({len(TIER3_STOCKS)} stocks, {TIER3_SIZE_FACTOR:.0%} qty):")
+print(f"    {', '.join(TIER3_STOCKS)}")
+print(f"    Buy threshold: {signals.BUY_THRESHOLD_T3} | Short: disabled")
+
+print(f"\n  Short eligible: {', '.join(SHORT_ELIGIBLE)}")
 
 print(f"\n  Walk-forward params loaded: {len(STOCK_PARAMS)} stocks")
 if STOCK_PARAMS:

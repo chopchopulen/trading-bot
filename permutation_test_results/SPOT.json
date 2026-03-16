@@ -1,0 +1,15 @@
+{
+  "stock": "SPOT",
+  "actual_sharpe": 96.86463284472079,
+  "wf_status": "PASS",
+  "wf_trades": 2,
+  "day_shuffle_p": 0.01996007984031936,
+  "day_shuffle_mean": -9.336881507628284,
+  "day_shuffle_std": 56.15438134093346,
+  "signal_shift_p": 0.03592814371257485,
+  "signal_shift_mean": -62.43684171413853,
+  "signal_shift_std": 322.7054808983606,
+  "combined_p": 0.01996007984031936,
+  "timestamp": "2026-03-16T02:41:40.440145",
+  "signal_mode": "full"
+}

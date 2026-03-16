@@ -1,0 +1,18 @@
+{
+  "stock": "COST",
+  "total_return": 0.5298047510099132,
+  "profit_factor": 1.1607621240527375,
+  "sharpe": 0.8518877581847901,
+  "win_rate": 45.1063829787234,
+  "max_drawdown": 10.231757349096709,
+  "trades": 235,
+  "edge_survives_costs": true,
+  "best_params": {
+    "fast": 6,
+    "slow": 10,
+    "rsi_period": 7,
+    "rsi_buy": 30,
+    "rsi_sell": 60
+  },
+  "timestamp": "2026-03-16T14:43:48.734077"
+}

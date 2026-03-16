@@ -1,0 +1,18 @@
+{
+  "stock": "NFLX",
+  "total_return": -0.2985204186400806,
+  "profit_factor": 0.6314871500611894,
+  "sharpe": -2.399596487283147,
+  "win_rate": 35.97122302158273,
+  "max_drawdown": 0.9971211920711774,
+  "trades": 278,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 8,
+    "slow": 22,
+    "rsi_period": 7,
+    "rsi_buy": 25,
+    "rsi_sell": 70
+  },
+  "timestamp": "2026-03-16T14:43:16.219194"
+}

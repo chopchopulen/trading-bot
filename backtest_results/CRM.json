@@ -1,0 +1,18 @@
+{
+  "stock": "CRM",
+  "total_return": -0.6113348800000967,
+  "profit_factor": 0.6659920917910993,
+  "sharpe": -2.3029904339064675,
+  "win_rate": 42.4124513618677,
+  "max_drawdown": 2.6895066908205387,
+  "trades": 257,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 8,
+    "slow": 22,
+    "rsi_period": 7,
+    "rsi_buy": 25,
+    "rsi_sell": 70
+  },
+  "timestamp": "2026-03-16T14:43:26.285734"
+}
