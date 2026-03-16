@@ -1,0 +1,11 @@
+{
+  "stock": "CRM",
+  "actual_sharpe": -1.7724553406150527,
+  "p_value": 0.3066933066933067,
+  "mean_perm_sharpe": -657.6233772794329,
+  "std_perm_sharpe": 19961.26104422996,
+  "n_perms": 1000,
+  "significant": false,
+  "wf_status": "WEAK",
+  "timestamp": "2026-03-15T22:32:16.596954"
+}

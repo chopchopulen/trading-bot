@@ -1,0 +1,11 @@
+{
+  "stock": "META",
+  "actual_sharpe": 21.60133855151704,
+  "p_value": 0.00999000999000999,
+  "mean_perm_sharpe": -8.448055990598231,
+  "std_perm_sharpe": 207.13006816212163,
+  "n_perms": 1000,
+  "significant": false,
+  "wf_status": "PASS",
+  "timestamp": "2026-03-15T22:30:54.209773"
+}

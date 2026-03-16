@@ -1,0 +1,11 @@
+{
+  "stock": "PFE",
+  "actual_sharpe": -15.115933459331824,
+  "p_value": 0.6203796203796204,
+  "mean_perm_sharpe": -19.393148278296408,
+  "std_perm_sharpe": 50.81792978039518,
+  "n_perms": 1000,
+  "significant": false,
+  "wf_status": "WEAK",
+  "timestamp": "2026-03-15T22:37:03.181028"
+}

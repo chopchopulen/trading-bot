@@ -1,0 +1,11 @@
+{
+  "stock": "QQQ",
+  "actual_sharpe": 0.28937660579677743,
+  "p_value": 0.45554445554445555,
+  "mean_perm_sharpe": 0.11629163142914394,
+  "std_perm_sharpe": 4.334619510104967,
+  "n_perms": 1000,
+  "significant": false,
+  "wf_status": "WEAK",
+  "timestamp": "2026-03-15T22:35:35.509472"
+}

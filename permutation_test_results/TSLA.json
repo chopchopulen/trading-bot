@@ -1,0 +1,11 @@
+{
+  "stock": "TSLA",
+  "actual_sharpe": 1.965702715758647,
+  "p_value": 0.16583416583416583,
+  "mean_perm_sharpe": -16.87541001573773,
+  "std_perm_sharpe": 192.52264661547,
+  "n_perms": 1000,
+  "significant": false,
+  "wf_status": "PASS",
+  "timestamp": "2026-03-15T22:30:13.720886"
+}

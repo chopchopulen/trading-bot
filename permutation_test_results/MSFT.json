@@ -1,0 +1,11 @@
+{
+  "stock": "MSFT",
+  "actual_sharpe": 8.208357565420195,
+  "p_value": 0.18081918081918083,
+  "mean_perm_sharpe": -2.660538530557872,
+  "std_perm_sharpe": 60.642629362079155,
+  "n_perms": 1000,
+  "significant": false,
+  "wf_status": "PASS",
+  "timestamp": "2026-03-15T22:27:26.863076"
+}

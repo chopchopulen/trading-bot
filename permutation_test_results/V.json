@@ -1,0 +1,11 @@
+{
+  "stock": "V",
+  "actual_sharpe": -18.121510081024688,
+  "p_value": 0.916083916083916,
+  "mean_perm_sharpe": -6.306767950620293,
+  "std_perm_sharpe": 8.588200155418761,
+  "n_perms": 1000,
+  "significant": false,
+  "wf_status": "WEAK",
+  "timestamp": "2026-03-15T22:34:50.011016"
+}

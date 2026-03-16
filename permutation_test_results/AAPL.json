@@ -1,0 +1,11 @@
+{
+  "stock": "AAPL",
+  "actual_sharpe": 9.086284447358173,
+  "p_value": 0.5694305694305695,
+  "mean_perm_sharpe": 13.537335932044796,
+  "std_perm_sharpe": 124.14397334395534,
+  "n_perms": 1000,
+  "significant": false,
+  "wf_status": "PASS",
+  "timestamp": "2026-03-15T22:26:43.480233"
+}

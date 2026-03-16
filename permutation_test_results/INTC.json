@@ -1,0 +1,11 @@
+{
+  "stock": "INTC",
+  "actual_sharpe": -12.13734888073939,
+  "p_value": 0.8501498501498501,
+  "mean_perm_sharpe": 0.10516020596850649,
+  "std_perm_sharpe": 116.35733965347148,
+  "n_perms": 1000,
+  "significant": false,
+  "wf_status": "WEAK",
+  "timestamp": "2026-03-15T22:40:15.276825"
+}

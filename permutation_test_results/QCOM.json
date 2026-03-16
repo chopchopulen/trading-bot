@@ -1,0 +1,11 @@
+{
+  "stock": "QCOM",
+  "actual_sharpe": -0.34457915560928276,
+  "p_value": 0.4965034965034965,
+  "mean_perm_sharpe": 0.6983892877736637,
+  "std_perm_sharpe": 8.350196271822037,
+  "n_perms": 1000,
+  "significant": false,
+  "wf_status": "WEAK",
+  "timestamp": "2026-03-15T22:40:54.164477"
+}

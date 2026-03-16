@@ -1,0 +1,231 @@
+{
+  "timestamp": "2026-03-15T22:40:54.366716",
+  "n_permutations": 1000,
+  "bonferroni_alpha": 0.0019230769230769232,
+  "fisher_combined_p": 0.07088048391687263,
+  "n_stocks_tested": 22,
+  "n_significant": 0,
+  "n_marginal": 2,
+  "per_stock": [
+    {
+      "stock": "AAPL",
+      "actual_sharpe": 9.086284447358173,
+      "p_value": 0.5694305694305695,
+      "mean_perm_sharpe": 13.537335932044796,
+      "std_perm_sharpe": 124.14397334395534,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "PASS"
+    },
+    {
+      "stock": "MSFT",
+      "actual_sharpe": 8.208357565420195,
+      "p_value": 0.18081918081918083,
+      "mean_perm_sharpe": -2.660538530557872,
+      "std_perm_sharpe": 60.642629362079155,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "PASS"
+    },
+    {
+      "stock": "NVDA",
+      "actual_sharpe": -3.395692219519934,
+      "p_value": 0.45454545454545453,
+      "mean_perm_sharpe": -16.599041066740096,
+      "std_perm_sharpe": 175.92459179579166,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "WEAK"
+    },
+    {
+      "stock": "GOOGL",
+      "actual_sharpe": 0.1329088621029741,
+      "p_value": 0.5254745254745254,
+      "mean_perm_sharpe": 0.321430611007547,
+      "std_perm_sharpe": 10.077854838513945,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "WEAK"
+    },
+    {
+      "stock": "AMZN",
+      "actual_sharpe": 4.99247543987441,
+      "p_value": 0.46153846153846156,
+      "mean_perm_sharpe": 10.99964935434677,
+      "std_perm_sharpe": 113.44465602392005,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "PASS"
+    },
+    {
+      "stock": "TSLA",
+      "actual_sharpe": 1.965702715758647,
+      "p_value": 0.16583416583416583,
+      "mean_perm_sharpe": -16.87541001573773,
+      "std_perm_sharpe": 192.52264661547,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "PASS"
+    },
+    {
+      "stock": "META",
+      "actual_sharpe": 21.60133855151704,
+      "p_value": 0.00999000999000999,
+      "mean_perm_sharpe": -8.448055990598231,
+      "std_perm_sharpe": 207.13006816212163,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "PASS"
+    },
+    {
+      "stock": "NFLX",
+      "actual_sharpe": 1.8695362102667321,
+      "p_value": 0.13486513486513488,
+      "mean_perm_sharpe": -23.810108244609204,
+      "std_perm_sharpe": 75.18840827840084,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "PASS"
+    },
+    {
+      "stock": "CRM",
+      "actual_sharpe": -1.7724553406150527,
+      "p_value": 0.3066933066933067,
+      "mean_perm_sharpe": -657.6233772794329,
+      "std_perm_sharpe": 19961.26104422996,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "WEAK"
+    },
+    {
+      "stock": "JPM",
+      "actual_sharpe": -3.6979920335073886,
+      "p_value": 0.3596403596403596,
+      "mean_perm_sharpe": -6.054666016383557,
+      "std_perm_sharpe": 10.867299209738501,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "WEAK"
+    },
+    {
+      "stock": "BAC",
+      "actual_sharpe": -1.1698152491651894,
+      "p_value": 0.3196803196803197,
+      "mean_perm_sharpe": -4.091604990114313,
+      "std_perm_sharpe": 5.388622703929159,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "WEAK"
+    },
+    {
+      "stock": "GS",
+      "actual_sharpe": 8.874532075408062,
+      "p_value": 0.01098901098901099,
+      "mean_perm_sharpe": -5.85453693623544,
+      "std_perm_sharpe": 5.837402931170408,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "PASS"
+    },
+    {
+      "stock": "V",
+      "actual_sharpe": -18.121510081024688,
+      "p_value": 0.916083916083916,
+      "mean_perm_sharpe": -6.306767950620293,
+      "std_perm_sharpe": 8.588200155418761,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "WEAK"
+    },
+    {
+      "stock": "QQQ",
+      "actual_sharpe": 0.28937660579677743,
+      "p_value": 0.45554445554445555,
+      "mean_perm_sharpe": 0.11629163142914394,
+      "std_perm_sharpe": 4.334619510104967,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "WEAK"
+    },
+    {
+      "stock": "XOM",
+      "actual_sharpe": -3.4937662388581705,
+      "p_value": 0.5424575424575424,
+      "mean_perm_sharpe": -2.4003065119498177,
+      "std_perm_sharpe": 6.640104616648405,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "WEAK"
+    },
+    {
+      "stock": "PFE",
+      "actual_sharpe": -15.115933459331824,
+      "p_value": 0.6203796203796204,
+      "mean_perm_sharpe": -19.393148278296408,
+      "std_perm_sharpe": 50.81792978039518,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "WEAK"
+    },
+    {
+      "stock": "UNH",
+      "actual_sharpe": -2.058696344545292,
+      "p_value": 0.47952047952047955,
+      "mean_perm_sharpe": -5.976174603224166,
+      "std_perm_sharpe": 16.02839136084033,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "WEAK"
+    },
+    {
+      "stock": "WMT",
+      "actual_sharpe": 3.780058035643467,
+      "p_value": 0.0939060939060939,
+      "mean_perm_sharpe": -3.111445633152339,
+      "std_perm_sharpe": 4.940634344130732,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "PASS"
+    },
+    {
+      "stock": "COST",
+      "actual_sharpe": 6.837538553773108,
+      "p_value": 0.08791208791208792,
+      "mean_perm_sharpe": -24.240795237735075,
+      "std_perm_sharpe": 61.32539897939165,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "PASS"
+    },
+    {
+      "stock": "NKE",
+      "actual_sharpe": -16.607960731972057,
+      "p_value": 0.8721278721278721,
+      "mean_perm_sharpe": -10.105057298894026,
+      "std_perm_sharpe": 20.28821172544819,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "WEAK"
+    },
+    {
+      "stock": "INTC",
+      "actual_sharpe": -12.13734888073939,
+      "p_value": 0.8501498501498501,
+      "mean_perm_sharpe": 0.10516020596850649,
+      "std_perm_sharpe": 116.35733965347148,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "WEAK"
+    },
+    {
+      "stock": "QCOM",
+      "actual_sharpe": -0.34457915560928276,
+      "p_value": 0.4965034965034965,
+      "mean_perm_sharpe": 0.6983892877736637,
+      "std_perm_sharpe": 8.350196271822037,
+      "n_perms": 1000,
+      "significant": false,
+      "wf_status": "WEAK"
+    }
+  ]
+}

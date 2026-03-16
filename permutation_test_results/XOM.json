@@ -1,0 +1,11 @@
+{
+  "stock": "XOM",
+  "actual_sharpe": -3.4937662388581705,
+  "p_value": 0.5424575424575424,
+  "mean_perm_sharpe": -2.4003065119498177,
+  "std_perm_sharpe": 6.640104616648405,
+  "n_perms": 1000,
+  "significant": false,
+  "wf_status": "WEAK",
+  "timestamp": "2026-03-15T22:36:16.556470"
+}

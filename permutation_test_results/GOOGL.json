@@ -1,0 +1,11 @@
+{
+  "stock": "GOOGL",
+  "actual_sharpe": 0.1329088621029741,
+  "p_value": 0.5254745254745254,
+  "mean_perm_sharpe": 0.321430611007547,
+  "std_perm_sharpe": 10.077854838513945,
+  "n_perms": 1000,
+  "significant": false,
+  "wf_status": "WEAK",
+  "timestamp": "2026-03-15T22:28:50.533960"
+}

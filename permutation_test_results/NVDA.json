@@ -1,0 +1,11 @@
+{
+  "stock": "NVDA",
+  "actual_sharpe": -3.395692219519934,
+  "p_value": 0.45454545454545453,
+  "mean_perm_sharpe": -16.599041066740096,
+  "std_perm_sharpe": 175.92459179579166,
+  "n_perms": 1000,
+  "significant": false,
+  "wf_status": "WEAK",
+  "timestamp": "2026-03-15T22:28:09.906571"
+}

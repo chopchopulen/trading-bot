@@ -1,0 +1,11 @@
+{
+  "stock": "COST",
+  "actual_sharpe": 6.837538553773108,
+  "p_value": 0.08791208791208792,
+  "mean_perm_sharpe": -24.240795237735075,
+  "std_perm_sharpe": 61.32539897939165,
+  "n_perms": 1000,
+  "significant": false,
+  "wf_status": "PASS",
+  "timestamp": "2026-03-15T22:38:49.555075"
+}

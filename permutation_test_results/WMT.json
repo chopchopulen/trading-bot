@@ -1,0 +1,11 @@
+{
+  "stock": "WMT",
+  "actual_sharpe": 3.780058035643467,
+  "p_value": 0.0939060939060939,
+  "mean_perm_sharpe": -3.111445633152339,
+  "std_perm_sharpe": 4.940634344130732,
+  "n_perms": 1000,
+  "significant": false,
+  "wf_status": "PASS",
+  "timestamp": "2026-03-15T22:38:21.527892"
+}

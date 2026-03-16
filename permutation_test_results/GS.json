@@ -1,0 +1,11 @@
+{
+  "stock": "GS",
+  "actual_sharpe": 8.874532075408062,
+  "p_value": 0.01098901098901099,
+  "mean_perm_sharpe": -5.85453693623544,
+  "std_perm_sharpe": 5.837402931170408,
+  "n_perms": 1000,
+  "significant": false,
+  "wf_status": "PASS",
+  "timestamp": "2026-03-15T22:34:09.400853"
+}

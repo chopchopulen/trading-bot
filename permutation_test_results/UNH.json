@@ -1,0 +1,11 @@
+{
+  "stock": "UNH",
+  "actual_sharpe": -2.058696344545292,
+  "p_value": 0.47952047952047955,
+  "mean_perm_sharpe": -5.976174603224166,
+  "std_perm_sharpe": 16.02839136084033,
+  "n_perms": 1000,
+  "significant": false,
+  "wf_status": "WEAK",
+  "timestamp": "2026-03-15T22:37:41.607543"
+}

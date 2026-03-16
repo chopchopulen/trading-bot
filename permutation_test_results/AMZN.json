@@ -1,0 +1,11 @@
+{
+  "stock": "AMZN",
+  "actual_sharpe": 4.99247543987441,
+  "p_value": 0.46153846153846156,
+  "mean_perm_sharpe": 10.99964935434677,
+  "std_perm_sharpe": 113.44465602392005,
+  "n_perms": 1000,
+  "significant": false,
+  "wf_status": "PASS",
+  "timestamp": "2026-03-15T22:29:31.242116"
+}

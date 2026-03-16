@@ -437,76 +437,77 @@ def run_walk_forward():
     return best
 
 # ── Run all stocks ────────────────────────────────────────────────
-try:
-    all_verified = {}
-    spy_bars_cache = None
+if __name__ == "__main__":
+    try:
+        all_verified = {}
+        spy_bars_cache = None
 
-    os.makedirs("walk_forward_results", exist_ok=True)
+        os.makedirs("walk_forward_results", exist_ok=True)
 
-    for stock in STOCKS_TO_TEST:
-        STOCK = stock
+        for stock in STOCKS_TO_TEST:
+            STOCK = stock
+            print(f"\n{'='*80}")
+            print(f"🔬 Testing {stock}...")
+            print(f"{'='*80}")
+            result = run_walk_forward()
+            if result:
+                all_verified[stock] = result
+                # Save per-stock JSON
+                json_out = {
+                    "stock": stock,
+                    "status": result["status"],
+                    "best_params": result["params"],
+                    "train_return": result["train_return"],
+                    "test_return": result["return"],
+                    "test_sharpe": result["sharpe"],
+                    "test_trades": result["trades"],
+                    "test_win_rate": result["win_rate"],
+                    "timestamp": datetime.now().isoformat()
+                }
+                with open(f"walk_forward_results/{stock}.json", "w") as f:
+                    json.dump(json_out, f, indent=2)
+
+        # Cross stock summary
         print(f"\n{'='*80}")
-        print(f"🔬 Testing {stock}...")
+        print("CROSS STOCK SUMMARY")
         print(f"{'='*80}")
-        result = run_walk_forward()
-        if result:
-            all_verified[stock] = result
-            # Save per-stock JSON
-            json_out = {
-                "stock": stock,
-                "status": result["status"],
-                "best_params": result["params"],
-                "train_return": result["train_return"],
-                "test_return": result["return"],
-                "test_sharpe": result["sharpe"],
-                "test_trades": result["trades"],
-                "test_win_rate": result["win_rate"],
-                "timestamp": datetime.now().isoformat()
-            }
-            with open(f"walk_forward_results/{stock}.json", "w") as f:
-                json.dump(json_out, f, indent=2)
 
-    # Cross stock summary
-    print(f"\n{'='*80}")
-    print("CROSS STOCK SUMMARY")
-    print(f"{'='*80}")
+        if all_verified:
+            print("✅ Stocks with verified parameters:")
+            for stock, result in all_verified.items():
+                p = result["params"]
+                print(f"  {stock}: EMA {p['fast']}/{p['slow']} | "
+                      f"RSI {p['rsi_buy']}/{p['rsi_sell']} | "
+                      f"BB {p['bb_period']}/{p['bb_std']} | "
+                      f"Return: {result['return']:+.2f}% | "
+                      f"Sharpe: {result['sharpe']:.2f}")
 
-    if all_verified:
-        print("✅ Stocks with verified parameters:")
-        for stock, result in all_verified.items():
-            p = result["params"]
-            print(f"  {stock}: EMA {p['fast']}/{p['slow']} | "
-                  f"RSI {p['rsi_buy']}/{p['rsi_sell']} | "
-                  f"BB {p['bb_period']}/{p['bb_std']} | "
-                  f"Return: {result['return']:+.2f}% | "
-                  f"Sharpe: {result['sharpe']:.2f}")
+            # Find most common EMA settings across stocks
+            ema_combos = [f"{r['params']['fast']}/{r['params']['slow']}"
+                         for r in all_verified.values()]
+            most_common_ema = Counter(ema_combos).most_common(1)[0]
 
-        # Find most common EMA settings across stocks
-        ema_combos = [f"{r['params']['fast']}/{r['params']['slow']}"
-                     for r in all_verified.values()]
-        most_common_ema = Counter(ema_combos).most_common(1)[0]
+            print(f"\n📋 RECOMMENDED SETTINGS FOR bot.py:")
+            print(f"   Most consistent EMA: {most_common_ema[0]} "
+                  f"(appeared in {most_common_ema[1]}/{len(all_verified)} stocks)")
 
-        print(f"\n📋 RECOMMENDED SETTINGS FOR bot.py:")
-        print(f"   Most consistent EMA: {most_common_ema[0]} "
-              f"(appeared in {most_common_ema[1]}/{len(all_verified)} stocks)")
+            if len(all_verified) > 0:
+                best_overall = max(all_verified.values(), key=lambda x: x["return"])
+                best_p = best_overall["params"]
+                print(f"\n   Best single performer settings:")
+                print(f"   FAST_MA = {best_p['fast']}")
+                print(f"   SLOW_MA = {best_p['slow']}")
+                print(f"   RSI_OVERSOLD = {best_p['rsi_buy']}")
+                print(f"   RSI_OVERBOUGHT = {best_p['rsi_sell']}")
+                print(f"   BB_PERIOD = {best_p['bb_period']}")
+                print(f"   BB_STD = {best_p['bb_std']}")
 
-        if len(all_verified) > 0:
-            best_overall = max(all_verified.values(), key=lambda x: x["return"])
-            best_p = best_overall["params"]
-            print(f"\n   Best single performer settings:")
-            print(f"   FAST_MA = {best_p['fast']}")
-            print(f"   SLOW_MA = {best_p['slow']}")
-            print(f"   RSI_OVERSOLD = {best_p['rsi_buy']}")
-            print(f"   RSI_OVERBOUGHT = {best_p['rsi_sell']}")
-            print(f"   BB_PERIOD = {best_p['bb_period']}")
-            print(f"   BB_STD = {best_p['bb_std']}")
+        else:
+            print("  ⚠️ No stocks passed verification")
+            print("  Market is in an unusual period — keep current settings")
+            print("  Recommendation: Re-run optimizer when market stabilizes")
 
-    else:
-        print("  ⚠️ No stocks passed verification")
-        print("  Market is in an unusual period — keep current settings")
-        print("  Recommendation: Re-run optimizer when market stabilizes")
-
-except Exception as e:
-    import traceback
-    print(f"Error: {e}")
-    traceback.print_exc()
+    except Exception as e:
+        import traceback
+        print(f"Error: {e}")
+        traceback.print_exc()

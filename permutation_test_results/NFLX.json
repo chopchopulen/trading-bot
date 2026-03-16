@@ -1,0 +1,11 @@
+{
+  "stock": "NFLX",
+  "actual_sharpe": 1.8695362102667321,
+  "p_value": 0.13486513486513488,
+  "mean_perm_sharpe": -23.810108244609204,
+  "std_perm_sharpe": 75.18840827840084,
+  "n_perms": 1000,
+  "significant": false,
+  "wf_status": "PASS",
+  "timestamp": "2026-03-15T22:31:36.468805"
+}
