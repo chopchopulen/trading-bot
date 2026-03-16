@@ -1,11 +1,15 @@
 {
   "stock": "MSFT",
   "actual_sharpe": 8.208357565420195,
-  "p_value": 0.18081918081918083,
-  "mean_perm_sharpe": -2.660538530557872,
-  "std_perm_sharpe": 60.642629362079155,
-  "n_perms": 1000,
-  "significant": false,
   "wf_status": "PASS",
-  "timestamp": "2026-03-15T22:27:26.863076"
+  "wf_trades": 4,
+  "day_shuffle_p": 0.02594810379241517,
+  "day_shuffle_mean": -3.4843251840649967,
+  "day_shuffle_std": 7.86781735571416,
+  "signal_shift_p": 0.10379241516966067,
+  "signal_shift_mean": -2.9953269256889943,
+  "signal_shift_std": 12.424824349297515,
+  "combined_p": 0.02594810379241517,
+  "timestamp": "2026-03-16T01:35:35.500306",
+  "signal_mode": "simple"
 }

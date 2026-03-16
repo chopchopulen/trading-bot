@@ -1,11 +1,15 @@
 {
   "stock": "TSLA",
-  "actual_sharpe": 1.965702715758647,
-  "p_value": 0.16583416583416583,
-  "mean_perm_sharpe": -16.87541001573773,
-  "std_perm_sharpe": 192.52264661547,
-  "n_perms": 1000,
-  "significant": false,
+  "actual_sharpe": 2.3413426287665238,
   "wf_status": "PASS",
-  "timestamp": "2026-03-15T22:30:13.720886"
+  "wf_trades": 5,
+  "day_shuffle_p": 0.14770459081836326,
+  "day_shuffle_mean": -3.7693237668391313,
+  "day_shuffle_std": 6.635671145714325,
+  "signal_shift_p": 0.16167664670658682,
+  "signal_shift_mean": -3.6366004330156003,
+  "signal_shift_std": 6.8743348825428265,
+  "combined_p": 0.14770459081836326,
+  "timestamp": "2026-03-16T01:36:31.816576",
+  "signal_mode": "simple"
 }

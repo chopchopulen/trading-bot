@@ -7,14 +7,15 @@ from dotenv import load_dotenv
 import matplotlib.pyplot as plt
 
 load_dotenv()
+API_KEY = "PK22XEELBFYNU7QMJHJOGRJ6V6"
+SECRET_KEY = "3arXWSeJW69nWfZHKW9nABMWwMkK1Ct964VakJdT7PXV"
+BASE_URL = "https://paper-api.alpaca.markets"
 
-api = tradeapi.REST(
-    os.environ["ALPACA_API_KEY"],
-    os.environ["ALPACA_SECRET_KEY"],
-    os.environ["ALPACA_BASE_URL"]
-)
+api = tradeapi.REST(API_KEY, SECRET_KEY, BASE_URL)
 
-STOCK = "AAPL"
+STOCK = "META"
+STOCK = "AMD"
+STOCK = "GS"
 STARTING_CASH = 100000
 QUANTITY = 10
 LOOKBACK_DAYS = 90

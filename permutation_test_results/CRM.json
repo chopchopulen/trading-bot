@@ -1,11 +1,15 @@
 {
   "stock": "CRM",
-  "actual_sharpe": -1.7724553406150527,
-  "p_value": 0.3066933066933067,
-  "mean_perm_sharpe": -657.6233772794329,
-  "std_perm_sharpe": 19961.26104422996,
-  "n_perms": 1000,
-  "significant": false,
-  "wf_status": "WEAK",
-  "timestamp": "2026-03-15T22:32:16.596954"
+  "actual_sharpe": 3.7708829649122633,
+  "wf_status": "PASS",
+  "wf_trades": 4,
+  "day_shuffle_p": 0.13572854291417166,
+  "day_shuffle_mean": -5.2668521685124015,
+  "day_shuffle_std": 10.947904098586235,
+  "signal_shift_p": 0.29740518962075846,
+  "signal_shift_mean": -4.598380339222387,
+  "signal_shift_std": 25.849251868662268,
+  "combined_p": 0.13572854291417166,
+  "timestamp": "2026-03-16T01:37:26.889886",
+  "signal_mode": "simple"
 }

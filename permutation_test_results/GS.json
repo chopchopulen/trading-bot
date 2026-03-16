@@ -1,11 +1,15 @@
 {
   "stock": "GS",
   "actual_sharpe": 8.874532075408062,
-  "p_value": 0.01098901098901099,
-  "mean_perm_sharpe": -5.85453693623544,
-  "std_perm_sharpe": 5.837402931170408,
-  "n_perms": 1000,
-  "significant": false,
   "wf_status": "PASS",
-  "timestamp": "2026-03-15T22:34:09.400853"
+  "wf_trades": 5,
+  "day_shuffle_p": 0.001996007984031936,
+  "day_shuffle_mean": -5.439143222480798,
+  "day_shuffle_std": 4.9205676459187275,
+  "signal_shift_p": 0.017964071856287425,
+  "signal_shift_mean": -1.5643950197177436,
+  "signal_shift_std": 6.0875578637312575,
+  "combined_p": 0.001996007984031936,
+  "timestamp": "2026-03-16T01:24:54.592742",
+  "signal_mode": "simple"
 }

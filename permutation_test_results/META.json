@@ -1,11 +1,15 @@
 {
   "stock": "META",
-  "actual_sharpe": 21.60133855151704,
-  "p_value": 0.00999000999000999,
-  "mean_perm_sharpe": -8.448055990598231,
-  "std_perm_sharpe": 207.13006816212163,
-  "n_perms": 1000,
-  "significant": false,
+  "actual_sharpe": 31.708934611139416,
   "wf_status": "PASS",
-  "timestamp": "2026-03-15T22:30:54.209773"
+  "wf_trades": 3,
+  "day_shuffle_p": 0.011976047904191617,
+  "day_shuffle_mean": -2.0591545162888067,
+  "day_shuffle_std": 13.852929144166113,
+  "signal_shift_p": 0.023952095808383235,
+  "signal_shift_mean": -6.826990658129982,
+  "signal_shift_std": 23.80204358695395,
+  "combined_p": 0.011976047904191617,
+  "timestamp": "2026-03-16T01:24:33.830175",
+  "signal_mode": "simple"
 }

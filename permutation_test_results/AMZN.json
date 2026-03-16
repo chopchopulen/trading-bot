@@ -1,11 +1,15 @@
 {
   "stock": "AMZN",
   "actual_sharpe": 4.99247543987441,
-  "p_value": 0.46153846153846156,
-  "mean_perm_sharpe": 10.99964935434677,
-  "std_perm_sharpe": 113.44465602392005,
-  "n_perms": 1000,
-  "significant": false,
   "wf_status": "PASS",
-  "timestamp": "2026-03-15T22:29:31.242116"
+  "wf_trades": 5,
+  "day_shuffle_p": 0.2055888223552894,
+  "day_shuffle_mean": -2.8695179713552026,
+  "day_shuffle_std": 32.761972143142984,
+  "signal_shift_p": 0.19560878243512975,
+  "signal_shift_mean": -3.1311934733093767,
+  "signal_shift_std": 12.908398558740668,
+  "combined_p": 0.19560878243512975,
+  "timestamp": "2026-03-16T01:36:01.986871",
+  "signal_mode": "simple"
 }

@@ -1,11 +1,15 @@
 {
   "stock": "QCOM",
-  "actual_sharpe": -0.34457915560928276,
-  "p_value": 0.4965034965034965,
-  "mean_perm_sharpe": 0.6983892877736637,
-  "std_perm_sharpe": 8.350196271822037,
-  "n_perms": 1000,
-  "significant": false,
-  "wf_status": "WEAK",
-  "timestamp": "2026-03-15T22:40:54.164477"
+  "actual_sharpe": 3.840148204750575,
+  "wf_status": "PASS",
+  "wf_trades": 3,
+  "day_shuffle_p": 0.10379241516966067,
+  "day_shuffle_mean": -5.1670342037968435,
+  "day_shuffle_std": 9.519664103718494,
+  "signal_shift_p": 0.19161676646706588,
+  "signal_shift_mean": -6.549591463617936,
+  "signal_shift_std": 20.298571313049496,
+  "combined_p": 0.10379241516966067,
+  "timestamp": "2026-03-16T01:37:51.294242",
+  "signal_mode": "simple"
 }

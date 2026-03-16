@@ -1,25 +1,19 @@
+API_KEY = "PKVDUH6TYNLSMY2KXUCDT6OYMR"
+SECRET_KEY = "7hQTtvVED8nNkQvKdqXrdfnvEuapMtcbvE8To1LpF9dk"
+BASE_URL = "https://paper-api.alpaca.markets"
+
 import alpaca_trade_api as tradeapi
 import pandas as pd
 import numpy as np
-import os
 from datetime import datetime, timedelta
-from dotenv import load_dotenv
 import matplotlib.pyplot as plt
 
-load_dotenv()
+api = tradeapi.REST(API_KEY, SECRET_KEY, BASE_URL)
 
-api = tradeapi.REST(
-    os.environ["ALPACA_API_KEY"],
-    os.environ["ALPACA_SECRET_KEY"],
-    os.environ["ALPACA_BASE_URL"]
-)
-
-STOCK = "TSLA"
-STOCK = "NVDA" 
-STOCK = "MSFT"
+STOCK = "AAPL"
 STARTING_CASH = 100000
 QUANTITY = 10
-LOOKBACK_DAYS = 730
+LOOKBACK_DAYS = 365
 
 # ── Parameter grid to test ────────────────────────────────────────
 PARAM_GRID = [

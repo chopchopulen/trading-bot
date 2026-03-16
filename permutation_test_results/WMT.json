@@ -1,11 +1,15 @@
 {
   "stock": "WMT",
-  "actual_sharpe": 3.780058035643467,
-  "p_value": 0.0939060939060939,
-  "mean_perm_sharpe": -3.111445633152339,
-  "std_perm_sharpe": 4.940634344130732,
-  "n_perms": 1000,
-  "significant": false,
+  "actual_sharpe": 4.973502266023546,
   "wf_status": "PASS",
-  "timestamp": "2026-03-15T22:38:21.527892"
+  "wf_trades": 7,
+  "day_shuffle_p": 0.1217564870259481,
+  "day_shuffle_mean": -1.6648923825987298,
+  "day_shuffle_std": 5.8584087589115095,
+  "signal_shift_p": 0.0718562874251497,
+  "signal_shift_mean": -2.2627809290754604,
+  "signal_shift_std": 5.19288226919786,
+  "combined_p": 0.0718562874251497,
+  "timestamp": "2026-03-16T01:25:19.242806",
+  "signal_mode": "simple"
 }

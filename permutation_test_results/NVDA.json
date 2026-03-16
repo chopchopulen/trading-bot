@@ -1,11 +1,15 @@
 {
   "stock": "NVDA",
-  "actual_sharpe": -3.395692219519934,
-  "p_value": 0.45454545454545453,
-  "mean_perm_sharpe": -16.599041066740096,
-  "std_perm_sharpe": 175.92459179579166,
-  "n_perms": 1000,
-  "significant": false,
+  "actual_sharpe": -0.29909422806968167,
   "wf_status": "WEAK",
-  "timestamp": "2026-03-15T22:28:09.906571"
+  "wf_trades": 14,
+  "day_shuffle_p": 0.34331337325349304,
+  "day_shuffle_mean": -1.5783916206470654,
+  "day_shuffle_std": 3.3390088745013613,
+  "signal_shift_p": 0.22554890219560877,
+  "signal_shift_mean": -3.345584959003231,
+  "signal_shift_std": 4.095517619977624,
+  "combined_p": 0.22554890219560877,
+  "timestamp": "2026-03-16T01:38:19.911020",
+  "signal_mode": "simple"
 }

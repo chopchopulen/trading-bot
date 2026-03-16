@@ -1,11 +1,15 @@
 {
   "stock": "AAPL",
-  "actual_sharpe": 9.086284447358173,
-  "p_value": 0.5694305694305695,
-  "mean_perm_sharpe": 13.537335932044796,
-  "std_perm_sharpe": 124.14397334395534,
-  "n_perms": 1000,
-  "significant": false,
+  "actual_sharpe": 7.030683253161362,
   "wf_status": "PASS",
-  "timestamp": "2026-03-15T22:26:43.480233"
+  "wf_trades": 4,
+  "day_shuffle_p": 0.41317365269461076,
+  "day_shuffle_mean": 4.675424383678876,
+  "day_shuffle_std": 13.912714409421273,
+  "signal_shift_p": 0.10379241516966067,
+  "signal_shift_mean": -5.880063698365273,
+  "signal_shift_std": 15.911810737194424,
+  "combined_p": 0.10379241516966067,
+  "timestamp": "2026-03-16T01:35:07.598859",
+  "signal_mode": "simple"
 }

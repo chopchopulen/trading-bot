@@ -1,11 +1,15 @@
 {
   "stock": "NFLX",
   "actual_sharpe": 1.8695362102667321,
-  "p_value": 0.13486513486513488,
-  "mean_perm_sharpe": -23.810108244609204,
-  "std_perm_sharpe": 75.18840827840084,
-  "n_perms": 1000,
-  "significant": false,
   "wf_status": "PASS",
-  "timestamp": "2026-03-15T22:31:36.468805"
+  "wf_trades": 2,
+  "day_shuffle_p": 0.06387225548902195,
+  "day_shuffle_mean": -23.868488828760736,
+  "day_shuffle_std": 33.5168974872218,
+  "signal_shift_p": 0.3992015968063872,
+  "signal_shift_mean": -4.673485857056896,
+  "signal_shift_std": 21.916477152084582,
+  "combined_p": 0.06387225548902195,
+  "timestamp": "2026-03-16T01:36:59.754689",
+  "signal_mode": "simple"
 }

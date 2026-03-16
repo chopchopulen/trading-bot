@@ -1,11 +1,15 @@
 {
   "stock": "COST",
-  "actual_sharpe": 6.837538553773108,
-  "p_value": 0.08791208791208792,
-  "mean_perm_sharpe": -24.240795237735075,
-  "std_perm_sharpe": 61.32539897939165,
-  "n_perms": 1000,
-  "significant": false,
+  "actual_sharpe": 8.143865061848429,
   "wf_status": "PASS",
-  "timestamp": "2026-03-15T22:38:49.555075"
+  "wf_trades": 4,
+  "day_shuffle_p": 0.09181636726546906,
+  "day_shuffle_mean": -12.479697209642996,
+  "day_shuffle_std": 34.03403460015211,
+  "signal_shift_p": 0.13373253493013973,
+  "signal_shift_mean": -7.344589030419776,
+  "signal_shift_std": 28.042031074149218,
+  "combined_p": 0.09181636726546906,
+  "timestamp": "2026-03-16T01:25:37.175986",
+  "signal_mode": "simple"
 }
