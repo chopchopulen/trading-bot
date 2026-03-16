@@ -56,6 +56,9 @@ RSI_PERIOD = 7
 BB_PERIOD_RANGE = [15, 20, 25]
 BB_STD_RANGE = [1.5, 2.0, 2.5]
 
+# ── Score threshold range ─────────────────────────────────────────
+SCORE_THRESHOLD_RANGE = [4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0]
+
 # ── Transaction cost model ───────────────────────────────────────
 COST_MODEL_ENABLED = True
 
@@ -200,7 +203,8 @@ def calculate_vwap(bars):
     return cum_tp_vol / cum_vol
 
 # ── Run single backtest ───────────────────────────────────────────
-def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_std):
+def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_std,
+                 score_threshold=6.0):
     close = bars["close"]
     fast_ema = calculate_ema(close, fast)
     slow_ema = calculate_ema(close, slow)
@@ -210,8 +214,15 @@ def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_st
     atr = calculate_atr(bars)
     vwap = calculate_vwap(bars)
 
+    # Volume: 20-period rolling average
+    volume = bars["volume"]
+    avg_volume = volume.rolling(window=20).mean()
+
     spy_close = spy_bars["close"].reindex(close.index, method="ffill")
     spy_ema = calculate_ema(spy_close, REGIME_EMA)
+
+    # Sell threshold is buy threshold - 0.5 (matches tier gap pattern)
+    sell_threshold = score_threshold - 0.5
 
     cash = STARTING_CASH
     position = 0
@@ -227,9 +238,9 @@ def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_st
 
         price = close.iloc[i]
         uptrend = spy_close.iloc[i] > spy_ema.iloc[i]
-        macd_bullish = macd_line.iloc[i] > signal_line.iloc[i]
-        macd_bearish = macd_line.iloc[i] < signal_line.iloc[i]
         cur_vwap = vwap.iloc[i]
+        cur_volume = volume.iloc[i]
+        cur_avg_volume = avg_volume.iloc[i]
 
         # ATR-based stop loss and take profit
         if position > 0:
@@ -244,16 +255,16 @@ def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_st
                 last_trade = i
                 continue
 
-        # Buy signal (weighted scoring)
+        # Buy signal (weighted scoring with volume)
         buy_score, _ = signals.calculate_buy_score(
             fast_ema.iloc[i], slow_ema.iloc[i],
             rsi.iloc[i], rsi_buy,
             price, bb_lower.iloc[i],
             macd_line.iloc[i], signal_line.iloc[i],
-            cur_vwap, uptrend, 0
+            cur_vwap, uptrend, 0,
+            current_volume=cur_volume, avg_volume=cur_avg_volume
         )
-        # Use T1 threshold for backtesting (most permissive)
-        if (buy_score >= signals.BUY_THRESHOLD_T1 and
+        if (buy_score >= score_threshold and
             position == 0 and cash >= price * QUANTITY and
             not pd.isna(atr.iloc[i])):
             buy_cost = calculate_trade_cost(STOCK, price, QUANTITY, "buy")
@@ -273,7 +284,7 @@ def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_st
                 macd_line.iloc[i], signal_line.iloc[i],
                 cur_vwap
             )
-            if sell_score < signals.SELL_THRESHOLD_T1:
+            if sell_score < sell_threshold:
                 continue
             sell_cost = calculate_trade_cost(STOCK, price, position, "sell")
             pnl = (price - buy_price) * position - buy_cost_stored - sell_cost
@@ -316,16 +327,18 @@ def split_data(bars, spy_bars, test_days):
 # ── Build parameter grid ──────────────────────────────────────────
 def build_param_grid():
     params = []
-    for fast, slow, rsi_buy, rsi_sell, bb_period, bb_std in itertools.product(
+    for fast, slow, rsi_buy, rsi_sell, bb_period, bb_std, threshold in itertools.product(
         EMA_FAST_RANGE, EMA_SLOW_RANGE,
         RSI_BUY_RANGE, RSI_SELL_RANGE,
-        BB_PERIOD_RANGE, BB_STD_RANGE
+        BB_PERIOD_RANGE, BB_STD_RANGE,
+        SCORE_THRESHOLD_RANGE
     ):
         if fast < slow:
             params.append({
                 "fast": fast, "slow": slow,
                 "rsi_buy": rsi_buy, "rsi_sell": rsi_sell,
-                "bb_period": bb_period, "bb_std": bb_std
+                "bb_period": bb_period, "bb_std": bb_std,
+                "score_threshold": threshold
             })
     return params
 
@@ -362,7 +375,8 @@ def run_walk_forward():
             train_bars, train_spy,
             p["fast"], p["slow"],
             p["rsi_buy"], p["rsi_sell"],
-            p["bb_period"], p["bb_std"]
+            p["bb_period"], p["bb_std"],
+            p["score_threshold"]
         )
         result["params"] = p
         results.append(result)
@@ -373,14 +387,15 @@ def run_walk_forward():
     print(f"\n{'='*80}")
     print(f"TOP 10 PARAMETER SETS — TRAINING DATA ({STOCK})")
     print(f"{'='*80}")
-    print(f"  {'EMA':<10} {'RSI':<12} {'BB':<12} {'Return':<10} {'Trades':<8} {'Win%':<8} {'Sharpe':<8}")
-    print(f"  {'-'*75}")
+    print(f"  {'EMA':<10} {'RSI':<12} {'BB':<12} {'Thresh':<8} {'Return':<10} {'Trades':<8} {'Win%':<8} {'Sharpe':<8}")
+    print(f"  {'-'*85}")
 
     for r in top_10:
         p = r["params"]
         print(f"  EMA {p['fast']}/{p['slow']:2} | "
               f"{p['rsi_buy']}/{p['rsi_sell']} | "
               f"BB {p['bb_period']}/{p['bb_std']} | "
+              f"T:{p['score_threshold']:.1f} | "
               f"{r['return']:+6.2f}% | "
               f"{r['trades']:4} trades | "
               f"{r['win_rate']:5.1f}% | "
@@ -389,8 +404,8 @@ def run_walk_forward():
     print(f"\n{'='*80}")
     print(f"VERIFYING TOP 10 ON UNSEEN TEST DATA ({STOCK})")
     print(f"{'='*80}")
-    print(f"  {'EMA':<10} {'RSI':<12} {'BB':<12} {'Train':<10} {'Test':<10} {'Verdict':<10}")
-    print(f"  {'-'*70}")
+    print(f"  {'EMA':<10} {'RSI':<12} {'BB':<12} {'Thresh':<8} {'Train':<10} {'Test':<10} {'Verdict':<10}")
+    print(f"  {'-'*80}")
 
     verified_results = []
     for r in top_10:
@@ -399,7 +414,8 @@ def run_walk_forward():
             test_bars, test_spy,
             p["fast"], p["slow"],
             p["rsi_buy"], p["rsi_sell"],
-            p["bb_period"], p["bb_std"]
+            p["bb_period"], p["bb_std"],
+            p["score_threshold"]
         )
         test_result["params"] = p
         test_result["train_return"] = r["return"]
@@ -417,6 +433,7 @@ def run_walk_forward():
         print(f"  EMA {p['fast']}/{p['slow']:2} | "
               f"{p['rsi_buy']}/{p['rsi_sell']} | "
               f"BB {p['bb_period']}/{p['bb_std']} | "
+              f"T:{p['score_threshold']:.1f} | "
               f"Train: {r['return']:+.2f}% | "
               f"Test: {test_result['return']:+.2f}% | "
               f"{verdict}")
@@ -445,6 +462,7 @@ def run_walk_forward():
     print(f"   RSI Sell:    {best_p['rsi_sell']}")
     print(f"   BB Period:   {best_p['bb_period']}")
     print(f"   BB Std:      {best_p['bb_std']}")
+    print(f"   Score Thresh:{best_p['score_threshold']:.1f}")
     print(f"   Train Return:{best['train_return']:+.2f}%")
     print(f"   Test Return: {best['return']:+.2f}%")
     print(f"   Test Sharpe: {best['sharpe']:.2f}")
@@ -474,6 +492,7 @@ if __name__ == "__main__":
                     "stock": stock,
                     "status": result["status"],
                     "best_params": result["params"],
+                    "optimal_threshold": result["params"]["score_threshold"],
                     "train_return": result["train_return"],
                     "test_return": result["return"],
                     "test_sharpe": result["sharpe"],
@@ -496,6 +515,7 @@ if __name__ == "__main__":
                 print(f"  {stock}: EMA {p['fast']}/{p['slow']} | "
                       f"RSI {p['rsi_buy']}/{p['rsi_sell']} | "
                       f"BB {p['bb_period']}/{p['bb_std']} | "
+                      f"Thresh: {p['score_threshold']:.1f} | "
                       f"Return: {result['return']:+.2f}% | "
                       f"Sharpe: {result['sharpe']:.2f}")
 

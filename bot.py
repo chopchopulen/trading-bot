@@ -99,7 +99,11 @@ for _stock in STOCKS:
         with open(_path) as _f:
             _data = json.load(_f)
             if _data.get("status") in ("PASS", "WEAK"):
-                STOCK_PARAMS[_stock] = _data["best_params"]
+                _params = _data["best_params"]
+                # Also store optimal_threshold from top-level or from best_params
+                if "optimal_threshold" in _data:
+                    _params["optimal_threshold"] = _data["optimal_threshold"]
+                STOCK_PARAMS[_stock] = _params
 
 # ── Load overnight backtest results for additional filtering ──
 BACKTEST_RESULTS = {}
@@ -113,8 +117,10 @@ def get_params(stock):
     """Return per-stock params if available, otherwise defaults."""
     if stock in STOCK_PARAMS:
         p = STOCK_PARAMS[stock]
-        return p["fast"], p["slow"], p["rsi_buy"], p["rsi_sell"], p["bb_period"], p["bb_std"]
-    return FAST_MA, SLOW_MA, RSI_OVERSOLD, RSI_OVERBOUGHT, BB_PERIOD, BB_STD
+        threshold = p.get("optimal_threshold", p.get("score_threshold", 6.0))
+        return (p["fast"], p["slow"], p["rsi_buy"], p["rsi_sell"],
+                p["bb_period"], p["bb_std"], threshold)
+    return FAST_MA, SLOW_MA, RSI_OVERSOLD, RSI_OVERBOUGHT, BB_PERIOD, BB_STD, 6.0
 
 # ── MACD parameters ───────────────────────────────────────────────
 MACD_FAST = 12
@@ -591,7 +597,7 @@ def run_bot():
             bars = get_bars(stock)
 
             # Get per-stock optimized parameters (or defaults)
-            s_fast, s_slow, s_rsi_buy, s_rsi_sell, s_bb_period, s_bb_std = get_params(stock)
+            s_fast, s_slow, s_rsi_buy, s_rsi_sell, s_bb_period, s_bb_std, s_threshold = get_params(stock)
 
             # Calculate all indicators using signals module
             fast, slow = signals.get_moving_averages(bars, s_fast, s_slow)
@@ -675,7 +681,7 @@ def run_bot():
                     fast, slow, rsi, s_rsi_sell, price, bb_upper,
                     macd_line, signal_line, vwap
                 )
-                sell_threshold = signals.get_sell_threshold(stock, TIER1_STOCKS, TIER2_STOCKS)
+                sell_threshold = s_threshold - 0.5
 
                 if sell_score >= sell_threshold:
                     api.submit_order(
@@ -704,7 +710,7 @@ def run_bot():
                     fast, slow, rsi, s_rsi_buy, price, bb_lower,
                     macd_line, signal_line, vwap
                 )
-                cover_threshold = signals.get_cover_threshold(stock, TIER1_STOCKS, TIER2_STOCKS)
+                cover_threshold = s_threshold - 0.5
 
                 if cover_score >= cover_threshold:
                     cover_qty = abs(position)
@@ -741,19 +747,28 @@ def run_bot():
                 stock_sector = get_stock_sector(stock)
                 sector_count = count_sector_positions(stock_sector, open_positions)
 
-                # Calculate buy score
+                # Get volume for scoring
+                cur_volume = None
+                cur_avg_volume = None
+                if len(bars) >= 20:
+                    cur_volume = bars["volume"].iloc[-1]
+                    cur_avg_volume = bars["volume"].rolling(window=20).mean().iloc[-1]
+
+                # Calculate buy score (per-stock optimized threshold)
                 buy_score, buy_bd = signals.calculate_buy_score(
                     fast, slow, rsi, s_rsi_buy, price, bb_lower,
-                    macd_line, signal_line, vwap, uptrend, sentiment
+                    macd_line, signal_line, vwap, uptrend, sentiment,
+                    current_volume=cur_volume, avg_volume=cur_avg_volume
                 )
-                buy_threshold = signals.get_buy_threshold(stock, TIER1_STOCKS, TIER2_STOCKS)
+                buy_threshold = s_threshold
 
-                # Calculate short score
+                # Calculate short score (per-stock threshold + 1.0 for conservatism)
                 short_score, short_bd = signals.calculate_short_score(
                     fast, slow, rsi, s_rsi_sell, price, bb_upper,
-                    macd_line, signal_line, vwap, not uptrend, sentiment
+                    macd_line, signal_line, vwap, not uptrend, sentiment,
+                    current_volume=cur_volume, avg_volume=cur_avg_volume
                 )
-                short_threshold = signals.get_short_threshold(stock, TIER1_STOCKS, TIER2_STOCKS)
+                short_threshold = s_threshold + 1.0
 
                 can_buy = (buy_score >= buy_threshold and
                           not buys_blocked and
@@ -894,7 +909,9 @@ print(f"\n  Short eligible: {', '.join(SHORT_ELIGIBLE)}")
 
 print(f"\n  Walk-forward params loaded: {len(STOCK_PARAMS)} stocks")
 if STOCK_PARAMS:
-    print(f"    {', '.join(STOCK_PARAMS.keys())}")
+    for _s, _p in STOCK_PARAMS.items():
+        _t = _p.get("optimal_threshold", _p.get("score_threshold", 6.0))
+        print(f"    {_s}: EMA {_p['fast']}/{_p['slow']} | Thresh: {_t:.1f}")
 else:
     print("    ⚠️ None — using defaults for all stocks")
 

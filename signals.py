@@ -18,8 +18,10 @@ W_MACD      = 1.5   # MACD bullish crossover
 W_VWAP      = 1.0   # Price below VWAP
 W_REGIME    = 2.5   # SPY regime (uptrend for longs, downtrend for shorts)
 W_SENTIMENT = 0.5   # News sentiment
+W_VOLUME    = 1.0   # Volume above 20-period average
+W_VOLUME_PENALTY = -0.5  # Volume below 50% of average (low conviction)
 
-# Max possible: 12.5 (12.0 without sentiment in backtests)
+# Max possible: 13.5 (13.0 without sentiment in backtests)
 
 # ── Tier Thresholds ─────────────────────────────────────────────────
 BUY_THRESHOLD_T1  = 6.0    # Tier 1: proven edge
@@ -248,7 +250,8 @@ def calculate_vwap_series(bars):
 
 def calculate_buy_score(fast_val, slow_val, rsi_val, rsi_buy_level,
                         price, bb_lower, macd_line, signal_line,
-                        vwap, regime_uptrend, sentiment=0):
+                        vwap, regime_uptrend, sentiment=0,
+                        current_volume=None, avg_volume=None):
     """
     Calculate weighted buy score for a long entry.
     Returns (score, breakdown_dict).
@@ -291,6 +294,15 @@ def calculate_buy_score(fast_val, slow_val, rsi_val, rsi_buy_level,
         score += W_SENTIMENT
         breakdown["sentiment"] = W_SENTIMENT
 
+    # Volume confirmation
+    if current_volume is not None and avg_volume is not None and avg_volume > 0:
+        if current_volume > avg_volume:
+            score += W_VOLUME
+            breakdown["volume"] = W_VOLUME
+        elif current_volume < avg_volume * 0.5:
+            score += W_VOLUME_PENALTY
+            breakdown["volume"] = W_VOLUME_PENALTY
+
     return score, breakdown
 
 
@@ -329,7 +341,8 @@ def calculate_sell_score(fast_val, slow_val, rsi_val, rsi_sell_level,
 
 def calculate_short_score(fast_val, slow_val, rsi_val, rsi_sell_level,
                           price, bb_upper, macd_line, signal_line,
-                          vwap, regime_downtrend, sentiment=0):
+                          vwap, regime_downtrend, sentiment=0,
+                          current_volume=None, avg_volume=None):
     """
     Calculate weighted short entry score (mirror of buy score, inverted).
     Returns (score, breakdown_dict).
@@ -371,6 +384,15 @@ def calculate_short_score(fast_val, slow_val, rsi_val, rsi_sell_level,
     if sentiment < -0.15:
         score += W_SENTIMENT
         breakdown["sentiment"] = W_SENTIMENT
+
+    # Volume confirmation
+    if current_volume is not None and avg_volume is not None and avg_volume > 0:
+        if current_volume > avg_volume:
+            score += W_VOLUME
+            breakdown["volume"] = W_VOLUME
+        elif current_volume < avg_volume * 0.5:
+            score += W_VOLUME_PENALTY
+            breakdown["volume"] = W_VOLUME_PENALTY
 
     return score, breakdown
 
