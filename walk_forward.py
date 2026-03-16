@@ -26,17 +26,22 @@ STOCKS_TO_TEST = [
 STOCK = "AAPL"
 STARTING_CASH = 100000
 QUANTITY = 10
-LOOKBACK_DAYS = 60
+LOOKBACK_DAYS = 90
 
 # ── Walk forward settings ─────────────────────────────────────────
-TRAIN_DAYS = 40
-TEST_DAYS = 20
+TRAIN_DAYS = 60
+TEST_DAYS = 30
 
 # ── Risk management ───────────────────────────────────────────────
 ATR_PERIOD = 14
 ATR_STOP_MULT = 1.5
 ATR_PROFIT_MULT = 3.0
 REGIME_EMA = 50
+
+# ── Simple signal mode ──────────────────────────────────────────
+# When True: use ONLY EMA crossover + RSI + ATR stops (no BB, MACD, VWAP)
+# Produces 10-20x more trades for better statistical testing
+SIMPLE_SIGNAL_MODE = False
 
 # ── Fine grained parameter ranges ────────────────────────────────
 # ── Stage 1 — EMA + RSI (coarse) ─────────────────────────────────
@@ -238,11 +243,18 @@ def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_st
                 last_trade = i
                 continue
 
-        # Buy — matches live bot: OR logic for RSI/BB + (MACD OR VWAP)
-        if (uptrend and
-            fast_ema.iloc[i] > slow_ema.iloc[i] and
-            (rsi.iloc[i] < rsi_buy or price <= bb_lower.iloc[i]) and
-            (macd_bullish or (pd.isna(cur_vwap) or price < cur_vwap)) and
+        # Buy signal
+        if SIMPLE_SIGNAL_MODE:
+            buy_signal = (uptrend and
+                          fast_ema.iloc[i] > slow_ema.iloc[i] and
+                          rsi.iloc[i] < rsi_buy)
+        else:
+            buy_signal = (uptrend and
+                          fast_ema.iloc[i] > slow_ema.iloc[i] and
+                          (rsi.iloc[i] < rsi_buy or price <= bb_lower.iloc[i]) and
+                          (macd_bullish or (pd.isna(cur_vwap) or price < cur_vwap)))
+
+        if (buy_signal and
             position == 0 and cash >= price * QUANTITY and
             not pd.isna(atr.iloc[i])):
             buy_cost = calculate_trade_cost(STOCK, price, QUANTITY, "buy")
@@ -253,11 +265,18 @@ def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_st
             buy_cost_stored = buy_cost
             last_trade = i
 
-        # Sell — matches live bot: OR logic for RSI/BB + (MACD OR VWAP)
-        elif (fast_ema.iloc[i] < slow_ema.iloc[i] and
-              (rsi.iloc[i] > rsi_sell or price >= bb_upper.iloc[i]) and
-              (macd_bearish or (pd.isna(cur_vwap) or price > cur_vwap)) and
-              position > 0):
+        # Sell signal
+        elif position > 0:
+            if SIMPLE_SIGNAL_MODE:
+                sell_signal = (fast_ema.iloc[i] < slow_ema.iloc[i] and
+                               rsi.iloc[i] > rsi_sell)
+            else:
+                sell_signal = (fast_ema.iloc[i] < slow_ema.iloc[i] and
+                               (rsi.iloc[i] > rsi_sell or price >= bb_upper.iloc[i]) and
+                               (macd_bearish or (pd.isna(cur_vwap) or price > cur_vwap)))
+
+            if not sell_signal:
+                continue
             sell_cost = calculate_trade_cost(STOCK, price, position, "sell")
             pnl = (price - buy_price) * position - buy_cost_stored - sell_cost
             cash += (price * position) - sell_cost

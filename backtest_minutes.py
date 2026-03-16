@@ -17,7 +17,7 @@ api = tradeapi.REST(
 STOCK = "AAPL"
 STARTING_CASH = 100000
 QUANTITY = 10
-LOOKBACK_DAYS = 30
+LOOKBACK_DAYS = 90
 
 # ── ATR-based stop loss and take profit ──────────────────────────
 ATR_PERIOD = 14
@@ -26,6 +26,11 @@ ATR_PROFIT_MULT = 3.0         # Take profit = entry + 3.0 * ATR
 
 # ── Regime detection settings ─────────────────────────────────────
 REGIME_EMA = 50             # If price > 50 EMA = uptrend, below = downtrend
+
+# ── Simple signal mode ──────────────────────────────────────────
+# When True: use ONLY EMA crossover + RSI + ATR stops (no BB, MACD, VWAP)
+# Produces 10-20x more trades for better statistical testing
+SIMPLE_SIGNAL_MODE = False
 
 # ── Parameter grid ────────────────────────────────────────────────
 PARAM_GRID = [
@@ -259,11 +264,18 @@ def run_single_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sel
                 last_trade_bar = i
                 continue
 
-        # Buy — matches live bot: OR logic for RSI/BB + (MACD OR VWAP)
-        if (market_uptrend and
-            fast_val > slow_val and
-            (rsi_val < rsi_buy or price <= lower) and
-            (macd_bullish or (pd.isna(cur_vwap) or price < cur_vwap)) and
+        # Buy signal
+        if SIMPLE_SIGNAL_MODE:
+            buy_signal = (market_uptrend and
+                          fast_val > slow_val and
+                          rsi_val < rsi_buy)
+        else:
+            buy_signal = (market_uptrend and
+                          fast_val > slow_val and
+                          (rsi_val < rsi_buy or price <= lower) and
+                          (macd_bullish or (pd.isna(cur_vwap) or price < cur_vwap)))
+
+        if (buy_signal and
             position == 0 and
             cash >= price * QUANTITY and
             not pd.isna(atr.iloc[i])):
@@ -276,11 +288,18 @@ def run_single_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sel
             last_trade_bar = i
             trades.append({"action": "BUY", "price": price})
 
-        # Sell — matches live bot: OR logic for RSI/BB + (MACD OR VWAP)
-        elif (fast_val < slow_val and
-              (rsi_val > rsi_sell or price >= upper) and
-              (macd_bearish or (pd.isna(cur_vwap) or price > cur_vwap)) and
-              position > 0):
+        # Sell signal
+        elif position > 0:
+            if SIMPLE_SIGNAL_MODE:
+                sell_signal = (fast_val < slow_val and
+                               rsi_val > rsi_sell)
+            else:
+                sell_signal = (fast_val < slow_val and
+                               (rsi_val > rsi_sell or price >= upper) and
+                               (macd_bearish or (pd.isna(cur_vwap) or price > cur_vwap)))
+
+            if not sell_signal:
+                continue
             sell_cost = calculate_trade_cost(STOCK, price, position, "sell")
             pnl = (price - buy_price) * position - buy_cost_stored - sell_cost
             cash += (price * position) - sell_cost
@@ -384,10 +403,17 @@ def run_full_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sell)
                 last_trade_bar = i
                 continue
 
-        if (market_uptrend and
-            fast_val > slow_val and
-            (rsi_val < rsi_buy or price <= lower) and
-            (macd_bullish or (pd.isna(cur_vwap) or price < cur_vwap)) and
+        if SIMPLE_SIGNAL_MODE:
+            buy_sig = (market_uptrend and
+                       fast_val > slow_val and
+                       rsi_val < rsi_buy)
+        else:
+            buy_sig = (market_uptrend and
+                       fast_val > slow_val and
+                       (rsi_val < rsi_buy or price <= lower) and
+                       (macd_bullish or (pd.isna(cur_vwap) or price < cur_vwap)))
+
+        if (buy_sig and
             position == 0 and
             cash >= price * QUANTITY and
             not pd.isna(atr.iloc[i])):
@@ -403,10 +429,17 @@ def run_full_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sell)
                 "price": price, "rsi": rsi_val
             })
 
-        elif (fast_val < slow_val and
-              (rsi_val > rsi_sell or price >= upper) and
-              (macd_bearish or (pd.isna(cur_vwap) or price > cur_vwap)) and
-              position > 0):
+        elif position > 0:
+            if SIMPLE_SIGNAL_MODE:
+                sell_sig = (fast_val < slow_val and
+                            rsi_val > rsi_sell)
+            else:
+                sell_sig = (fast_val < slow_val and
+                            (rsi_val > rsi_sell or price >= upper) and
+                            (macd_bearish or (pd.isna(cur_vwap) or price > cur_vwap)))
+
+            if not sell_sig:
+                continue
             sell_cost = calculate_trade_cost(STOCK, price, position, "sell")
             pnl = (price - buy_price) * position - buy_cost_stored - sell_cost
             cash += (price * position) - sell_cost
