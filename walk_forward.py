@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import itertools
 import os
+import json
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import matplotlib.pyplot as plt
@@ -16,15 +17,20 @@ BASE_URL = "https://paper-api.alpaca.markets"
 
 api = tradeapi.REST(API_KEY, SECRET_KEY, BASE_URL)
 
-STOCKS_TO_TEST = ["AAPL", "TSLA", "NVDA", "MSFT", "AMZN", "GOOGL", "META", "AMD", "NFLX", "QQQ"]
+STOCKS_TO_TEST = [
+    "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "TSLA", "META", "AMD", "NFLX", "CRM",
+    "JPM", "BAC", "GS", "V", "SPY", "QQQ",
+    "XOM", "CVX", "JNJ", "PFE", "UNH",
+    "WMT", "COST", "NKE", "INTC", "QCOM"
+]
 STOCK = "AAPL"
 STARTING_CASH = 100000
 QUANTITY = 10
-LOOKBACK_DAYS = 30
+LOOKBACK_DAYS = 60
 
 # ── Walk forward settings ─────────────────────────────────────────
-TRAIN_DAYS = 20
-TEST_DAYS = 10
+TRAIN_DAYS = 40
+TEST_DAYS = 20
 
 # ── Risk management ───────────────────────────────────────────────
 ATR_PERIOD = 14
@@ -36,8 +42,8 @@ REGIME_EMA = 50
 # ── Stage 1 — EMA + RSI (coarse) ─────────────────────────────────
 EMA_FAST_RANGE = range(2, 10, 2)      # 2, 4, 6, 8
 EMA_SLOW_RANGE = range(7, 25, 3)      # 7, 10, 13, 16, 19, 22
-RSI_BUY_RANGE = range(25, 45, 5)      # 25, 30, 35, 40
-RSI_SELL_RANGE = range(55, 75, 5)     # 55, 60, 65, 70
+RSI_BUY_RANGE = range(30, 50, 5)      # 30, 35, 40, 45
+RSI_SELL_RANGE = range(50, 70, 5)     # 50, 55, 60, 65
 RSI_PERIOD = 7
 
 # ── Stage 2 — BB (tested separately after EMA+RSI found) ─────────
@@ -210,7 +216,7 @@ def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_st
     last_trade = -10
 
     for i in range(max(slow, bb_period, RSI_PERIOD, REGIME_EMA, 35) + 1, len(bars)):
-        if i - last_trade < 5:
+        if i - last_trade < 2:
             continue
 
         price = close.iloc[i]
@@ -232,12 +238,11 @@ def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_st
                 last_trade = i
                 continue
 
-        # Buy — matches live bot: OR logic for RSI/BB + MACD + VWAP
+        # Buy — matches live bot: OR logic for RSI/BB + (MACD OR VWAP)
         if (uptrend and
             fast_ema.iloc[i] > slow_ema.iloc[i] and
             (rsi.iloc[i] < rsi_buy or price <= bb_lower.iloc[i]) and
-            macd_bullish and
-            (pd.isna(cur_vwap) or price < cur_vwap) and
+            (macd_bullish or (pd.isna(cur_vwap) or price < cur_vwap)) and
             position == 0 and cash >= price * QUANTITY and
             not pd.isna(atr.iloc[i])):
             buy_cost = calculate_trade_cost(STOCK, price, QUANTITY, "buy")
@@ -248,11 +253,10 @@ def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_st
             buy_cost_stored = buy_cost
             last_trade = i
 
-        # Sell — matches live bot: OR logic for RSI/BB + MACD + VWAP
+        # Sell — matches live bot: OR logic for RSI/BB + (MACD OR VWAP)
         elif (fast_ema.iloc[i] < slow_ema.iloc[i] and
               (rsi.iloc[i] > rsi_sell or price >= bb_upper.iloc[i]) and
-              macd_bearish and
-              (pd.isna(cur_vwap) or price > cur_vwap) and
+              (macd_bearish or (pd.isna(cur_vwap) or price > cur_vwap)) and
               position > 0):
             sell_cost = calculate_trade_cost(STOCK, price, position, "sell")
             pnl = (price - buy_price) * position - buy_cost_stored - sell_cost
@@ -401,36 +405,43 @@ def run_walk_forward():
               f"{verdict}")
 
     passed = [r for r in verified_results if r["verdict"] == "✅ PASS"]
+    weak = [r for r in verified_results if r["verdict"] == "⚠️ WEAK"]
 
     if passed:
         best = max(passed, key=lambda x: x["sharpe"])
-        best_p = best["params"]
-
-        print(f"\n{'='*80}")
-        print(f"🏆 BEST VERIFIED PARAMETERS FOR {STOCK}:")
-        print(f"{'='*80}")
-        print(f"   EMA Fast:    {best_p['fast']}")
-        print(f"   EMA Slow:    {best_p['slow']}")
-        print(f"   RSI Buy:     {best_p['rsi_buy']}")
-        print(f"   RSI Sell:    {best_p['rsi_sell']}")
-        print(f"   BB Period:   {best_p['bb_period']}")
-        print(f"   BB Std:      {best_p['bb_std']}")
-        print(f"   Train Return:{best['train_return']:+.2f}%")
-        print(f"   Test Return: {best['return']:+.2f}%")
-        print(f"   Test Sharpe: {best['sharpe']:.2f}")
-        print(f"   Win Rate:    {best['win_rate']:.1f}%")
-
-        return best
-
+        status = "PASS"
+    elif weak:
+        best = max(weak, key=lambda x: x["return"])
+        status = "WEAK"
     else:
         print(f"\n⚠️ No parameters passed for {STOCK}")
         print(f"   Market conditions too different between train/test periods")
         return None
 
+    best_p = best["params"]
+    print(f"\n{'='*80}")
+    print(f"🏆 BEST VERIFIED PARAMETERS FOR {STOCK} ({status}):")
+    print(f"{'='*80}")
+    print(f"   EMA Fast:    {best_p['fast']}")
+    print(f"   EMA Slow:    {best_p['slow']}")
+    print(f"   RSI Buy:     {best_p['rsi_buy']}")
+    print(f"   RSI Sell:    {best_p['rsi_sell']}")
+    print(f"   BB Period:   {best_p['bb_period']}")
+    print(f"   BB Std:      {best_p['bb_std']}")
+    print(f"   Train Return:{best['train_return']:+.2f}%")
+    print(f"   Test Return: {best['return']:+.2f}%")
+    print(f"   Test Sharpe: {best['sharpe']:.2f}")
+    print(f"   Win Rate:    {best['win_rate']:.1f}%")
+
+    best["status"] = status
+    return best
+
 # ── Run all stocks ────────────────────────────────────────────────
 try:
     all_verified = {}
     spy_bars_cache = None
+
+    os.makedirs("walk_forward_results", exist_ok=True)
 
     for stock in STOCKS_TO_TEST:
         STOCK = stock
@@ -440,6 +451,20 @@ try:
         result = run_walk_forward()
         if result:
             all_verified[stock] = result
+            # Save per-stock JSON
+            json_out = {
+                "stock": stock,
+                "status": result["status"],
+                "best_params": result["params"],
+                "train_return": result["train_return"],
+                "test_return": result["return"],
+                "test_sharpe": result["sharpe"],
+                "test_trades": result["trades"],
+                "test_win_rate": result["win_rate"],
+                "timestamp": datetime.now().isoformat()
+            }
+            with open(f"walk_forward_results/{stock}.json", "w") as f:
+                json.dump(json_out, f, indent=2)
 
     # Cross stock summary
     print(f"\n{'='*80}")

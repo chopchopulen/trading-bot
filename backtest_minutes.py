@@ -220,7 +220,7 @@ def run_single_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sel
     last_trade_bar = -10
 
     for i in range(max(slow, BB_PERIOD, rsi_period, REGIME_EMA, 35) + 1, len(bars)):
-        if i - last_trade_bar < 5:
+        if i - last_trade_bar < 2:
             continue
 
         price = close.iloc[i]
@@ -259,12 +259,11 @@ def run_single_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sel
                 last_trade_bar = i
                 continue
 
-        # Buy — matches live bot: OR logic for RSI/BB + MACD + VWAP
+        # Buy — matches live bot: OR logic for RSI/BB + (MACD OR VWAP)
         if (market_uptrend and
             fast_val > slow_val and
             (rsi_val < rsi_buy or price <= lower) and
-            macd_bullish and
-            (pd.isna(cur_vwap) or price < cur_vwap) and
+            (macd_bullish or (pd.isna(cur_vwap) or price < cur_vwap)) and
             position == 0 and
             cash >= price * QUANTITY and
             not pd.isna(atr.iloc[i])):
@@ -277,11 +276,10 @@ def run_single_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sel
             last_trade_bar = i
             trades.append({"action": "BUY", "price": price})
 
-        # Sell — matches live bot: OR logic for RSI/BB + MACD + VWAP
+        # Sell — matches live bot: OR logic for RSI/BB + (MACD OR VWAP)
         elif (fast_val < slow_val and
               (rsi_val > rsi_sell or price >= upper) and
-              macd_bearish and
-              (pd.isna(cur_vwap) or price > cur_vwap) and
+              (macd_bearish or (pd.isna(cur_vwap) or price > cur_vwap)) and
               position > 0):
             sell_cost = calculate_trade_cost(STOCK, price, position, "sell")
             pnl = (price - buy_price) * position - buy_cost_stored - sell_cost
@@ -339,7 +337,7 @@ def run_full_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sell)
     last_trade_bar = -10
 
     for i in range(max(slow, BB_PERIOD, rsi_period, REGIME_EMA, 35) + 1, len(bars)):
-        if i - last_trade_bar < 5:
+        if i - last_trade_bar < 2:
             continue
 
         price = close.iloc[i]
@@ -389,8 +387,7 @@ def run_full_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sell)
         if (market_uptrend and
             fast_val > slow_val and
             (rsi_val < rsi_buy or price <= lower) and
-            macd_bullish and
-            (pd.isna(cur_vwap) or price < cur_vwap) and
+            (macd_bullish or (pd.isna(cur_vwap) or price < cur_vwap)) and
             position == 0 and
             cash >= price * QUANTITY and
             not pd.isna(atr.iloc[i])):
@@ -408,8 +405,7 @@ def run_full_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sell)
 
         elif (fast_val < slow_val and
               (rsi_val > rsi_sell or price >= upper) and
-              macd_bearish and
-              (pd.isna(cur_vwap) or price > cur_vwap) and
+              (macd_bearish or (pd.isna(cur_vwap) or price > cur_vwap)) and
               position > 0):
             sell_cost = calculate_trade_cost(STOCK, price, position, "sell")
             pnl = (price - buy_price) * position - buy_cost_stored - sell_cost

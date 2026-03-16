@@ -78,7 +78,7 @@ STOCK_NAMES = {
     "QCOM": "Qualcomm"
 }
 
-# ── Strategy parameters (walk forward optimized) ──────────────────
+# ── Strategy parameters (defaults, overridden by walk-forward results) ──
 FAST_MA = 6
 SLOW_MA = 10
 RSI_PERIOD = 7
@@ -86,6 +86,23 @@ RSI_OVERSOLD = 35
 RSI_OVERBOUGHT = 55
 BB_PERIOD = 15
 BB_STD = 1.5
+
+# ── Load per-stock optimized parameters from walk-forward results ──
+STOCK_PARAMS = {}
+for _stock in STOCKS:
+    _path = f"walk_forward_results/{_stock}.json"
+    if os.path.exists(_path):
+        with open(_path) as _f:
+            _data = json.load(_f)
+            if _data.get("status") in ("PASS", "WEAK"):
+                STOCK_PARAMS[_stock] = _data["best_params"]
+
+def get_params(stock):
+    """Return per-stock params if available, otherwise defaults."""
+    if stock in STOCK_PARAMS:
+        p = STOCK_PARAMS[stock]
+        return p["fast"], p["slow"], p["rsi_buy"], p["rsi_sell"], p["bb_period"], p["bb_std"]
+    return FAST_MA, SLOW_MA, RSI_OVERSOLD, RSI_OVERBOUGHT, BB_PERIOD, BB_STD
 
 # ── MACD parameters ───────────────────────────────────────────────
 MACD_FAST = 12
@@ -229,12 +246,14 @@ def market_is_uptrend():
         return True
 
 # ── EMA Crossover ─────────────────────────────────────────────────
-def get_moving_averages(bars):
-    if len(bars) < SLOW_MA:
+def get_moving_averages(bars, fast_span=None, slow_span=None):
+    fast_span = fast_span or FAST_MA
+    slow_span = slow_span or SLOW_MA
+    if len(bars) < slow_span:
         return None, None
     close = bars["close"]
-    fast = close.ewm(span=FAST_MA, adjust=False).mean().iloc[-1]
-    slow = close.ewm(span=SLOW_MA, adjust=False).mean().iloc[-1]
+    fast = close.ewm(span=fast_span, adjust=False).mean().iloc[-1]
+    slow = close.ewm(span=slow_span, adjust=False).mean().iloc[-1]
     return fast, slow
 
 # ── RSI ───────────────────────────────────────────────────────────
@@ -253,14 +272,16 @@ def get_rsi(bars):
     return 100 - (100 / (1 + rs))
 
 # ── Bollinger Bands ───────────────────────────────────────────────
-def get_bollinger_bands(bars):
-    if len(bars) < BB_PERIOD:
+def get_bollinger_bands(bars, bb_period=None, bb_std=None):
+    bb_period = bb_period or BB_PERIOD
+    bb_std = bb_std or BB_STD
+    if len(bars) < bb_period:
         return None, None, None
     close = bars["close"]
-    middle = close.rolling(window=BB_PERIOD).mean().iloc[-1]
-    std = close.rolling(window=BB_PERIOD).std().iloc[-1]
-    upper = middle + (BB_STD * std)
-    lower = middle - (BB_STD * std)
+    middle = close.rolling(window=bb_period).mean().iloc[-1]
+    std = close.rolling(window=bb_period).std().iloc[-1]
+    upper = middle + (bb_std * std)
+    lower = middle - (bb_std * std)
     return upper, middle, lower
 
 # ── MACD ──────────────────────────────────────────────────────────
@@ -570,10 +591,13 @@ def run_bot():
         try:
             bars = get_bars(stock)
 
+            # Get per-stock optimized parameters (or defaults)
+            s_fast, s_slow, s_rsi_buy, s_rsi_sell, s_bb_period, s_bb_std = get_params(stock)
+
             # Calculate all indicators
-            fast, slow = get_moving_averages(bars)
+            fast, slow = get_moving_averages(bars, s_fast, s_slow)
             rsi = get_rsi(bars)
-            bb_upper, bb_middle, bb_lower = get_bollinger_bands(bars)
+            bb_upper, bb_middle, bb_lower = get_bollinger_bands(bars, s_bb_period, s_bb_std)
             macd_line, signal_line, histogram = get_macd(bars)
             atr = get_atr(bars)
 
@@ -634,14 +658,13 @@ def run_bot():
                     PENDING_ORDERS.discard(stock)
                     continue
 
-            # ── Buy: regime + EMA + (RSI OR BB) + MACD + VWAP ─
+            # ── Buy: regime + EMA + (RSI OR BB) + (MACD OR VWAP) ─
             if (uptrend and
                 not buys_blocked and
                 not at_max_positions and
                 fast > slow and
-                (rsi < RSI_OVERSOLD or price <= bb_lower) and
-                macd_bullish and
-                (vwap is None or price < vwap) and
+                (rsi < s_rsi_buy or price <= bb_lower) and
+                (macd_bullish or (vwap is None or price < vwap)) and
                 position == 0 and
                 stock not in PENDING_ORDERS):
 
@@ -667,11 +690,10 @@ def run_bot():
                       f"Stop: ${stop:.2f} | "
                       f"Target: ${target:.2f}")
 
-            # ── Sell: EMA + (RSI OR BB) + MACD + VWAP ────
+            # ── Sell: EMA + (RSI OR BB) + (MACD OR VWAP) ────
             elif (fast < slow and
-                  (rsi > RSI_OVERBOUGHT or price >= bb_upper) and
-                  macd_bearish and
-                  (vwap is None or price > vwap) and
+                  (rsi > s_rsi_sell or price >= bb_upper) and
+                  (macd_bearish or (vwap is None or price > vwap)) and
                   position > 0):
 
                 api.submit_order(
@@ -731,8 +753,12 @@ schedule.every().friday.at("15:55").do(show_positions)
 schedule.every(1).minutes.do(run_bot)
 
 print("🚀 Bot: EMA + RSI + BB + MACD + ATR Sizing + Sentiment + Kelly + Stop Loss + Regime!")
-print(f"   EMA: {FAST_MA}/{SLOW_MA} | RSI: {RSI_OVERSOLD}/{RSI_OVERBOUGHT} | "
+print(f"   Default EMA: {FAST_MA}/{SLOW_MA} | RSI: {RSI_OVERSOLD}/{RSI_OVERBOUGHT} | "
       f"BB: {BB_PERIOD}/{BB_STD} | MACD: {MACD_FAST}/{MACD_SLOW}/{MACD_SIGNAL}")
+if STOCK_PARAMS:
+    print(f"   📊 Per-stock optimized params loaded for {len(STOCK_PARAMS)} stocks: {', '.join(STOCK_PARAMS.keys())}")
+else:
+    print("   ⚠️ No walk-forward results found, using default params for all stocks")
 print("Checks every minute during market hours.")
 print("Press Ctrl+C to stop.")
 
