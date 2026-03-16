@@ -1,0 +1,25 @@
+# Secrets
+.env
+*.env
+
+# Runtime state
+entry_prices.json
+trades_log.csv
+walk_forward_results/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Claude Code internals
+.claude/

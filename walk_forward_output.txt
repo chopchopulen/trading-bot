@@ -1,0 +1,497 @@
+
+================================================================================
+🔬 Testing AAPL...
+================================================================================
+
+Fetching data for AAPL...
+Got 2041 minute bars for AAPL
+Train: 1011 bars | Test: 1030 bars
+
+🔍 Testing 3,312 combinations on training data...
+   Progress: 0% (0/3,312)
+   Progress: 30% (1,000/3,312)
+   Progress: 60% (2,000/3,312)
+   Progress: 91% (3,000/3,312)
+
+================================================================================
+TOP 10 PARAMETER SETS — TRAINING DATA (AAPL)
+================================================================================
+  EMA        RSI          BB           Return     Trades   Win%     Sharpe  
+  ---------------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/60 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+
+================================================================================
+VERIFYING TOP 10 ON UNSEEN TEST DATA (AAPL)
+================================================================================
+  EMA        RSI          BB           Train      Test       Verdict   
+  ----------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/60 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+
+⚠️ No parameters passed for AAPL
+   Market conditions too different between train/test periods
+
+================================================================================
+🔬 Testing TSLA...
+================================================================================
+
+Fetching data for TSLA...
+Got 2140 minute bars for TSLA
+Train: 1048 bars | Test: 1092 bars
+
+🔍 Testing 3,312 combinations on training data...
+   Progress: 0% (0/3,312)
+   Progress: 30% (1,000/3,312)
+   Progress: 60% (2,000/3,312)
+   Progress: 91% (3,000/3,312)
+
+================================================================================
+TOP 10 PARAMETER SETS — TRAINING DATA (TSLA)
+================================================================================
+  EMA        RSI          BB           Return     Trades   Win%     Sharpe  
+  ---------------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/60 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+
+================================================================================
+VERIFYING TOP 10 ON UNSEEN TEST DATA (TSLA)
+================================================================================
+  EMA        RSI          BB           Train      Test       Verdict   
+  ----------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/60 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+
+⚠️ No parameters passed for TSLA
+   Market conditions too different between train/test periods
+
+================================================================================
+🔬 Testing NVDA...
+================================================================================
+
+Fetching data for NVDA...
+Got 2087 minute bars for NVDA
+Train: 1041 bars | Test: 1046 bars
+
+🔍 Testing 3,312 combinations on training data...
+   Progress: 0% (0/3,312)
+   Progress: 30% (1,000/3,312)
+   Progress: 60% (2,000/3,312)
+   Progress: 91% (3,000/3,312)
+
+================================================================================
+TOP 10 PARAMETER SETS — TRAINING DATA (NVDA)
+================================================================================
+  EMA        RSI          BB           Return     Trades   Win%     Sharpe  
+  ---------------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/60 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+
+================================================================================
+VERIFYING TOP 10 ON UNSEEN TEST DATA (NVDA)
+================================================================================
+  EMA        RSI          BB           Train      Test       Verdict   
+  ----------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/60 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+
+⚠️ No parameters passed for NVDA
+   Market conditions too different between train/test periods
+
+================================================================================
+🔬 Testing MSFT...
+================================================================================
+
+Fetching data for MSFT...
+Got 2093 minute bars for MSFT
+Train: 1036 bars | Test: 1057 bars
+
+🔍 Testing 3,312 combinations on training data...
+   Progress: 0% (0/3,312)
+   Progress: 30% (1,000/3,312)
+   Progress: 60% (2,000/3,312)
+   Progress: 91% (3,000/3,312)
+
+================================================================================
+TOP 10 PARAMETER SETS — TRAINING DATA (MSFT)
+================================================================================
+  EMA        RSI          BB           Return     Trades   Win%     Sharpe  
+  ---------------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/60 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+
+================================================================================
+VERIFYING TOP 10 ON UNSEEN TEST DATA (MSFT)
+================================================================================
+  EMA        RSI          BB           Train      Test       Verdict   
+  ----------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/60 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+
+⚠️ No parameters passed for MSFT
+   Market conditions too different between train/test periods
+
+================================================================================
+🔬 Testing AMZN...
+================================================================================
+
+Fetching data for AMZN...
+Got 2050 minute bars for AMZN
+Train: 1002 bars | Test: 1048 bars
+
+🔍 Testing 3,312 combinations on training data...
+   Progress: 0% (0/3,312)
+   Progress: 30% (1,000/3,312)
+   Progress: 60% (2,000/3,312)
+   Progress: 91% (3,000/3,312)
+
+================================================================================
+TOP 10 PARAMETER SETS — TRAINING DATA (AMZN)
+================================================================================
+  EMA        RSI          BB           Return     Trades   Win%     Sharpe  
+  ---------------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/60 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+
+================================================================================
+VERIFYING TOP 10 ON UNSEEN TEST DATA (AMZN)
+================================================================================
+  EMA        RSI          BB           Train      Test       Verdict   
+  ----------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/60 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+
+⚠️ No parameters passed for AMZN
+   Market conditions too different between train/test periods
+
+================================================================================
+🔬 Testing GOOGL...
+================================================================================
+
+Fetching data for GOOGL...
+Got 2039 minute bars for GOOGL
+Train: 1010 bars | Test: 1029 bars
+
+🔍 Testing 3,312 combinations on training data...
+   Progress: 0% (0/3,312)
+   Progress: 30% (1,000/3,312)
+   Progress: 60% (2,000/3,312)
+   Progress: 91% (3,000/3,312)
+
+================================================================================
+TOP 10 PARAMETER SETS — TRAINING DATA (GOOGL)
+================================================================================
+  EMA        RSI          BB           Return     Trades   Win%     Sharpe  
+  ---------------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/60 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+
+================================================================================
+VERIFYING TOP 10 ON UNSEEN TEST DATA (GOOGL)
+================================================================================
+  EMA        RSI          BB           Train      Test       Verdict   
+  ----------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/60 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+
+⚠️ No parameters passed for GOOGL
+   Market conditions too different between train/test periods
+
+================================================================================
+🔬 Testing META...
+================================================================================
+
+Fetching data for META...
+Got 2034 minute bars for META
+Train: 1001 bars | Test: 1033 bars
+
+🔍 Testing 3,312 combinations on training data...
+   Progress: 0% (0/3,312)
+   Progress: 30% (1,000/3,312)
+   Progress: 60% (2,000/3,312)
+   Progress: 91% (3,000/3,312)
+
+================================================================================
+TOP 10 PARAMETER SETS — TRAINING DATA (META)
+================================================================================
+  EMA        RSI          BB           Return     Trades   Win%     Sharpe  
+  ---------------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/60 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+
+================================================================================
+VERIFYING TOP 10 ON UNSEEN TEST DATA (META)
+================================================================================
+  EMA        RSI          BB           Train      Test       Verdict   
+  ----------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/60 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+
+⚠️ No parameters passed for META
+   Market conditions too different between train/test periods
+
+================================================================================
+🔬 Testing AMD...
+================================================================================
+
+Fetching data for AMD...
+Got 2071 minute bars for AMD
+Train: 1035 bars | Test: 1036 bars
+
+🔍 Testing 3,312 combinations on training data...
+   Progress: 0% (0/3,312)
+   Progress: 30% (1,000/3,312)
+   Progress: 60% (2,000/3,312)
+   Progress: 91% (3,000/3,312)
+
+================================================================================
+TOP 10 PARAMETER SETS — TRAINING DATA (AMD)
+================================================================================
+  EMA        RSI          BB           Return     Trades   Win%     Sharpe  
+  ---------------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/60 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+
+================================================================================
+VERIFYING TOP 10 ON UNSEEN TEST DATA (AMD)
+================================================================================
+  EMA        RSI          BB           Train      Test       Verdict   
+  ----------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/60 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+
+⚠️ No parameters passed for AMD
+   Market conditions too different between train/test periods
+
+================================================================================
+🔬 Testing NFLX...
+================================================================================
+
+Fetching data for NFLX...
+Got 2133 minute bars for NFLX
+Train: 1075 bars | Test: 1058 bars
+
+🔍 Testing 3,312 combinations on training data...
+   Progress: 0% (0/3,312)
+   Progress: 30% (1,000/3,312)
+   Progress: 60% (2,000/3,312)
+   Progress: 91% (3,000/3,312)
+
+================================================================================
+TOP 10 PARAMETER SETS — TRAINING DATA (NFLX)
+================================================================================
+  EMA        RSI          BB           Return     Trades   Win%     Sharpe  
+  ---------------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/60 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+
+================================================================================
+VERIFYING TOP 10 ON UNSEEN TEST DATA (NFLX)
+================================================================================
+  EMA        RSI          BB           Train      Test       Verdict   
+  ----------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/60 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+
+⚠️ No parameters passed for NFLX
+   Market conditions too different between train/test periods
+
+================================================================================
+🔬 Testing QQQ...
+================================================================================
+
+Fetching data for QQQ...
+Got 2263 minute bars for QQQ
+Train: 1149 bars | Test: 1114 bars
+
+🔍 Testing 3,312 combinations on training data...
+   Progress: 0% (0/3,312)
+   Progress: 30% (1,000/3,312)
+   Progress: 60% (2,000/3,312)
+   Progress: 91% (3,000/3,312)
+
+================================================================================
+TOP 10 PARAMETER SETS — TRAINING DATA (QQQ)
+================================================================================
+  EMA        RSI          BB           Return     Trades   Win%     Sharpe  
+  ---------------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 15/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 20/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.0 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/55 | BB 25/2.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+  EMA 2/ 7 | 25/60 | BB 15/1.5 |  +0.00% |    0 trades |   0.0% | Sharpe:  0.00
+
+================================================================================
+VERIFYING TOP 10 ON UNSEEN TEST DATA (QQQ)
+================================================================================
+  EMA        RSI          BB           Train      Test       Verdict   
+  ----------------------------------------------------------------------
+  EMA 2/ 7 | 25/55 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 15/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 20/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.0 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/55 | BB 25/2.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+  EMA 2/ 7 | 25/60 | BB 15/1.5 | Train: +0.00% | Test: +0.00% | ⚠️ WEAK
+
+⚠️ No parameters passed for QQQ
+   Market conditions too different between train/test periods
+
+================================================================================
+CROSS STOCK SUMMARY
+================================================================================
+  ⚠️ No stocks passed verification
+  Market is in an unusual period — keep current settings
+  Recommendation: Re-run optimizer when market stabilizes
