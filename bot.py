@@ -27,12 +27,14 @@ newsapi = NewsApiClient(api_key=NEWS_API_KEY)
 analyzer = SentimentIntensityAnalyzer()
 
 # ── Tiered Stock Universe ───────────────────────────────────────────
-# Tier 1 — Full size (proven edge, p < 0.05)
-TIER1_STOCKS = ["AMZN", "SPY"]
+# Tier 1 — Full size (p < 0.05, PF >= 1.5 — validated by permutation test with gradient scoring)
+TIER1_STOCKS = ["MSFT", "AAPL", "META", "AMD", "QQQ"]
 # Tier 2 — Half size (promising, p < 0.15 or strong walk-forward)
-TIER2_STOCKS = ["AAPL", "MSFT", "GS"]
+TIER2_STOCKS = ["NFLX", "WMT", "GS", "V", "UNH", "HOOD", "UBER"]
 # Tier 3 — Quarter size (monitoring, accumulating data)
-TIER3_STOCKS = ["NVDA", "AMD", "WMT", "COST"]
+TIER3_STOCKS = ["COST", "AMZN", "COIN", "ROKU", "ABNB", "PYPL", "SPOT"]
+# Pending validation — strong p-values but backtest confirmation needed before active trading
+PENDING_VALIDATION = ["SHOP", "PLTR"]
 
 STOCKS = TIER1_STOCKS + TIER2_STOCKS + TIER3_STOCKS
 WATCHLIST = []
@@ -43,7 +45,7 @@ TIER3_SIZE_FACTOR = 0.25
 
 # ── Short selling configuration ─────────────────────────────────────
 # High-liquidity, easy-to-borrow; WMT/COST excluded (defensive — may rise in bear markets)
-SHORT_ELIGIBLE = ["NVDA", "AMD", "AMZN", "AAPL", "MSFT", "META", "TSLA", "NFLX", "GS"]
+SHORT_ELIGIBLE = ["NVDA", "AMD", "AMZN", "AAPL", "MSFT", "META", "NFLX", "COIN", "PLTR"]
 MAX_SHORT_POSITIONS = 3
 SHORT_DAILY_LOSS_LIMIT = -300
 SHORT_MAX_LOSS_PCT = 0.05  # Force close if stock rises 5% above short entry
@@ -56,12 +58,13 @@ ORB_DATA = {}  # {stock: {"high": float, "low": float, "date": str, "finalized":
 
 # ── Sector diversification ──────────────────────────────────────────
 SECTOR_MAP = {
-    "tech":     ["MSFT", "META", "AAPL", "AMZN", "NFLX", "CRM"],
-    "semi":     ["AMD", "NVDA", "QCOM"],
-    "finance":  ["GS", "COIN", "HOOD"],
-    "consumer": ["WMT", "COST", "TSLA", "UBER"],
-    "etf":      ["SPY"],
-    "other":    ["SPOT"],
+    "tech":       ["MSFT", "META", "AAPL", "AMZN", "NFLX", "CRM", "UBER", "ROKU", "SPOT", "SHOP", "PLTR"],
+    "semi":       ["AMD", "NVDA", "QCOM"],
+    "finance":    ["GS", "HOOD", "V", "PYPL"],
+    "consumer":   ["WMT", "COST", "TSLA", "ABNB"],
+    "healthcare": ["UNH"],
+    "crypto":     ["COIN"],
+    "etf":        ["SPY", "QQQ"],
 }
 MAX_POSITIONS_PER_SECTOR = 2
 
@@ -76,7 +79,9 @@ STOCK_NAMES = {
     "UNH": "UnitedHealth", "WMT": "Walmart", "COST": "Costco",
     "NKE": "Nike", "INTC": "Intel", "QCOM": "Qualcomm",
     "UBER": "Uber", "COIN": "Coinbase", "HOOD": "Robinhood",
-    "SPOT": "Spotify",
+    "SPOT": "Spotify", "QQQ": "Nasdaq", "V": "Visa",
+    "UNH": "UnitedHealth", "ROKU": "Roku", "ABNB": "Airbnb",
+    "PYPL": "PayPal", "SHOP": "Shopify", "PLTR": "Palantir",
     "AVGO": "Broadcom", "LLY": "Eli Lilly",
     "MA": "Mastercard", "PANW": "Palo Alto Networks",
     "CRWD": "CrowdStrike", "SNOW": "Snowflake",
@@ -1139,6 +1144,7 @@ print(f"    {', '.join(TIER3_STOCKS)}")
 
 print(f"\n  Total stocks monitored: {len(STOCKS)}")
 print(f"  Short eligible: {', '.join(SHORT_ELIGIBLE)}")
+print(f"\n  Awaiting backtest confirmation (NOT trading): {', '.join(PENDING_VALIDATION)}")
 
 print(f"\n  Walk-forward params loaded: {len(STOCK_PARAMS)} stocks")
 if STOCK_PARAMS:
