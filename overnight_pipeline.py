@@ -75,8 +75,8 @@ BACKTEST_STOCKS = [
     "NKE", "INTC", "GOOGL", "AAPL", "SPY"
 ]
 
-# Stocks to walk-forward in Phase 2
-WALK_FORWARD_STOCKS = NEW_STOCKS
+# Stocks to walk-forward in Phase 2 (new stocks + all pipeline candidates)
+WALK_FORWARD_STOCKS = NEW_STOCKS + PIPELINE_STOCKS
 
 # ── Settings ─────────────────────────────────────────────────────
 LOOKBACK_DAYS = 90
@@ -84,6 +84,7 @@ PERMUTATION_COUNT = 500
 RESULTS_DIR = "backtest_results"
 SUMMARY_DIR = "results"
 SKIP_IF_RECENT_HOURS = 12  # Skip stocks with results less than this many hours old
+FORCE_REPERM = True        # Ignore existing permutation results and re-run all (set True when signals.py changes)
 
 # ── Backtest settings (match backtest_minutes.py) ────────────────
 STARTING_CASH = 100000
@@ -483,7 +484,8 @@ def run_walk_forward_for_stock(stock):
         return False
 
 
-def run_phase1(daily_regime):
+def run_phase1(daily_regime, stock_list=None):
+    stocks_to_run = stock_list if stock_list is not None else BACKTEST_STOCKS
     print(f"\n{'=' * 80}")
     print(f"  PHASE 1 — BACKTEST ALL STOCKS")
     print(f"  Grid search across {len(PARAM_GRID)} parameter sets per stock")
@@ -493,10 +495,10 @@ def run_phase1(daily_regime):
     os.makedirs(RESULTS_DIR, exist_ok=True)
     results = {}
 
-    for idx, stock in enumerate(BACKTEST_STOCKS):
+    for idx, stock in enumerate(stocks_to_run):
         result_path = f"{RESULTS_DIR}/{stock}.json"
         if is_result_recent(result_path, SKIP_IF_RECENT_HOURS):
-            print(f"  [{idx+1}/{len(BACKTEST_STOCKS)}] {stock} — skipping (recent result exists)")
+            print(f"  [{idx+1}/{len(stocks_to_run)}] {stock} — skipping (recent result exists)")
             try:
                 with open(result_path) as f:
                     results[stock] = json.load(f)
@@ -504,7 +506,7 @@ def run_phase1(daily_regime):
                 pass
             continue
 
-        print(f"  [{idx+1}/{len(BACKTEST_STOCKS)}] {stock} — fetching data...", flush=True)
+        print(f"  [{idx+1}/{len(stocks_to_run)}] {stock} — fetching data...", flush=True)
         try:
             bars = fetch_minute_bars(stock, LOOKBACK_DAYS)
             if bars is None or len(bars) < 200:
@@ -693,12 +695,14 @@ def run_phase3(backtest_results, wf_results):
         print("  No eligible stocks for permutation testing.")
         return {}
 
-    # Skip stocks with recent permutation results
+    # Skip stocks with recent permutation results (unless FORCE_REPERM overrides)
     to_test = []
     already_done = {}
     for stock in eligible:
         perm_path = f"permutation_test_results/{stock}.json"
-        if is_result_recent(perm_path, SKIP_IF_RECENT_HOURS):
+        if FORCE_REPERM:
+            to_test.append(stock)
+        elif is_result_recent(perm_path, SKIP_IF_RECENT_HOURS):
             print(f"  {stock} — skipping (recent permutation result exists)")
             try:
                 with open(perm_path) as f:
@@ -707,6 +711,8 @@ def run_phase3(backtest_results, wf_results):
                 to_test.append(stock)
         else:
             to_test.append(stock)
+    if FORCE_REPERM and eligible:
+        print(f"  FORCE_REPERM=True — re-running all {len(eligible)} stocks (signals.py may have changed)")
 
     print(f"  Eligible: {len(eligible)} stocks")
     print(f"  Already done: {len(already_done)}")
@@ -987,6 +993,7 @@ if __name__ == "__main__":
         print("\n  DRY RUN — showing what would be tested:\n")
         print(f"  Phase 1 — Backtest {len(BACKTEST_STOCKS)} stocks: {', '.join(BACKTEST_STOCKS)}")
         print(f"  Phase 2 — Walk-forward {len(WALK_FORWARD_STOCKS)} stocks: {', '.join(WALK_FORWARD_STOCKS)}")
+        print(f"            (+ supplemental backtest for any that pass without existing backtest results)")
         print(f"  Phase 3 — Permutation test on profitable stocks ({PERMUTATION_COUNT} perms each)")
         print(f"  Phase 4 — Generate master summary report")
         sys.exit(0)
@@ -1021,6 +1028,18 @@ if __name__ == "__main__":
         wf_results = run_phase2()
         elapsed = (time.time() - phase2_start) / 60
         print(f"  Phase 2 took {elapsed:.1f} minutes\n")
+
+        # Supplemental backtest: Phase 2 stocks that passed walk-forward but have no backtest result
+        supplemental = [
+            s for s, r in wf_results.items()
+            if r.get("status") in ("PASS", "WEAK")
+            and not os.path.exists(f"{RESULTS_DIR}/{s}.json")
+        ]
+        if supplemental:
+            print(f"  Supplemental backtest for {len(supplemental)} Phase 2 stocks without backtest results:")
+            print(f"  {', '.join(supplemental)}\n")
+            supp_results = run_phase1(daily_regime, stock_list=supplemental)
+            backtest_results.update(supp_results)
     else:
         print("\n  Phase 2 SKIPPED\n")
 

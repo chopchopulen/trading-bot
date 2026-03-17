@@ -6,7 +6,7 @@ import schedule
 import csv
 import os
 import json
-
+import argparse
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from newsapi import NewsApiClient
@@ -20,6 +20,7 @@ API_KEY = "PK22XEELBFYNU7QMJHJOGRJ6V6"
 SECRET_KEY = "3arXWSeJW69nWfZHKW9nABMWwMkK1Ct964VakJdT7PXV"
 BASE_URL = "https://paper-api.alpaca.markets"
 NEWS_API_KEY = "801fe14f0cdc4eac8344f9b7ae242e66"
+SENTIMENT_CACHE_FILE = "sentiment_cache.json"
 
 api = tradeapi.REST(API_KEY, SECRET_KEY, BASE_URL)
 newsapi = NewsApiClient(api_key=NEWS_API_KEY)
@@ -27,12 +28,11 @@ analyzer = SentimentIntensityAnalyzer()
 
 # ── Tiered Stock Universe ───────────────────────────────────────────
 # Tier 1 — Full size (proven edge, p < 0.05)
-TIER1_STOCKS = ["MSFT", "META", "AMD", "SPY"]
+TIER1_STOCKS = ["AMZN", "SPY"]
 # Tier 2 — Half size (promising, p < 0.15 or strong walk-forward)
-TIER2_STOCKS = ["AAPL", "TSLA", "NFLX", "WMT", "COST",
-                "GS", "HOOD", "UBER", "COIN"]
+TIER2_STOCKS = ["AAPL", "MSFT", "GS"]
 # Tier 3 — Quarter size (monitoring, accumulating data)
-TIER3_STOCKS = ["SPOT", "CRM", "QCOM", "AMZN", "NVDA"]
+TIER3_STOCKS = ["NVDA", "AMD", "WMT", "COST"]
 
 STOCKS = TIER1_STOCKS + TIER2_STOCKS + TIER3_STOCKS
 WATCHLIST = []
@@ -42,11 +42,17 @@ TIER2_SIZE_FACTOR = 0.5
 TIER3_SIZE_FACTOR = 0.25
 
 # ── Short selling configuration ─────────────────────────────────────
-SHORT_ELIGIBLE = ["AAPL", "MSFT", "META", "AMD", "TSLA", "NFLX",
-                  "NVDA", "AMZN", "GS"]
+# High-liquidity, easy-to-borrow; WMT/COST excluded (defensive — may rise in bear markets)
+SHORT_ELIGIBLE = ["NVDA", "AMD", "AMZN", "AAPL", "MSFT", "META", "TSLA", "NFLX", "GS"]
 MAX_SHORT_POSITIONS = 3
 SHORT_DAILY_LOSS_LIMIT = -300
 SHORT_MAX_LOSS_PCT = 0.05  # Force close if stock rises 5% above short entry
+
+# ── Pairs tracking (diagnostic only, no auto-trading) ───────────────
+PAIRS = {"SEMI": ("AMD", "NVDA"), "MEGACAP": ("MSFT", "AAPL")}
+
+# ── Opening Range Breakout data ──────────────────────────────────────
+ORB_DATA = {}  # {stock: {"high": float, "low": float, "date": str, "finalized": bool}}
 
 # ── Sector diversification ──────────────────────────────────────────
 SECTOR_MAP = {
@@ -90,6 +96,12 @@ RSI_OVERSOLD = 30
 RSI_OVERBOUGHT = 65
 BB_PERIOD = 15
 BB_STD = 1.5
+DEFAULT_BUY_THRESHOLD = 4.0
+DEFAULT_SELL_THRESHOLD = 3.5
+
+# ── Diagnostic and test modes ─────────────────────────────────────
+DIAGNOSTIC_MODE = True   # Print full score breakdowns each minute per stock
+TEST_MODE = True         # Subtract 1.0 from all thresholds (calibration only — NOT for live trading)
 
 # ── Load per-stock optimized parameters from walk-forward results ──
 STOCK_PARAMS = {}
@@ -117,10 +129,10 @@ def get_params(stock):
     """Return per-stock params if available, otherwise defaults."""
     if stock in STOCK_PARAMS:
         p = STOCK_PARAMS[stock]
-        threshold = p.get("optimal_threshold", p.get("score_threshold", 4.0))
+        threshold = p.get("optimal_threshold", p.get("score_threshold", DEFAULT_BUY_THRESHOLD))
         return (p["fast"], p["slow"], p["rsi_buy"], p["rsi_sell"],
                 p["bb_period"], p["bb_std"], threshold)
-    return FAST_MA, SLOW_MA, RSI_OVERSOLD, RSI_OVERBOUGHT, BB_PERIOD, BB_STD, 4.0
+    return FAST_MA, SLOW_MA, RSI_OVERSOLD, RSI_OVERBOUGHT, BB_PERIOD, BB_STD, DEFAULT_BUY_THRESHOLD
 
 # ── Minimum hold time ────────────────────────────────────────────
 MIN_HOLD_BARS = 5  # Hold at least 5 minutes — no whipsaw exits
@@ -193,8 +205,10 @@ def market_is_open():
 
 def is_safe_trading_window():
     now = datetime.now()
-    market_open = now.replace(hour=9, minute=30, second=0)
-    market_close = now.replace(hour=16, minute=0, second=0)
+    # Market opens at 6:30 AM Pacific Time (9:30 AM ET)
+    market_open = now.replace(hour=6, minute=30, second=0, microsecond=0)
+    # Market closes at 1:00 PM Pacific Time (4:00 PM ET)
+    market_close = now.replace(hour=13, minute=0, second=0, microsecond=0)
     if now < market_open + timedelta(minutes=15):
         print(f"  ⏰ Too close to market open — skipping")
         return False
@@ -217,6 +231,105 @@ def get_bars(stock, lookback_hours=2):
     if isinstance(bars.index, pd.MultiIndex):
         bars = bars.xs(stock, level="symbol")
     return bars
+
+# ── Opening Range Breakout tracking ──────────────────────────────
+def calculate_orb(stock, bars):
+    """Track the 9:30–9:45 AM ET opening range. Returns dict with orb_high/low and
+    whether the current price has broken above/below the range."""
+    global ORB_DATA
+    today_str = pd.Timestamp.now(tz='America/New_York').strftime('%Y-%m-%d')
+
+    existing = ORB_DATA.get(stock, {})
+    if existing.get("date") == today_str and existing.get("finalized"):
+        last_price = float(bars["close"].iloc[-1])
+        return {
+            "orb_high": existing["high"],
+            "orb_low":  existing["low"],
+            "is_above_high": last_price > existing["high"],
+            "is_below_low":  last_price < existing["low"],
+            "finalized": True,
+        }
+
+    # Convert bar index to ET timezone
+    if bars.index.tz is None:
+        bars_et = bars.copy()
+        bars_et.index = bars_et.index.tz_localize('UTC').tz_convert('America/New_York')
+    else:
+        bars_et = bars.copy()
+        bars_et.index = bars_et.index.tz_convert('America/New_York')
+
+    orb_start = pd.Timestamp(today_str + ' 09:30', tz='America/New_York')
+    orb_end   = pd.Timestamp(today_str + ' 09:45', tz='America/New_York')
+    orb_bars  = bars_et[(bars_et.index >= orb_start) & (bars_et.index < orb_end)]
+
+    if len(orb_bars) < 3:
+        return {"orb_high": None, "orb_low": None, "is_above_high": False,
+                "is_below_low": False, "finalized": False}
+
+    orb_high   = float(orb_bars["high"].max())
+    orb_low    = float(orb_bars["low"].min())
+    last_price = float(bars["close"].iloc[-1])
+    now_et     = pd.Timestamp.now(tz='America/New_York')
+    finalized  = now_et >= orb_end
+
+    if finalized and existing.get("date") != today_str:
+        ORB_DATA[stock] = {"high": orb_high, "low": orb_low,
+                           "date": today_str, "finalized": True}
+        print(f"  📊 {stock} ORB finalized: High ${orb_high:.2f} / Low ${orb_low:.2f}")
+
+    return {
+        "orb_high":      orb_high,
+        "orb_low":       orb_low,
+        "is_above_high": last_price > orb_high,
+        "is_below_low":  last_price < orb_low,
+        "finalized":     finalized,
+    }
+
+# ── Pairs signal check (diagnostic only) ─────────────────────────
+def check_pairs_signal(pair_name):
+    """Compute z-score of price ratio for a stock pair. Prints alert when |z| >= 2.0."""
+    if pair_name not in PAIRS:
+        return
+    stock_a, stock_b = PAIRS[pair_name]
+    try:
+        bars_a = get_bars(stock_a, lookback_hours=1.5)
+        bars_b = get_bars(stock_b, lookback_hours=1.5)
+        if len(bars_a) < 10 or len(bars_b) < 10:
+            return
+        close_a = bars_a["close"].reindex(bars_b["close"].index, method="nearest").dropna()
+        close_b = bars_b["close"].reindex(close_a.index, method="nearest").dropna()
+        if len(close_a) < 10:
+            return
+        spread = close_a / close_b
+        zscore = (spread.iloc[-1] - spread.mean()) / spread.std()
+        if abs(zscore) >= 2.0:
+            direction = "LONG A / SHORT B" if zscore > 0 else "SHORT A / LONG B"
+            print(f"  🔗 PAIRS {pair_name} ({stock_a}/{stock_b}): z={zscore:.2f} → {direction}")
+        elif DIAGNOSTIC_MODE:
+            print(f"  🔗 PAIRS {pair_name} ({stock_a}/{stock_b}): z={zscore:.2f} (neutral)")
+    except Exception as e:
+        print(f"  Pairs check error ({pair_name}): {e}")
+
+# ── Diagnostic label helpers ──────────────────────────────────────
+def _rs_label(rs):
+    if rs is None:  return "N/A"
+    if rs >  0.5:   return f"strong +{rs:.2f}"
+    if rs < -0.5:   return f"weak {rs:.2f}"
+    return f"neutral {rs:.2f}"
+
+def _orb_label(orb):
+    if orb is None or not orb.get("finalized"): return "not_set"
+    if orb["is_above_high"]: return f"above_high(${orb['orb_high']:.2f})"
+    if orb["is_below_low"]:  return f"below_low(${orb['orb_low']:.2f})"
+    return "inside"
+
+def _vwap_label(price, vd):
+    if vd is None: return "N/A"
+    if price > vd.get("upper_2std", 1e9): return ">+2std"
+    if price > vd.get("upper_1std", 1e9): return ">+1std"
+    if price < vd.get("lower_2std", 0):   return "<-2std"
+    if price < vd.get("lower_1std", 0):   return "<-1std"
+    return "inside_bands"
 
 # ── Regime detection (daily 20-day EMA) ──────────────────────────
 DAILY_REGIME_EMA = 20
@@ -268,11 +381,11 @@ def get_atr_qty(stock, price, atr):
 
         qty = int(dollar_risk / stop_distance)
 
-        # Tier-based sizing
+        # Tier-based sizing: T3 = 25%, T2 = 50%, T1 = full
         if stock in TIER3_STOCKS:
-            qty = int(qty * TIER3_SIZE_FACTOR)
+            qty = max(MIN_QTY, int(qty * 0.25))
         elif stock in TIER2_STOCKS:
-            qty = int(qty * TIER2_SIZE_FACTOR)
+            qty = max(MIN_QTY, int(qty * 0.50))
 
         qty = max(MIN_QTY, min(qty, MAX_QTY))
         return qty
@@ -332,9 +445,42 @@ def run_premarket_scan():
     print(f"\n{'='*50}")
     print(f"🌅 PRE-MARKET SCAN at {datetime.now().strftime('%H:%M:%S')}")
     print(f"{'='*50}")
+
+    # Check if today's sentiment cache already exists (avoids burning API calls on restarts)
+    today_str = datetime.now().strftime("%Y-%m-%d")
+    if os.path.exists(SENTIMENT_CACHE_FILE):
+        try:
+            with open(SENTIMENT_CACHE_FILE, "r") as f:
+                cache_data = json.load(f)
+            if cache_data.get("date") == today_str:
+                print(f"  📋 Loading sentiment from today's cache ({SENTIMENT_CACHE_FILE})")
+                scores = cache_data.get("scores", {})
+                WATCHLIST = []
+                for stock in STOCKS:
+                    sentiment = scores.get(stock, 0)
+                    if sentiment > SENTIMENT_THRESHOLD_BUY:
+                        WATCHLIST.append(stock)
+                        print(f"  ✅ {stock} added | Sentiment: {sentiment:.3f} (cached)")
+                    else:
+                        print(f"  ❌ {stock} excluded | Sentiment: {sentiment:.3f} (cached)")
+                if not WATCHLIST:
+                    print(f"\n  ⚠️ No stocks passed filter — trading ALL stocks today")
+                    WATCHLIST = STOCKS.copy()
+                else:
+                    print(f"\n  📋 Today's watchlist: {WATCHLIST}")
+                with open("watchlist.txt", "w") as f:
+                    f.write("\n".join(WATCHLIST))
+                    f.write(f"\nLast updated: {datetime.now().strftime('%b %d %Y, %I:%M %p')}")
+                return
+        except Exception as e:
+            print(f"  Cache load error: {e} — fetching fresh sentiment")
+
+    # No valid cache — fetch fresh from NewsAPI and save for the day
     WATCHLIST = []
+    fresh_scores = {}
     for stock in STOCKS:
         sentiment = get_sentiment(stock)
+        fresh_scores[stock] = sentiment
         if sentiment > SENTIMENT_THRESHOLD_BUY:
             WATCHLIST.append(stock)
             print(f"  ✅ {stock} added | Sentiment: {sentiment:.3f}")
@@ -348,6 +494,13 @@ def run_premarket_scan():
     with open("watchlist.txt", "w") as f:
         f.write("\n".join(WATCHLIST))
         f.write(f"\nLast updated: {datetime.now().strftime('%b %d %Y, %I:%M %p')}")
+    # Save cache so bot restarts today reuse the same scores
+    try:
+        with open(SENTIMENT_CACHE_FILE, "w") as f:
+            json.dump({"date": today_str, "scores": fresh_scores}, f, indent=2)
+        print(f"  💾 Sentiment cached to {SENTIMENT_CACHE_FILE}")
+    except Exception as e:
+        print(f"  Cache save error: {e}")
 
 # ── Get current position ──────────────────────────────────────────
 def get_position(stock):
@@ -580,6 +733,13 @@ def run_bot():
 
     active_stocks = WATCHLIST if WATCHLIST else STOCKS
 
+    # Fetch SPY bars once for relative strength calculation
+    spy_bars_for_rs = None
+    try:
+        spy_bars_for_rs = get_bars("SPY")
+    except Exception as e:
+        print(f"  SPY bars fetch error (RS disabled): {e}")
+
     for stock in active_stocks:
         try:
             bars = get_bars(stock)
@@ -596,6 +756,16 @@ def run_bot():
             if any(v is None for v in [fast, slow, rsi, bb_upper, atr]):
                 print(f"  {stock}: Not enough data yet, skipping...")
                 continue
+
+            # ── v3 signals: ORB, VWAP bands, Relative Strength ────────
+            orb_data  = calculate_orb(stock, bars)
+            vwap_data = signals.get_vwap_bands(bars)
+            rel_strength = None
+            if stock != "SPY" and spy_bars_for_rs is not None:
+                try:
+                    rel_strength = signals.get_relative_strength(bars, spy_bars_for_rs)
+                except Exception:
+                    rel_strength = None
 
             position = get_position(stock)
             if position != 0:
@@ -674,7 +844,9 @@ def run_bot():
                     fast, slow, rsi, s_rsi_sell, price, bb_upper,
                     bb_lower=bb_lower
                 )
-                sell_threshold = s_threshold - 0.5
+                sell_threshold = DEFAULT_SELL_THRESHOLD if stock not in STOCK_PARAMS else s_threshold - 0.5
+                if TEST_MODE:
+                    sell_threshold = max(0.5, sell_threshold - 1.0)
 
                 if sell_score >= sell_threshold:
                     api.submit_order(
@@ -704,6 +876,8 @@ def run_bot():
                     bb_upper=bb_upper
                 )
                 cover_threshold = s_threshold - 0.5
+                if TEST_MODE:
+                    cover_threshold = max(0.5, cover_threshold - 1.0)
 
                 if cover_score >= cover_threshold:
                     cover_qty = abs(position)
@@ -740,23 +914,84 @@ def run_bot():
                 stock_sector = get_stock_sector(stock)
                 sector_count = count_sector_positions(stock_sector, open_positions)
 
-                # Calculate buy score (gradient scoring, per-stock threshold)
+                # Calculate buy score (gradient scoring v3, per-stock threshold)
                 buy_score, buy_bd = signals.calculate_buy_score(
                     fast, slow, rsi, s_rsi_buy, price, bb_lower,
                     bb_upper=bb_upper,
                     regime_uptrend=uptrend,
-                    current_volume=cur_volume, avg_volume=cur_avg_volume
+                    current_volume=cur_volume, avg_volume=cur_avg_volume,
+                    rel_strength=rel_strength, orb_data=orb_data, vwap_data=vwap_data
                 )
                 buy_threshold = s_threshold
 
-                # Calculate short score (per-stock threshold + 1.0 for conservatism)
+                # Calculate short score (gradient scoring v3; no +1.0 penalty — regime gate provides conservatism)
                 short_score, short_bd = signals.calculate_short_score(
                     fast, slow, rsi, s_rsi_sell, price, bb_upper,
                     bb_lower=bb_lower,
                     regime_downtrend=not uptrend,
-                    current_volume=cur_volume, avg_volume=cur_avg_volume
+                    current_volume=cur_volume, avg_volume=cur_avg_volume,
+                    rel_strength=rel_strength, orb_data=orb_data, vwap_data=vwap_data
                 )
-                short_threshold = s_threshold + 1.0
+                short_threshold = s_threshold
+
+                # TEST_MODE: lower all entry thresholds by 1.0 to verify end-to-end flow
+                if TEST_MODE:
+                    buy_threshold = max(0.5, buy_threshold - 1.0)
+                    short_threshold = max(0.5, short_threshold - 1.0)
+
+                # DIAGNOSTIC_MODE: show full score breakdown every cycle
+                if DIAGNOSTIC_MODE:
+                    regime_str = "UPTREND" if uptrend else "DOWNTREND"
+                    if uptrend:
+                        r_gate = buy_bd.get("regime")
+                        v_gate = buy_bd.get("volume")
+                        if r_gate == "blocked":
+                            print(f"  DIAG {stock} [{regime_str}] BUY: regime blocked | SHORT: regime blocked (uptrend)")
+                        elif v_gate == "too_low":
+                            vol_ratio = (cur_volume / cur_avg_volume) if cur_avg_volume else 0
+                            print(f"  DIAG {stock} [{regime_str}] BUY: volume blocked ({vol_ratio:.2f}x avg) | SHORT: regime blocked")
+                        else:
+                            ema_s  = buy_bd.get("ema",  0.0)
+                            rsi_s  = buy_bd.get("rsi",  0.0)
+                            bb_s   = buy_bd.get("bb",   0.0)
+                            rs_s   = buy_bd.get("rs",   0.0)
+                            orb_s  = buy_bd.get("orb",  0.0)
+                            vwap_s = buy_bd.get("vwap", 0.0)
+                            status = ">>> FIRE <<<" if buy_score >= buy_threshold else f"gap -{buy_threshold - buy_score:.1f}"
+                            print(f"  DIAG {stock} [{regime_str}] BUY | "
+                                  f"EMA:{ema_s:.1f}/3 RSI:{rsi_s:.1f}/2 BB:{bb_s:.1f}/2 "
+                                  f"RS:{rs_s:.1f}[{_rs_label(rel_strength)}] "
+                                  f"ORB:{orb_s:.1f}[{_orb_label(orb_data)}] "
+                                  f"VWAP:{vwap_s:.1f}[{_vwap_label(price, vwap_data)}] | "
+                                  f"Total:{buy_score:.1f}/{signals.MAX_SCORE} Thresh:{buy_threshold:.1f} | {status}")
+                    else:
+                        r_gate = short_bd.get("regime")
+                        v_gate = short_bd.get("volume")
+                        short_elig = "eligible" if stock in SHORT_ELIGIBLE else "NOT eligible"
+                        if r_gate == "blocked":
+                            print(f"  DIAG {stock} [{regime_str}] SHORT: regime blocked | BUY: regime blocked (downtrend)")
+                        elif v_gate == "too_low":
+                            vol_ratio = (cur_volume / cur_avg_volume) if cur_avg_volume else 0
+                            print(f"  DIAG {stock} [{regime_str}] SHORT: volume blocked ({vol_ratio:.2f}x avg) | BUY: regime blocked")
+                        else:
+                            ema_s  = short_bd.get("ema",  0.0)
+                            rsi_s  = short_bd.get("rsi",  0.0)
+                            bb_s   = short_bd.get("bb",   0.0)
+                            rs_s   = short_bd.get("rs",   0.0)
+                            orb_s  = short_bd.get("orb",  0.0)
+                            vwap_s = short_bd.get("vwap", 0.0)
+                            if short_score >= short_threshold and stock in SHORT_ELIGIBLE:
+                                status = ">>> FIRE <<<"
+                            elif short_score < short_threshold:
+                                status = f"gap -{short_threshold - short_score:.1f}"
+                            else:
+                                status = f"score OK but {short_elig}"
+                            print(f"  DIAG {stock} [{regime_str}] SHORT | "
+                                  f"EMA:{ema_s:.1f}/3 RSI:{rsi_s:.1f}/2 BB:{bb_s:.1f}/2 "
+                                  f"RS:{rs_s:.1f}[{_rs_label(rel_strength)}] "
+                                  f"ORB:{orb_s:.1f}[{_orb_label(orb_data)}] "
+                                  f"VWAP:{vwap_s:.1f}[{_vwap_label(price, vwap_data)}] | "
+                                  f"Total:{short_score:.1f}/{signals.MAX_SCORE} Thresh:{short_threshold:.1f} | {short_elig} | {status}")
 
                 can_buy = (buy_score >= buy_threshold and
                           not buys_blocked and
@@ -859,6 +1094,11 @@ def run_bot():
     show_positions()
     show_performance()
 
+    # ── Pairs diagnostic ──────────────────────────────────────────
+    if DIAGNOSTIC_MODE:
+        for pair_name in PAIRS:
+            check_pairs_signal(pair_name)
+
 # ── Schedule ──────────────────────────────────────────────────────
 schedule.every().monday.at("04:00").do(run_premarket_scan)
 schedule.every().tuesday.at("04:00").do(run_premarket_scan)
@@ -878,29 +1118,32 @@ schedule.every(1).minutes.do(run_bot)
 print(f"\n{'='*60}")
 print("🚀 TRADING BOT — STARTUP SUMMARY")
 print(f"{'='*60}")
-print(f"\n  Signal Mode: GRADIENT SCORING (signals.py, max score 7.0)")
+if TEST_MODE:
+    print("  ⚠️  TEST MODE ACTIVE — thresholds reduced by 1.0 (calibration only, NOT for live trading)")
+if DIAGNOSTIC_MODE:
+    print("  🔍 DIAGNOSTIC MODE ACTIVE — full score breakdowns printed each cycle")
+print(f"\n  Signal Mode: GRADIENT SCORING v3 (signals.py, max score {signals.MAX_SCORE})")
 print(f"  Defaults: EMA {FAST_MA}/{SLOW_MA} | RSI {RSI_OVERSOLD}/{RSI_OVERBOUGHT} | "
       f"BB {BB_PERIOD}/{BB_STD}")
+print(f"  Default thresholds: Buy {DEFAULT_BUY_THRESHOLD} | Sell {DEFAULT_SELL_THRESHOLD}")
 print(f"  Risk: Stop {ATR_STOP_MULT}x ATR | Target {ATR_PROFIT_MULT}x ATR | "
       f"Max {MAX_POSITIONS} longs, {MAX_SHORT_POSITIONS} shorts | "
       f"Daily limit ${DAILY_LOSS_LIMIT}")
 
 print(f"\n  Tier 1 — Full size ({len(TIER1_STOCKS)} stocks):")
 print(f"    {', '.join(TIER1_STOCKS)}")
-print(f"    Buy threshold: {signals.BUY_THRESHOLD_T1} | Short threshold: {signals.SHORT_THRESHOLD_T1}")
-print(f"\n  Tier 2 — Half size ({len(TIER2_STOCKS)} stocks, {TIER2_SIZE_FACTOR:.0%} qty):")
+print(f"\n  Tier 2 — 50% size ({len(TIER2_STOCKS)} stocks):")
 print(f"    {', '.join(TIER2_STOCKS)}")
-print(f"    Buy threshold: {signals.BUY_THRESHOLD_T2} | Short threshold: {signals.SHORT_THRESHOLD_T2}")
-print(f"\n  Tier 3 — Quarter size ({len(TIER3_STOCKS)} stocks, {TIER3_SIZE_FACTOR:.0%} qty):")
+print(f"\n  Tier 3 — 25% size, monitor ({len(TIER3_STOCKS)} stocks):")
 print(f"    {', '.join(TIER3_STOCKS)}")
-print(f"    Buy threshold: {signals.BUY_THRESHOLD_T3} | Short: disabled")
 
-print(f"\n  Short eligible: {', '.join(SHORT_ELIGIBLE)}")
+print(f"\n  Total stocks monitored: {len(STOCKS)}")
+print(f"  Short eligible: {', '.join(SHORT_ELIGIBLE)}")
 
 print(f"\n  Walk-forward params loaded: {len(STOCK_PARAMS)} stocks")
 if STOCK_PARAMS:
     for _s, _p in STOCK_PARAMS.items():
-        _t = _p.get("optimal_threshold", _p.get("score_threshold", 4.0))
+        _t = _p.get("optimal_threshold", _p.get("score_threshold", DEFAULT_BUY_THRESHOLD))
         print(f"    {_s}: EMA {_p['fast']}/{_p['slow']} | Thresh: {_t:.1f}")
 else:
     print("    ⚠️ None — using defaults for all stocks")
@@ -915,15 +1158,30 @@ if BACKTEST_RESULTS:
 else:
     print("    ⚠️ None — no backtest filtering active")
 
-print(f"\n  Total stocks monitored: {len(STOCKS)}")
-print(f"{'='*60}")
+print(f"\n{'='*60}")
 print("  Checks every minute during market hours.")
 print("  Press Ctrl+C to stop.")
 print(f"{'='*60}\n")
 
-run_premarket_scan()
-run_bot()
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--scan",    action="store_true", help="Run the pre-market scan")
+    parser.add_argument("--trade",   action="store_true", help="Run the trading loop continuously")
+    parser.add_argument("--summary", action="store_true", help="Show positions and performance")
+    args = parser.parse_args()
 
-while True:
-    schedule.run_pending()
-    time.sleep(1)
+    if args.scan:
+        run_premarket_scan()
+    elif args.trade:
+        run_premarket_scan()
+        while True:
+            schedule.run_pending()
+            run_bot()
+            time.sleep(60)
+    elif args.summary:
+        show_positions()
+        show_performance()
+    else:
+        # Default: run scan + one bot cycle (same as before)
+        run_premarket_scan()
+        run_bot()

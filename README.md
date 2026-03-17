@@ -4,14 +4,14 @@ A fully automated intraday trading bot running on **Alpaca Paper Trading** ($100
 
 ## What It Does
 
-The bot trades a **tiered stock universe** on 1-minute bars during market hours (9:45 AM - 3:45 PM ET). It uses a **gradient signal scoring system** (v2) to generate buy, sell, short, and cover signals with 3 scored indicators and 2 hard gates. Risk is managed with ATR-based position sizing and dynamic stop losses. Stocks are validated through a 3-stage pipeline: backtest -> walk-forward optimization -> permutation test.
+The bot trades a **tiered stock universe** on 1-minute bars during market hours (9:45 AM - 3:45 PM ET). It uses a **gradient signal scoring system** (v3) to generate buy, sell, short, and cover signals. Scores combine 3 base indicators (7.0 pts) with 3 contextual overlays (ORB, relative strength, VWAP bands) for a max of 12.5 points. Risk is managed with ATR-based position sizing and dynamic stop losses. Stocks are validated through a 3-stage pipeline: backtest → walk-forward optimization → permutation test.
 
 ## Architecture
 
 ```
-signals.py            <- Shared signal module (gradient scoring v2, indicators, costs)
-bot.py                <- Live trading engine (gradient scoring, shorts, tiered stocks)
-overnight_pipeline.py <- Master overnight test runner (4 phases, 53 stocks)
+signals.py            <- Shared signal module (gradient scoring v3, ORB, RS, VWAP bands)
+bot.py                <- Live trading engine (gradient scoring, shorts, tiered stocks, pairs)
+overnight_pipeline.py <- Master overnight test runner (4 phases, 53+ stocks)
 dashboard.py          <- Flask web dashboard (portfolio, positions, trades)
 walk_forward.py       <- Walk-forward parameter optimizer (~500 combos/stock)
 permutation_test.py   <- Statistical significance testing (dual methods)
@@ -20,11 +20,11 @@ backtest.py           <- Daily-bar backtester with grid search
 diagnose_signals.py   <- Signal diagnostics & debugging tool
 ```
 
-## Signal Scoring System (v2 — Gradient)
+## Signal Scoring System (v3 — Gradient + Contextual Overlays)
 
-The bot uses a **gradient scoring system** where each indicator contributes a continuous score based on signal strength, not binary on/off. This replaced the original 8-indicator binary system that was producing a 40% win rate.
+The bot uses a **gradient scoring system** where each indicator contributes a continuous score based on signal strength, not binary on/off. v3 adds three contextual overlays on top of the v2 base.
 
-### Scored Indicators
+### Base Indicators (max 7.0 pts)
 
 | Signal | Max Score | How It Works |
 |--------|-----------|-------------|
@@ -32,7 +32,15 @@ The bot uses a **gradient scoring system** where each indicator contributes a co
 | RSI Oversold | 2.0 | Gradient based on depth below buy level. RSI at 15 scores higher than RSI at 29 |
 | Bollinger %B | 2.0 | Gradient based on position within bands. Closer to lower band = higher score |
 
-**Max possible score: 7.0**
+### Contextual Overlays (v3 additions, max +5.5 pts)
+
+| Signal | Max Buy | Max Short | How It Works |
+|--------|---------|-----------|-------------|
+| Relative Strength vs SPY | +1.5 | +1.5 | 5-bar return vs SPY. Stock outperforming = buy signal; underperforming = short signal. Normalized: 0.2% diff = 1.0 score unit |
+| Opening Range Breakout (ORB) | +2.0 | +2.0 | Price breaks above/below 9:30–9:45 AM ET range with 1.5× avg volume. Regime-independent entry |
+| VWAP Bands | +1.5 | +2.0 | Price vs rolling VWAP ± 1/2 std dev bands. Below lower 2std + green candle = buy; above upper 2std + red candle = short |
+
+**Max possible score: 12.5**
 
 ### Hard Gates (block entry, not scored)
 
@@ -41,18 +49,18 @@ The bot uses a **gradient scoring system** where each indicator contributes a co
 | Regime | SPY must be above 20-day EMA (daily bars) | Blocks all longs in downtrends |
 | Volume | Current volume must be > 50% of 20-bar average | Blocks entries on thin volume |
 
-### Buy Thresholds by Tier
+### Entry Thresholds by Tier
 
 | Tier | Buy Threshold | Sell Threshold | Short Threshold |
 |------|--------------|----------------|-----------------|
-| Tier 1 (proven) | 3.5 | 3.0 | 4.5 |
-| Tier 2 (promising) | 4.0 | 3.5 | 5.0 |
+| Tier 1 (proven) | 3.5 | 3.0 | 3.5 |
+| Tier 2 (promising) | 4.0 | 3.5 | 4.0 |
 | Tier 3 (monitoring) | 4.5 | 4.0 | disabled |
 
 **Key design decisions:**
 - Regime is a **hard gate**, not a soft signal — no longs in downtrends, period
-- Dropped MACD (too slow on 1-min bars), VWAP (weak signal), Sentiment (unreliable)
-- Gradient scoring means strong confluence naturally scores high without threshold gaming
+- Short threshold is now equal to buy threshold (removed old +1.0 penalty — regime gate provides the necessary conservatism)
+- ORB signals bypass the regime hard gate (a confirmed breakout is valid regardless of daily trend)
 - All scoring logic lives in `signals.py` — single source of truth across all files
 
 ## Regime Detection (Daily 20-Day EMA)
@@ -66,15 +74,55 @@ SPY close < 20-day EMA on daily bars → DOWNTREND (shorts allowed, longs blocke
 
 For backtests, daily regime is mapped to each minute bar by date.
 
+## Opening Range Breakout (ORB)
+
+The 9:30–9:45 AM ET opening range is computed once per stock per day and cached in `ORB_DATA`. After the range finalizes at 9:45 AM, any bar where price crosses above the high (with volume ≥ 1.5× avg) adds +2.0 to the buy score, regardless of daily regime. A breakdown below the range adds +2.0 to the short score.
+
+- ORB requires at least 3 bars in the 15-minute window to be valid
+- Implementation uses `America/New_York` timezone with DST-safe `pd.Timestamp` handling
+- One ORB range per stock per calendar day; reprints "ORB finalized" to stdout once
+
+## Relative Strength vs SPY
+
+Every stock's 5-bar return is compared to SPY's 5-bar return. The difference is normalized to a ±2.0 score (0.2% spread = 1.0 point):
+
+```python
+score = (stock_5bar_return - spy_5bar_return) / 0.002
+# capped at [-2.0, +2.0]
+```
+
+- RS > +0.5: stock outperforming → +1.5 to buy score, -1.0 penalty to short
+- RS < -0.5: stock underperforming → +1.5 to short score, -1.0 penalty to buy
+- SPY itself is excluded from RS scoring (no self-comparison)
+
+## VWAP Bands
+
+Rolling VWAP with ±1 and ±2 standard deviation bands computed over a 20-bar window:
+
+```
+upper_2std = vwap + 2 * std(typical_price - vwap)
+lower_2std = vwap - 2 * std(typical_price - vwap)
+```
+
+| Position | Buy Score | Short Score |
+|----------|-----------|-------------|
+| Below lower 2std + green candle | +1.5 | — |
+| Below lower 1std | +0.5 | — |
+| Above upper 2std + red candle | — | +2.0 |
+| Above upper 1std | — | +1.0 |
+| Below VWAP (for shorts) | — | -1.0 |
+
 ## Short Selling
 
 When the market is in a **downtrend** (SPY < 20-day EMA on daily), the bot can short highly liquid stocks:
 
 ```
-SHORT_ELIGIBLE = AAPL, MSFT, META, AMD, TSLA, NFLX, NVDA, AMZN, GS
+SHORT_ELIGIBLE = NVDA, AMD, AMZN, AAPL, MSFT, META, TSLA, NFLX, GS
 ```
 
-Short signals use the same gradient scoring system (inverted: EMA bearish, RSI overbought, BB upper).
+WMT and COST are explicitly excluded — defensive names that may rise in bear markets.
+
+Short signals use the same gradient scoring system (inverted: EMA bearish, RSI overbought, BB upper) plus the v3 overlays.
 
 ### Short Risk Guardrails
 
@@ -86,6 +134,18 @@ Short signals use the same gradient scoring system (inverted: EMA bearish, RSI o
 | ATR stop loss | Entry + 1.5x ATR |
 | ATR take profit | Entry - 3.0x ATR |
 | Regime switch | Auto-cover all shorts if SPY flips to uptrend |
+
+## Pairs Tracking (Diagnostic)
+
+The bot tracks two correlated pairs using a z-score on the price ratio spread:
+
+```python
+PAIRS = {"SEMI": ("AMD", "NVDA"), "MEGACAP": ("MSFT", "AAPL")}
+```
+
+- Uses 1.5-hour bar lookback, aligned by index
+- When |z-score| ≥ 2.0, prints a directional signal (e.g., "LONG AMD / SHORT NVDA")
+- **Diagnostic only** — no auto-trading. Runs at end of each `run_bot()` cycle when `DIAGNOSTIC_MODE = True`
 
 ## Risk Management
 
@@ -179,9 +239,9 @@ Includes a transaction cost model (per-stock spread estimates, slippage, SEC fee
 
 | Phase | What | Output |
 |-------|------|--------|
-| **Phase 1** | Backtest all 26 original stocks (grid search, 10 param sets) + run walk-forward first if needed | `backtest_results/{STOCK}.json` |
-| **Phase 2** | Walk-forward on 10 new stocks | `walk_forward_results/{STOCK}.json` |
-| **Phase 3** | Permutation test on profitable stocks (500 perms) | `permutation_test_results/{STOCK}.json` |
+| **Phase 1** | Backtest all original stocks (grid search) + supplemental backtest for walk-forward passers lacking results | `backtest_results/{STOCK}.json` |
+| **Phase 2** | Walk-forward on NEW_STOCKS + all PIPELINE_STOCKS (17 candidates) | `walk_forward_results/{STOCK}.json` |
+| **Phase 3** | Permutation test on profitable stocks (500 perms, FORCE_REPERM bypasses stale cache) | `permutation_test_results/{STOCK}.json` |
 | **Phase 4** | Master summary report with tiered recommendations | `results/overnight_summary.txt` |
 
 ```bash
@@ -190,7 +250,26 @@ python3 overnight_pipeline.py --dry-run    # Show what would run
 python3 overnight_pipeline.py --skip-phase 1  # Skip backtest phase
 ```
 
-Features: per-stock optimal thresholds from walk-forward, daily regime detection, skips stocks with recent results, catches exceptions per-stock, Fisher combined p-value.
+**Pipeline improvements:**
+- `FORCE_REPERM = True` — re-runs all permutation tests, ignoring stale results from before gradient scoring overhaul
+- `WALK_FORWARD_STOCKS = NEW_STOCKS + PIPELINE_STOCKS` — 17 pipeline candidates now run walk-forward alongside new stocks
+- Supplemental backtest block after Phase 2 — auto-backtests any walk-forward passer that lacks a backtest result
+
+## Diagnostic & Calibration Modes
+
+### DIAGNOSTIC_MODE
+
+When `DIAGNOSTIC_MODE = True`, prints a full per-stock per-minute breakdown:
+
+```
+DIAG AMZN [DOWNTREND] SHORT | EMA:2.1/3 RSI:0.0/2 BB:0.0/2 RS:1.5[weak -0.82] ORB:2.0[below_low($185.40)] VWAP:1.0[>+1std] | Total:6.6/12.5 Thresh:4.5 | eligible | >>> FIRE <<<
+```
+
+Shows: regime, all 6 scoring components with labels (strong/neutral/weak, above_high/inside/below_low, >±1std/>±2std/inside_bands), total vs max score, gap to threshold.
+
+### TEST_MODE
+
+When `TEST_MODE = True`, subtracts 1.0 from all entry/exit thresholds (floored at 0.5). Used for calibration — verifies that signals flow end-to-end before going live. **Not for live trading.**
 
 ## Sentiment Analysis
 
@@ -198,7 +277,7 @@ The bot uses **NewsAPI + VADER** to score each stock's news sentiment for pre-ma
 - Fetches recent headlines for each stock
 - Scores each headline with VADER compound sentiment
 - Time-weights scores (recent news counts more)
-- Caches results for 30 minutes to stay within API limits
+- Caches results to `sentiment_cache.json` with today's date — bot restarts reuse the same scores and don't burn API quota
 - Pre-market scan at 4 AM ET identifies high-sentiment opportunities
 
 Note: Sentiment is used for pre-market watchlist filtering only — it was removed from the signal scoring system (v2) due to unreliability.
@@ -236,8 +315,11 @@ NEWS_API_KEY=your_newsapi_key_here
 ### Running
 
 ```bash
-# Live trading bot
+# Live trading bot (single scan + one cycle)
 python3 bot.py
+
+# Live trading bot (continuous loop — checks every minute)
+python3 bot.py --trade
 
 # Dashboard (separate terminal)
 python3 dashboard.py
@@ -317,12 +399,28 @@ Diagnosed the strategy as **fundamentally broken** after overnight pipeline reve
 - **Smaller parameter grid** — ~500 combos (was 7,200), prevents optimizer from finding noise
 - **Minimum hold time** — 5 bars to prevent whipsaw exits
 
+### Phase 13: Contextual Overlays, ORB & Short Calibration
+
+**The 0-trade problem:** In sustained downtrends, the old short scoring was fundamentally contradictory — it required RSI overbought + BB upper band, but in a real downtrend RSI is oversold and price is near the lower band. Max achievable short score was ~3.0/7.0, far below the 5.0-6.0 thresholds (+1.0 penalty on top of already-high buy thresholds).
+
+**Fixes and additions:**
+- **Gradient scoring v3** — added three contextual overlays (ORB, Relative Strength vs SPY, VWAP Bands). Max score raised from 7.0 to 12.5
+- **ORB (Opening Range Breakout)** — regime-independent entries based on 9:30–9:45 AM ET breakouts/breakdowns. Adds up to ±2.0 pts. DST-safe UTC-aware implementation
+- **Relative Strength vs SPY** — 5-bar return differential normalized to ±2.0 pts. Strong RS adds to buy score, weak RS adds to short score
+- **VWAP Bands** — rolling VWAP ± 1/2 std dev. Price below lower 2std + green candle = +1.5 buy; above upper 2std + red candle = +2.0 short
+- **Removed short_threshold +1.0 penalty** — the regime hard gate already ensures shorts only fire in downtrends; stacking a +1.0 penalty was preventing all short trades
+- **Sentiment cache file** — `sentiment_cache.json` stores today's scores so bot restarts don't burn API quota (was exhausting the 100-request developer limit on multiple restarts)
+- **DIAGNOSTIC_MODE + TEST_MODE** — per-stock per-minute full score breakdown; TEST_MODE lowers all thresholds by 1.0 for calibration
+- **Pipeline: FORCE_REPERM + PIPELINE_STOCKS in walk-forward** — ensures all 17 pipeline candidates get walk-forward optimization and all permutation results are re-run fresh (not reusing stale MACD/VWAP era results)
+- **Pairs tracking** — z-score monitoring for SEMI (AMD/NVDA) and MEGACAP (MSFT/AAPL) pairs; diagnostic only, no auto-trading
+- **Fixed `is_safe_trading_window()` nested function bug** — inner `def` shadowed the outer function, causing `return True` to always execute without checking the time window
+- **Fixed `--trade` flag** — now loops continuously with `schedule` rather than firing once
+
 ### Next Steps
-- Validate gradient scoring with full overnight pipeline run
-- Opening Range Breakout (ORB) strategy as secondary signal
-- Pairs trading (market-neutral) for cointegrated stock pairs
+- Run overnight pipeline with v3 scoring — validate ORB/RS/VWAP improve profit factors
+- Regime-specific walk-forward optimization (bull params for longs, bear params for shorts)
 - Slippage sensitivity analysis to find break-even cost levels
-- Paper trade validated stocks and monitor live performance
+- Monitor paper trading performance with DIAGNOSTIC_MODE enabled
 
 ## Results & Output Files
 
