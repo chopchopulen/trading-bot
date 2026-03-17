@@ -1,6 +1,6 @@
 ================================================================================
   OVERNIGHT PIPELINE — MASTER SUMMARY REPORT
-  Generated: 2026-03-16 16:04:56
+  Generated: 2026-03-16 20:58:01
 ================================================================================
 
 --------------------------------------------------------------------------------
@@ -8,43 +8,42 @@
 --------------------------------------------------------------------------------
   Stock     BT Ret     PF  Sharpe   Win%  Trades    WF   Perm p   Tier
   ------------------------------------------------------------------------
-  AAPL      -0.48%   0.69   -1.99    40%     318  PASS   0.0020     T1
-  MSFT      -0.76%   0.69   -2.01    39%     342  PASS   0.0020     T1
-  NVDA      -0.24%   0.82   -1.14    41%     299  WEAK   0.2695     T3
-  GOOGL     -0.34%   0.84   -0.98    40%     298  WEAK   0.7046   DROP
-  AMZN      -0.28%   0.79   -1.46    40%     267  PASS   0.0020     T1
-  TSLA      -0.40%   0.88   -0.69    40%     320  PASS   0.0020     T1
-  META      -1.02%   0.76   -1.48    42%     314  PASS   0.0020     T1
-  AMD       -0.75%   0.70   -1.63    40%     302  PASS   0.0020     T1
-  NFLX      -0.30%   0.63   -2.40    36%     278  PASS   0.0140     T1
-  CRM       -0.61%   0.67   -2.30    42%     257  PASS   0.0020     T1
-  JPM       -0.04%   0.97   -0.14    44%     312  WEAK   0.9621   DROP
-  BAC       -0.09%   0.67   -2.02    41%     241  WEAK   0.9421   DROP
-  GS        -0.03%   0.99   -0.03    40%     243  PASS   0.0020     T1
-  V         -0.30%   0.80   -1.36    43%     270  WEAK   0.6527   DROP
-  SPY       -0.25%   0.87   -0.72    44%     326  PASS   0.0020     T1
-  QQQ       -0.50%   0.80   -1.18    41%     345  WEAK   0.7924   DROP
-  XOM       +0.15%   1.22    0.90    45%     306  WEAK   0.8363   DROP
-  CVX       +0.14%   1.21    0.91    43%     272  WEAK   0.3852   DROP
-  JNJ       +0.10%   1.13    0.67    44%     268  WEAK      N/A   DROP
-  PFE       -0.09%   0.48   -4.53    32%     350  WEAK   0.8004   DROP
-  UNH       -0.21%   0.89   -0.62    45%     294  WEAK   0.5409   DROP
-  WMT       -0.27%   0.63   -2.19    35%     313  PASS   0.0020     T1
-  COST      +0.53%   1.16    0.85    45%     235  PASS   0.0020     T1
-  NKE       -0.38%   0.40   -4.88    30%     289  WEAK   0.4072   DROP
-  INTC      -0.12%   0.82   -1.12    39%     317  WEAK   0.8762   DROP
-  QCOM      -0.42%   0.60   -2.84    38%     274  PASS   0.0020     T1
-  UBER         N/A    N/A     N/A    N/A     N/A  WEAK   0.1218     T2
+  AAPL      -0.49%   0.68   -2.02    39%     320   N/A   0.0020   DROP
+  MSFT      -0.79%   0.68   -2.11    38%     341   N/A   0.0020   DROP
+  NVDA      -0.20%   0.84   -1.00    42%     296   N/A   0.2695   DROP
+  GOOGL     -0.26%   0.87   -0.76    41%     292   N/A   0.7046   DROP
+  AMZN      -0.28%   0.79   -1.45    41%     266   N/A   0.0020   DROP
+  TSLA      -0.52%   0.85   -0.96    40%     317   N/A   0.0020   DROP
+  META      -1.06%   0.75   -1.55    42%     313   N/A   0.0020   DROP
+  AMD       -0.75%   0.70   -1.62    40%     301   N/A   0.0020   DROP
+  NFLX      -0.34%   0.58   -2.79    35%     276   N/A   0.0140   DROP
+  CRM       -0.67%   0.64   -2.55    41%     255   N/A   0.0020   DROP
+  JPM       -0.04%   0.97   -0.15    44%     311   N/A   0.9621   DROP
+  BAC       -0.09%   0.67   -2.03    41%     242   N/A   0.9421   DROP
+  GS        -0.10%   0.98   -0.11    39%     241   N/A   0.0020   DROP
+  V         -0.28%   0.81   -1.26    43%     266   N/A   0.6527   DROP
+  SPY       -0.25%   0.87   -0.73    44%     326   N/A   0.0020   DROP
+  QQQ       -0.50%   0.80   -1.20    41%     341   N/A   0.7924   DROP
+  XOM       +0.17%   1.24    0.97    46%     304   N/A   0.8363   DROP
+  CVX       +0.13%   1.19    0.83    42%     272   N/A   0.3852   DROP
+  JNJ       +0.10%   1.14    0.71    44%     264   N/A      N/A   DROP
+  PFE       -0.09%   0.47   -4.72    32%     348   N/A   0.8004   DROP
+  UNH       -0.19%   0.90   -0.57    45%     294   N/A   0.5409   DROP
+  WMT       -0.27%   0.63   -2.19    36%     316   N/A   0.0020   DROP
+  COST      +0.51%   1.16    0.84    45%     231   N/A   0.0020     T3
+  NKE       -0.38%   0.40   -4.91    30%     288   N/A   0.4072   DROP
+  INTC      -0.12%   0.82   -1.13    39%     316   N/A   0.8762   DROP
+  QCOM      -0.39%   0.60   -2.87    38%     273   N/A   0.0020   DROP
+  UBER         N/A    N/A     N/A    N/A     N/A  WEAK   0.1218   DROP
   PLTR         N/A    N/A     N/A    N/A     N/A  WEAK   0.4810   DROP
-  COIN         N/A    N/A     N/A    N/A     N/A  WEAK   0.3533   DROP
-  SHOP         N/A    N/A     N/A    N/A     N/A  WEAK   0.4092   DROP
-  SQ           N/A    N/A     N/A    N/A     N/A  FAIL      N/A   DROP
-  ROKU         N/A    N/A     N/A    N/A     N/A  WEAK   0.2834     T3
-  ABNB         N/A    N/A     N/A    N/A     N/A  FAIL      N/A   DROP
+  COIN         N/A    N/A     N/A    N/A     N/A  PASS   0.3533   DROP
+  SHOP         N/A    N/A     N/A    N/A     N/A  FAIL   0.4092   DROP
+  ROKU         N/A    N/A     N/A    N/A     N/A  WEAK   0.2834   DROP
+  ABNB         N/A    N/A     N/A    N/A     N/A  WEAK   0.8263   DROP
   PYPL         N/A    N/A     N/A    N/A     N/A  WEAK   0.4152   DROP
-  SPOT         N/A    N/A     N/A    N/A     N/A  WEAK   0.4611   DROP
+  SPOT         N/A    N/A     N/A    N/A     N/A  PASS   0.4611   DROP
   ZM           N/A    N/A     N/A    N/A     N/A  FAIL   0.5629   DROP
-  HOOD         N/A    N/A     N/A    N/A     N/A  FAIL   0.0020     T3
+  HOOD         N/A    N/A     N/A    N/A     N/A  WEAK   0.0020   DROP
   AVGO         N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
   LLY          N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
   MA           N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
@@ -66,32 +65,28 @@
 --------------------------------------------------------------------------------
   TIERED RECOMMENDATIONS
 --------------------------------------------------------------------------------
-  TIER 1 — Trade full size (p < 0.05, PF > 1.0):
-    AAPL, MSFT, AMZN, TSLA, META, AMD, NFLX, CRM, GS, SPY, WMT, COST, QCOM
-  TIER 2 — Trade reduced size (p < 0.15, PF > 1.0):
-    UBER
-  TIER 3 — Monitor only (p < 0.30):
-    NVDA, ROKU, HOOD
+  TIER 3 — Monitor only (p < 0.30, PF >= 1.1):
+    COST
   DROP — No evidence of edge:
-    GOOGL, JPM, BAC, V, QQQ, XOM, CVX, JNJ, PFE, UNH, NKE, INTC, PLTR, COIN, SHOP, SQ, ABNB, PYPL, SPOT, ZM, AVGO, LLY, MA, PANW, CRWD, SNOW, DDOG, NET, ADBE, NOW, ORCL, MS, BLK, SCHW, HD, MCD, SBUX
+    AAPL, MSFT, NVDA, GOOGL, AMZN, TSLA, META, AMD, NFLX, CRM, JPM, BAC, GS, V, SPY, QQQ, XOM, CVX, JNJ, PFE, UNH, WMT, NKE, INTC, QCOM, UBER, PLTR, COIN, SHOP, ROKU, ABNB, PYPL, SPOT, ZM, HOOD, AVGO, LLY, MA, PANW, CRWD, SNOW, DDOG, NET, ADBE, NOW, ORCL, MS, BLK, SCHW, HD, MCD, SBUX
 
 --------------------------------------------------------------------------------
   RECOMMENDED STOCKS LIST FOR bot.py
 --------------------------------------------------------------------------------
-  TIER1_STOCKS = ["AAPL", "MSFT", "AMZN", "TSLA", "META", "AMD", "NFLX", "CRM", "GS", "SPY", "WMT", "COST", "QCOM"]
-  TIER2_STOCKS = ["UBER"]
+  TIER1_STOCKS = []
+  TIER2_STOCKS = []
   STOCKS = TIER1_STOCKS + TIER2_STOCKS
 
 --------------------------------------------------------------------------------
   STATISTICAL SUMMARY
 --------------------------------------------------------------------------------
   Fisher combined p-value: 0.000000
-  Stocks with permutation results: 34
+  Stocks with permutation results: 35
   Significant (p < 0.05): 14
   Promising (p < 0.15): 1
 
 --------------------------------------------------------------------------------
   PHASE TIMING
 --------------------------------------------------------------------------------
-  Report generated: 2026-03-16 16:04:56
+  Report generated: 2026-03-16 20:58:01
 ================================================================================

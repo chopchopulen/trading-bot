@@ -1,5 +1,11 @@
+MSFT
 AMD
+AAPL
 NFLX
 WMT
 COST
-Last updated: Mar 16 2026, 01:08 PM
+UBER
+COIN
+SPOT
+AMZN
+Last updated: Mar 16 2026, 10:31 PM

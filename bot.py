@@ -117,28 +117,22 @@ def get_params(stock):
     """Return per-stock params if available, otherwise defaults."""
     if stock in STOCK_PARAMS:
         p = STOCK_PARAMS[stock]
-        threshold = p.get("optimal_threshold", p.get("score_threshold", 6.0))
+        threshold = p.get("optimal_threshold", p.get("score_threshold", 4.0))
         return (p["fast"], p["slow"], p["rsi_buy"], p["rsi_sell"],
                 p["bb_period"], p["bb_std"], threshold)
-    return FAST_MA, SLOW_MA, RSI_OVERSOLD, RSI_OVERBOUGHT, BB_PERIOD, BB_STD, 6.0
+    return FAST_MA, SLOW_MA, RSI_OVERSOLD, RSI_OVERBOUGHT, BB_PERIOD, BB_STD, 4.0
 
-# ── MACD parameters ───────────────────────────────────────────────
-MACD_FAST = 12
-MACD_SLOW = 26
-MACD_SIGNAL = 9
+# ── Minimum hold time ────────────────────────────────────────────
+MIN_HOLD_BARS = 5  # Hold at least 5 minutes — no whipsaw exits
+ENTRY_BARS = {}    # Track entry bar index per stock for min hold
 
 # ── ATR parameters ────────────────────────────────────────────────
 ATR_PERIOD = 14
 ATR_RISK_PER_TRADE = 0.01   # Risk 1% of portfolio per trade
 
-# ── Sentiment thresholds ──────────────────────────────────────────
-SENTIMENT_THRESHOLD_BUY = 0.15
-SENTIMENT_THRESHOLD_SELL = -0.15
-
 # ── Risk management ───────────────────────────────────────────────
 ATR_STOP_MULT = 1.5           # Stop loss = entry - 1.5 * ATR
 ATR_PROFIT_MULT = 3.0         # Take profit = entry + 3.0 * ATR
-REGIME_EMA = 50
 DAILY_LOSS_LIMIT = -500       # Stop buying if daily P&L drops below this
 MAX_POSITIONS = 5             # Maximum simultaneous open positions (longs)
 
@@ -224,18 +218,34 @@ def get_bars(stock, lookback_hours=2):
         bars = bars.xs(stock, level="symbol")
     return bars
 
-# ── Regime detection ──────────────────────────────────────────────
+# ── Regime detection (daily 20-day EMA) ──────────────────────────
+DAILY_REGIME_EMA = 20
+
 def market_is_uptrend():
+    """Check if SPY is above its 20-day EMA (daily timeframe).
+    Flips once per day at most, not dozens of times like intraday EMA.
+    """
     try:
-        bars = get_bars("SPY", lookback_hours=4)
-        if len(bars) < REGIME_EMA:
+        end = datetime.now()
+        start = end - timedelta(days=45)  # 45 calendar days for warmup
+        bars = api.get_bars(
+            "SPY",
+            tradeapi.rest.TimeFrame.Day,
+            start=start.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            end=end.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            feed="iex"
+        ).df
+        if isinstance(bars.index, pd.MultiIndex):
+            bars = bars.xs("SPY", level="symbol")
+        if len(bars) < DAILY_REGIME_EMA:
             return True
         close = bars["close"]
-        regime_ema = close.ewm(span=REGIME_EMA, adjust=False).mean().iloc[-1]
+        ema_20 = close.ewm(span=DAILY_REGIME_EMA, adjust=False).mean()
         current_price = close.iloc[-1]
+        regime_ema = ema_20.iloc[-1]
         is_uptrend = current_price > regime_ema
-        trend = "📈 UPTREND" if is_uptrend else "📉 DOWNTREND"
-        print(f"  Market Regime: {trend} | SPY: ${current_price:.2f} vs 50 EMA: ${regime_ema:.2f}")
+        trend = "UPTREND" if is_uptrend else "DOWNTREND"
+        print(f"  Market Regime: {trend} | SPY: ${current_price:.2f} vs {DAILY_REGIME_EMA}d EMA: ${regime_ema:.2f}")
         return is_uptrend
     except Exception as e:
         print(f"  Regime check error: {e}")
@@ -313,30 +323,8 @@ def get_sentiment(stock):
         print(f"  Sentiment error for {stock}: {e}")
         return 0
 
-# ── VWAP (live — fetches today's bars) ────────────────────────────
-def get_vwap(stock):
-    try:
-        now = datetime.now()
-        today_open = now.replace(hour=9, minute=30, second=0, microsecond=0)
-        bars = api.get_bars(
-            stock,
-            tradeapi.rest.TimeFrame.Minute,
-            start=today_open.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            end=now.strftime("%Y-%m-%dT%H:%M:%SZ"),
-            feed="iex"
-        ).df
-        if isinstance(bars.index, pd.MultiIndex):
-            bars = bars.xs(stock, level="symbol")
-        if len(bars) < 1:
-            return None
-        typical_price = (bars["high"] + bars["low"] + bars["close"]) / 3
-        cum_tp_vol = (typical_price * bars["volume"]).cumsum()
-        cum_vol = bars["volume"].cumsum()
-        vwap = cum_tp_vol / cum_vol
-        return vwap.iloc[-1]
-    except Exception as e:
-        print(f"  VWAP error for {stock}: {e}")
-        return None
+# ── Sentiment thresholds (for pre-market scan only) ──────────────
+SENTIMENT_THRESHOLD_BUY = 0.15
 
 # ── Pre-market scan ───────────────────────────────────────────────
 def run_premarket_scan():
@@ -599,15 +587,13 @@ def run_bot():
             # Get per-stock optimized parameters (or defaults)
             s_fast, s_slow, s_rsi_buy, s_rsi_sell, s_bb_period, s_bb_std, s_threshold = get_params(stock)
 
-            # Calculate all indicators using signals module
+            # Calculate indicators using signals module
             fast, slow = signals.get_moving_averages(bars, s_fast, s_slow)
             rsi = signals.get_rsi(bars)
             bb_upper, bb_middle, bb_lower = signals.get_bollinger_bands(bars, s_bb_period, s_bb_std)
-            macd_line, signal_line, histogram = signals.get_macd(bars)
             atr = signals.get_atr(bars)
 
-            if any(v is None for v in [fast, slow, rsi, bb_upper,
-                                        macd_line, atr]):
+            if any(v is None for v in [fast, slow, rsi, bb_upper, atr]):
                 print(f"  {stock}: Not enough data yet, skipping...")
                 continue
 
@@ -616,8 +602,13 @@ def run_bot():
                 PENDING_ORDERS.discard(stock)
             price = get_price(stock)
             qty = get_atr_qty(stock, price, atr)
-            sentiment = get_sentiment(stock)
-            vwap = get_vwap(stock)
+
+            # Volume for scoring
+            cur_volume = None
+            cur_avg_volume = None
+            if len(bars) >= 20:
+                cur_volume = bars["volume"].iloc[-1]
+                cur_avg_volume = bars["volume"].rolling(window=20).mean().iloc[-1]
 
             # Determine tier label
             if stock in TIER1_STOCKS:
@@ -627,15 +618,10 @@ def run_bot():
             else:
                 tier_label = "T3"
 
-            macd_bullish = macd_line > signal_line
-            sentiment_emoji = "😊" if sentiment > 0.15 else "😐" if sentiment > -0.15 else "😟"
-            macd_emoji = "📈" if macd_bullish else "📉"
-            vwap_str = f"${vwap:.2f}" if vwap else "N/A"
-
+            ema_sep = abs(fast - slow) / slow * 100 if slow > 0 else 0
             print(f"  {stock} [{tier_label}] | RSI: {rsi:.1f} | "
-                  f"MACD: {macd_emoji} {macd_line:.3f}/{signal_line:.3f} | "
-                  f"ATR: {atr:.2f} | VWAP: {vwap_str} | "
-                  f"Sentiment: {sentiment:.3f} {sentiment_emoji} | "
+                  f"EMA sep: {ema_sep:.3f}% | "
+                  f"ATR: {atr:.2f} | "
                   f"Qty: {qty}")
 
             # ═══════════════════════════════════════════════════
@@ -655,8 +641,8 @@ def run_bot():
                     )
                     est_cost = calculate_trade_cost(stock, price, exit_qty, exit_side)
                     log_trade(stock, exit_signal, price, rsi,
-                             macd_line, fast, slow, bb_upper,
-                             bb_lower, atr, exit_qty, sentiment, est_cost)
+                             0, fast, slow, bb_upper,
+                             bb_lower, atr, exit_qty, 0, est_cost)
                     entry_data = ENTRY_PRICES.get(stock, {})
                     entry_price = entry_data.get("price", price) if isinstance(entry_data, dict) else entry_data
                     direction = entry_data.get("direction", "long") if isinstance(entry_data, dict) else "long"
@@ -677,9 +663,16 @@ def run_bot():
             # 2. SELL SIGNAL (close long via scoring)
             # ═══════════════════════════════════════════════════
             if position > 0:
+                # Min hold time check
+                entry_bar = ENTRY_BARS.get(stock, 0)
+                bars_held = len(bars) - entry_bar if entry_bar > 0 else MIN_HOLD_BARS
+                if bars_held < MIN_HOLD_BARS:
+                    print(f"  ⏸ {stock} HOLD (min hold: {bars_held}/{MIN_HOLD_BARS} bars)")
+                    continue
+
                 sell_score, sell_bd = signals.calculate_sell_score(
                     fast, slow, rsi, s_rsi_sell, price, bb_upper,
-                    macd_line, signal_line, vwap
+                    bb_lower=bb_lower
                 )
                 sell_threshold = s_threshold - 0.5
 
@@ -692,9 +685,9 @@ def run_bot():
                         time_in_force="day"
                     )
                     est_cost = calculate_trade_cost(stock, price, position, "sell")
-                    log_trade(stock, "SELL", price, rsi, macd_line,
+                    log_trade(stock, "SELL", price, rsi, 0,
                              fast, slow, bb_upper, bb_lower,
-                             atr, position, sentiment, est_cost)
+                             atr, position, 0, est_cost)
                     print(f"  🔴 {stock} SELL score: {sell_score:.1f}/{sell_threshold} | "
                           f"${price:.2f} | {sell_bd}")
                     ENTRY_PRICES.pop(stock, None)
@@ -708,7 +701,7 @@ def run_bot():
             if position < 0:
                 cover_score, cover_bd = signals.calculate_cover_score(
                     fast, slow, rsi, s_rsi_buy, price, bb_lower,
-                    macd_line, signal_line, vwap
+                    bb_upper=bb_upper
                 )
                 cover_threshold = s_threshold - 0.5
 
@@ -722,9 +715,9 @@ def run_bot():
                         time_in_force="day"
                     )
                     est_cost = calculate_trade_cost(stock, price, cover_qty, "buy")
-                    log_trade(stock, "SHORT COVER", price, rsi, macd_line,
+                    log_trade(stock, "SHORT COVER", price, rsi, 0,
                              fast, slow, bb_upper, bb_lower,
-                             atr, cover_qty, sentiment, est_cost)
+                             atr, cover_qty, 0, est_cost)
                     print(f"  📗 {stock} COVER score: {cover_score:.1f}/{cover_threshold} | "
                           f"${price:.2f} | {cover_bd}")
                     ENTRY_PRICES.pop(stock, None)
@@ -747,17 +740,11 @@ def run_bot():
                 stock_sector = get_stock_sector(stock)
                 sector_count = count_sector_positions(stock_sector, open_positions)
 
-                # Get volume for scoring
-                cur_volume = None
-                cur_avg_volume = None
-                if len(bars) >= 20:
-                    cur_volume = bars["volume"].iloc[-1]
-                    cur_avg_volume = bars["volume"].rolling(window=20).mean().iloc[-1]
-
-                # Calculate buy score (per-stock optimized threshold)
+                # Calculate buy score (gradient scoring, per-stock threshold)
                 buy_score, buy_bd = signals.calculate_buy_score(
                     fast, slow, rsi, s_rsi_buy, price, bb_lower,
-                    macd_line, signal_line, vwap, uptrend, sentiment,
+                    bb_upper=bb_upper,
+                    regime_uptrend=uptrend,
                     current_volume=cur_volume, avg_volume=cur_avg_volume
                 )
                 buy_threshold = s_threshold
@@ -765,7 +752,8 @@ def run_bot():
                 # Calculate short score (per-stock threshold + 1.0 for conservatism)
                 short_score, short_bd = signals.calculate_short_score(
                     fast, slow, rsi, s_rsi_sell, price, bb_upper,
-                    macd_line, signal_line, vwap, not uptrend, sentiment,
+                    bb_lower=bb_lower,
+                    regime_downtrend=not uptrend,
                     current_volume=cur_volume, avg_volume=cur_avg_volume
                 )
                 short_threshold = s_threshold + 1.0
@@ -799,11 +787,12 @@ def run_bot():
                     )
                     PENDING_ORDERS.add(stock)
                     ENTRY_PRICES[stock] = {"price": price, "atr": atr, "direction": "long"}
+                    ENTRY_BARS[stock] = len(bars)
                     save_entry_prices()
                     est_cost = calculate_trade_cost(stock, price, qty, "buy")
-                    log_trade(stock, "BUY", price, rsi, macd_line,
+                    log_trade(stock, "BUY", price, rsi, 0,
                              fast, slow, bb_upper, bb_lower,
-                             atr, qty, sentiment, est_cost)
+                             atr, qty, 0, est_cost)
                     stop = price - (ATR_STOP_MULT * atr)
                     target = price + (ATR_PROFIT_MULT * atr)
                     print(f"  ✅ {stock} [{tier_label}] BUY score: {buy_score:.1f}/{buy_threshold} | "
@@ -820,11 +809,12 @@ def run_bot():
                     )
                     PENDING_ORDERS.add(stock)
                     ENTRY_PRICES[stock] = {"price": price, "atr": atr, "direction": "short"}
+                    ENTRY_BARS[stock] = len(bars)
                     save_entry_prices()
                     est_cost = calculate_trade_cost(stock, price, qty, "sell")
-                    log_trade(stock, "SHORT", price, rsi, macd_line,
+                    log_trade(stock, "SHORT", price, rsi, 0,
                              fast, slow, bb_upper, bb_lower,
-                             atr, qty, sentiment, est_cost)
+                             atr, qty, 0, est_cost)
                     stop = price + (ATR_STOP_MULT * atr)
                     target = price - (ATR_PROFIT_MULT * atr)
                     print(f"  🔻 {stock} [{tier_label}] SHORT score: {short_score:.1f}/{short_threshold} | "
@@ -888,7 +878,7 @@ schedule.every(1).minutes.do(run_bot)
 print(f"\n{'='*60}")
 print("🚀 TRADING BOT — STARTUP SUMMARY")
 print(f"{'='*60}")
-print(f"\n  Signal Mode: WEIGHTED SCORING (signals.py)")
+print(f"\n  Signal Mode: GRADIENT SCORING (signals.py, max score 7.0)")
 print(f"  Defaults: EMA {FAST_MA}/{SLOW_MA} | RSI {RSI_OVERSOLD}/{RSI_OVERBOUGHT} | "
       f"BB {BB_PERIOD}/{BB_STD}")
 print(f"  Risk: Stop {ATR_STOP_MULT}x ATR | Target {ATR_PROFIT_MULT}x ATR | "
@@ -910,7 +900,7 @@ print(f"\n  Short eligible: {', '.join(SHORT_ELIGIBLE)}")
 print(f"\n  Walk-forward params loaded: {len(STOCK_PARAMS)} stocks")
 if STOCK_PARAMS:
     for _s, _p in STOCK_PARAMS.items():
-        _t = _p.get("optimal_threshold", _p.get("score_threshold", 6.0))
+        _t = _p.get("optimal_threshold", _p.get("score_threshold", 4.0))
         print(f"    {_s}: EMA {_p['fast']}/{_p['slow']} | Thresh: {_t:.1f}")
 else:
     print("    ⚠️ None — using defaults for all stocks")

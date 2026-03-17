@@ -57,7 +57,7 @@ ORIGINAL_26 = [
     "WMT", "COST", "NKE", "INTC", "QCOM"
 ]
 
-NEW_STOCKS = ["UBER", "PLTR", "COIN", "SHOP", "SQ", "ROKU", "ABNB", "PYPL", "SPOT", "ZM", "HOOD"]
+NEW_STOCKS = ["UBER", "PLTR", "COIN", "SHOP", "ROKU", "ABNB", "PYPL", "SPOT", "ZM", "HOOD"]
 
 # Pipeline candidates — new stocks to test for universe expansion
 PIPELINE_STOCKS = [
@@ -91,10 +91,10 @@ QUANTITY = 10
 ATR_PERIOD = 14
 ATR_STOP_MULT = 1.5
 ATR_PROFIT_MULT = 3.0
-REGIME_EMA = 50
 BB_PERIOD = 15
 BB_STD = 1.5
-SIMPLE_SIGNAL_MODE = False
+# ── Minimum hold time ────────────────────────────────────────────
+MIN_HOLD_BARS = 5  # Hold at least 5 minutes — no whipsaw exits
 
 # ── Transaction cost model ───────────────────────────────────────
 SPREAD_ESTIMATES = {
@@ -179,8 +179,48 @@ def fetch_minute_bars(stock, days):
     return combined
 
 
-def fetch_spy_bars(days):
-    return fetch_minute_bars("SPY", days)
+def fetch_spy_daily_bars(days):
+    """Fetch DAILY SPY bars for regime detection."""
+    end = datetime.now()
+    start = end - timedelta(days=days + 30)  # Extra for EMA warmup
+    try:
+        bars = api.get_bars(
+            "SPY",
+            tradeapi.rest.TimeFrame.Day,
+            start=start.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            end=end.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            feed="iex"
+        ).df
+        if isinstance(bars.index, pd.MultiIndex):
+            bars = bars.xs("SPY", level="symbol")
+        bars.index = pd.to_datetime(bars.index)
+        return bars
+    except Exception as e:
+        print(f"  Failed to fetch SPY daily bars: {e}")
+        return None
+
+
+DAILY_REGIME_EMA = 20  # 20-day EMA on daily bars
+
+
+def compute_daily_regime(spy_daily):
+    """Compute regime from daily SPY bars.
+    Returns dict mapping date -> bool (True = uptrend).
+    """
+    close = spy_daily["close"]
+    ema = close.ewm(span=DAILY_REGIME_EMA, adjust=False).mean()
+    regime = close > ema
+    result = {}
+    for idx, val in regime.items():
+        d = idx.date() if hasattr(idx, 'date') else idx
+        result[d] = bool(val)
+    return result
+
+
+def get_regime_for_bar(daily_regime, bar_time):
+    """Look up daily regime for a minute bar timestamp."""
+    d = bar_time.date() if hasattr(bar_time, 'date') else bar_time
+    return daily_regime.get(d, True)
 
 
 # ── Indicators ───────────────────────────────────────────────────
@@ -206,14 +246,6 @@ def calculate_bollinger_bands(series, period, std):
     return upper, middle, lower
 
 
-def calculate_macd(series, fast=12, slow=26, signal=9):
-    ema_fast = series.ewm(span=fast, adjust=False).mean()
-    ema_slow = series.ewm(span=slow, adjust=False).mean()
-    macd_line = ema_fast - ema_slow
-    signal_line = macd_line.ewm(span=signal, adjust=False).mean()
-    return macd_line, signal_line
-
-
 def calculate_atr(bars, period=ATR_PERIOD):
     high = bars["high"]
     low = bars["low"]
@@ -225,28 +257,23 @@ def calculate_atr(bars, period=ATR_PERIOD):
     return true_range.rolling(window=period).mean()
 
 
-def calculate_vwap(bars):
-    typical_price = (bars["high"] + bars["low"] + bars["close"]) / 3
-    tp_vol = typical_price * bars["volume"]
-    cum_tp_vol = tp_vol.groupby(tp_vol.index.date).cumsum()
-    cum_vol = bars["volume"].groupby(bars["volume"].index.date).cumsum()
-    return cum_tp_vol / cum_vol
-
-
 # ── Backtest engine ──────────────────────────────────────────────
-def run_backtest(stock, bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sell):
+def run_backtest(stock, bars, daily_regime, fast, slow, rsi_period, rsi_buy, rsi_sell,
+                 score_threshold=4.0):
     close = bars["close"]
 
     fast_ema = calculate_ema(close, fast)
     slow_ema = calculate_ema(close, slow)
     rsi = calculate_rsi(close, rsi_period)
     bb_upper, bb_middle, bb_lower = calculate_bollinger_bands(close, BB_PERIOD, BB_STD)
-    macd_line, signal_line = calculate_macd(close)
     atr = calculate_atr(bars)
-    vwap = calculate_vwap(bars)
 
-    spy_close = spy_bars["close"].reindex(close.index, method="ffill")
-    spy_regime_ema = calculate_ema(spy_close, REGIME_EMA)
+    # Volume: 20-period rolling average
+    volume = bars["volume"]
+    avg_volume = volume.rolling(window=20).mean()
+
+    # Sell threshold is buy threshold - 0.5
+    sell_threshold = score_threshold - 0.5
 
     cash = STARTING_CASH
     position = 0
@@ -254,25 +281,22 @@ def run_backtest(stock, bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sel
     buy_price = 0
     buy_atr = 0
     buy_cost_stored = 0
-    last_trade_bar = -10
+    buy_bar = 0
 
-    for i in range(max(slow, BB_PERIOD, rsi_period, REGIME_EMA, 35) + 1, len(bars)):
-        if i - last_trade_bar < 2:
-            continue
-
+    start_bar = max(slow, BB_PERIOD, rsi_period) + 1
+    for i in range(start_bar, len(bars)):
         price = close.iloc[i]
         fast_val = fast_ema.iloc[i]
         slow_val = slow_ema.iloc[i]
         rsi_val = rsi.iloc[i]
         upper = bb_upper.iloc[i]
         lower = bb_lower.iloc[i]
-        spy_price = spy_close.iloc[i]
-        spy_ema = spy_regime_ema.iloc[i]
-        cur_vwap = vwap.iloc[i]
+        cur_volume = volume.iloc[i]
+        cur_avg_volume = avg_volume.iloc[i]
 
-        market_uptrend = spy_price > spy_ema
+        market_uptrend = get_regime_for_bar(daily_regime, bars.index[i])
 
-        # ATR-based stop loss and take profit check
+        # ATR-based stop loss and take profit (ignore min hold)
         if position > 0:
             stop_price = buy_price - (ATR_STOP_MULT * buy_atr)
             target_price = buy_price + (ATR_PROFIT_MULT * buy_atr)
@@ -282,7 +306,6 @@ def run_backtest(stock, bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sel
                 cash += (price * position) - sell_cost
                 trades.append({"action": "STOP", "price": price, "pnl": pnl})
                 position = 0
-                last_trade_bar = i
                 continue
             elif price >= target_price:
                 sell_cost = calculate_trade_cost(stock, price, position, "sell")
@@ -290,18 +313,22 @@ def run_backtest(stock, bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sel
                 cash += (price * position) - sell_cost
                 trades.append({"action": "TAKE PROFIT", "price": price, "pnl": pnl})
                 position = 0
-                last_trade_bar = i
                 continue
 
-        # Buy signal (weighted scoring)
+        # Min hold time — skip signal-based exits if too soon
+        if position > 0 and (i - buy_bar) < MIN_HOLD_BARS:
+            continue
+
+        # Buy signal (gradient scoring)
         buy_score, _ = sig.calculate_buy_score(
             fast_val, slow_val, rsi_val, rsi_buy,
             price, lower,
-            macd_line.iloc[i], signal_line.iloc[i],
-            cur_vwap, market_uptrend, 0
+            bb_upper=upper,
+            regime_uptrend=market_uptrend,
+            current_volume=cur_volume, avg_volume=cur_avg_volume
         )
 
-        if (buy_score >= sig.BUY_THRESHOLD_T1 and
+        if (buy_score >= score_threshold and
             position == 0 and
             cash >= price * QUANTITY and
             not pd.isna(atr.iloc[i])):
@@ -311,24 +338,22 @@ def run_backtest(stock, bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sel
             buy_price = price
             buy_atr = atr.iloc[i]
             buy_cost_stored = buy_cost
-            last_trade_bar = i
+            buy_bar = i
             trades.append({"action": "BUY", "price": price})
 
-        # Sell signal (weighted scoring)
+        # Sell signal (gradient scoring)
         elif position > 0:
             sell_score, _ = sig.calculate_sell_score(
                 fast_val, slow_val, rsi_val, rsi_sell,
                 price, upper,
-                macd_line.iloc[i], signal_line.iloc[i],
-                cur_vwap
+                bb_lower=lower
             )
 
-            if sell_score < sig.SELL_THRESHOLD_T1:
+            if sell_score < sell_threshold:
                 continue
             sell_cost = calculate_trade_cost(stock, price, position, "sell")
             pnl = (price - buy_price) * position - buy_cost_stored - sell_cost
             cash += (price * position) - sell_cost
-            last_trade_bar = i
             trades.append({"action": "SELL", "price": price, "pnl": pnl})
             position = 0
 
@@ -398,10 +423,71 @@ def is_result_recent(path, max_age_hours):
 # ══════════════════════════════════════════════════════════════════
 # PHASE 1 — Backtest all stocks
 # ══════════════════════════════════════════════════════════════════
-def run_phase1(spy_bars):
+def load_walk_forward_threshold(stock):
+    """Load optimal_threshold from walk_forward_results/{stock}.json.
+    Returns (threshold, source) where source is 'walk_forward' or 'default'."""
+    wf_path = f"walk_forward_results/{stock}.json"
+    if os.path.exists(wf_path):
+        try:
+            with open(wf_path) as f:
+                data = json.load(f)
+            params = data.get("best_params", {})
+            threshold = params.get("score_threshold")
+            if threshold is not None:
+                return float(threshold), "walk_forward"
+        except Exception:
+            pass
+    return 4.0, "default"
+
+
+def run_walk_forward_for_stock(stock):
+    """Run walk-forward optimization for a single stock if no result exists.
+    Returns True if a result was produced."""
+    wf_path = f"walk_forward_results/{stock}.json"
+    if os.path.exists(wf_path):
+        return True
+
+    print(f"    No walk-forward result — running walk-forward first...")
+    try:
+        import walk_forward
+        walk_forward.STOCK = stock
+        walk_forward.LOOKBACK_DAYS = LOOKBACK_DAYS
+        if stock not in walk_forward.SPREAD_ESTIMATES:
+            walk_forward.SPREAD_ESTIMATES[stock] = SPREAD_ESTIMATES.get(stock, DEFAULT_SPREAD)
+
+        os.makedirs("walk_forward_results", exist_ok=True)
+        result = walk_forward.run_walk_forward()
+        if result:
+            json_out = {
+                "stock": stock,
+                "status": result["status"],
+                "best_params": result["params"],
+                "train_return": result["train_return"],
+                "test_return": result["return"],
+                "test_sharpe": result["sharpe"],
+                "test_trades": result["trades"],
+                "test_win_rate": result["win_rate"],
+                "timestamp": datetime.now().isoformat()
+            }
+            with open(wf_path, "w") as f:
+                json.dump(json_out, f, indent=2, cls=NumpyEncoder)
+            print(f"    Walk-forward complete: {result['status']} | "
+                  f"threshold={result['params'].get('score_threshold', '?')}")
+            return True
+        else:
+            print(f"    Walk-forward failed — no parameters passed verification")
+            return False
+    except Exception as e:
+        print(f"    Walk-forward ERROR: {e}")
+        traceback.print_exc()
+        return False
+
+
+def run_phase1(daily_regime):
     print(f"\n{'=' * 80}")
     print(f"  PHASE 1 — BACKTEST ALL STOCKS")
     print(f"  Grid search across {len(PARAM_GRID)} parameter sets per stock")
+    print(f"  Using per-stock optimal thresholds from walk-forward results")
     print(f"{'=' * 80}\n")
 
     os.makedirs(RESULTS_DIR, exist_ok=True)
@@ -425,16 +511,26 @@ def run_phase1(spy_bars):
                 print(f"    Not enough data for {stock}, skipping")
                 continue
 
-            print(f"    Got {len(bars)} bars, running grid search...")
+            print(f"    Got {len(bars)} bars", flush=True)
+
+            # Run walk-forward first if no result exists
+            run_walk_forward_for_stock(stock)
+
+            # Load per-stock threshold
+            threshold, source = load_walk_forward_threshold(stock)
+            print(f"    Using threshold: {threshold} (from {source})")
+
+            print(f"    Running grid search...")
 
             best_result = None
             best_params = None
 
             for p in PARAM_GRID:
                 result = run_backtest(
-                    stock, bars, spy_bars,
+                    stock, bars, daily_regime,
                     p["fast"], p["slow"],
-                    p["rsi_period"], p["rsi_buy"], p["rsi_sell"]
+                    p["rsi_period"], p["rsi_buy"], p["rsi_sell"],
+                    score_threshold=threshold
                 )
                 if best_result is None or result["sharpe"] > best_result["sharpe"]:
                     best_result = result
@@ -450,6 +546,8 @@ def run_phase1(spy_bars):
                 "trades": best_result["trades"],
                 "edge_survives_costs": best_result["edge_survives_costs"],
                 "best_params": best_params,
+                "score_threshold": threshold,
+                "threshold_source": source,
                 "timestamp": datetime.now().isoformat()
             }
 
@@ -486,7 +584,6 @@ def run_phase2():
     import walk_forward
 
     walk_forward.LOOKBACK_DAYS = LOOKBACK_DAYS
-    walk_forward.SIMPLE_SIGNAL_MODE = SIMPLE_SIGNAL_MODE
 
     os.makedirs("walk_forward_results", exist_ok=True)
     results = {}
@@ -894,13 +991,16 @@ if __name__ == "__main__":
         print(f"  Phase 4 — Generate master summary report")
         sys.exit(0)
 
-    # Fetch SPY bars once for all phases
-    print("\nFetching SPY bars for regime detection...")
-    spy_bars = fetch_spy_bars(LOOKBACK_DAYS)
-    if spy_bars is None:
-        print("FATAL: Could not fetch SPY bars. Exiting.")
+    # Fetch SPY daily bars for regime detection
+    print("\nFetching SPY daily bars for regime detection...")
+    spy_daily = fetch_spy_daily_bars(LOOKBACK_DAYS)
+    if spy_daily is None:
+        print("FATAL: Could not fetch SPY daily bars. Exiting.")
         sys.exit(1)
-    print(f"  Got {len(spy_bars)} SPY bars\n")
+    daily_regime = compute_daily_regime(spy_daily)
+    regime_up = sum(1 for v in daily_regime.values() if v)
+    print(f"  Got {len(spy_daily)} SPY daily bars")
+    print(f"  Regime: {regime_up}/{len(daily_regime)} uptrend days (daily 20-day EMA)\n")
 
     backtest_results = {}
     wf_results = {}
@@ -909,7 +1009,7 @@ if __name__ == "__main__":
     # Phase 1
     if 1 not in skip_phases:
         phase1_start = time.time()
-        backtest_results = run_phase1(spy_bars)
+        backtest_results = run_phase1(daily_regime)
         elapsed = (time.time() - phase1_start) / 60
         print(f"  Phase 1 took {elapsed:.1f} minutes\n")
     else:

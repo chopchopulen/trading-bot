@@ -27,13 +27,8 @@ ATR_PERIOD = 14
 ATR_STOP_MULT = 1.5           # Stop loss = entry - 1.5 * ATR
 ATR_PROFIT_MULT = 3.0         # Take profit = entry + 3.0 * ATR
 
-# ── Regime detection settings ─────────────────────────────────────
-REGIME_EMA = 50             # If price > 50 EMA = uptrend, below = downtrend
-
-# ── Simple signal mode ──────────────────────────────────────────
-# When True: use ONLY EMA crossover + RSI + ATR stops (no BB, MACD, VWAP)
-# Produces 10-20x more trades for better statistical testing
-SIMPLE_SIGNAL_MODE = False
+# ── Minimum hold time ────────────────────────────────────────────
+MIN_HOLD_BARS = 5  # Hold at least 5 minutes — no whipsaw exits
 
 # ── Parameter grid ────────────────────────────────────────────────
 PARAM_GRID = [
@@ -127,40 +122,47 @@ def get_minute_bars(stock, days):
     print(f"Got {len(combined)} minute bars")
     return combined
 
-# ── Fetch SPY for regime detection ────────────────────────────────
-def get_spy_bars(days):
+# ── Fetch SPY daily bars for regime detection ───────────────────
+def get_spy_daily_bars(days):
+    """Fetch DAILY SPY bars for regime detection."""
     end = datetime.now()
-    start = end - timedelta(days=days)
-    all_bars = []
-    current_start = start
-
-    while current_start < end:
-        chunk_end = min(current_start + timedelta(days=7), end)
-        try:
-            bars = api.get_bars(
-                "SPY",
-                tradeapi.rest.TimeFrame.Minute,
-                start=current_start.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                end=chunk_end.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                feed="iex"
-            ).df
-            if isinstance(bars.index, pd.MultiIndex):
-                bars = bars.xs("SPY", level="symbol")
-            if len(bars) > 0:
-                all_bars.append(bars)
-        except Exception as e:
-            pass
-        current_start = chunk_end
-
-    if not all_bars:
+    start = end - timedelta(days=days + 30)  # Extra for EMA warmup
+    try:
+        bars = api.get_bars(
+            "SPY",
+            tradeapi.rest.TimeFrame.Day,
+            start=start.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            end=end.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            feed="iex"
+        ).df
+        if isinstance(bars.index, pd.MultiIndex):
+            bars = bars.xs("SPY", level="symbol")
+        bars.index = pd.to_datetime(bars.index)
+        return bars
+    except Exception as e:
+        print(f"  Failed to fetch SPY daily bars: {e}")
         return None
 
-    combined = pd.concat(all_bars)
-    combined = combined[~combined.index.duplicated(keep="first")]
-    combined = combined.sort_index()
-    combined.index = pd.to_datetime(combined.index)
-    combined = combined.between_time("09:30", "16:00")
-    return combined
+
+DAILY_REGIME_EMA = 20  # 20-day EMA on daily bars
+
+
+def compute_daily_regime(spy_daily):
+    """Compute regime from daily SPY bars. Returns dict date -> bool."""
+    close = spy_daily["close"]
+    ema = close.ewm(span=DAILY_REGIME_EMA, adjust=False).mean()
+    regime = close > ema
+    result = {}
+    for idx, val in regime.items():
+        d = idx.date() if hasattr(idx, 'date') else idx
+        result[d] = bool(val)
+    return result
+
+
+def get_regime_for_bar(daily_regime, bar_time):
+    """Look up daily regime for a minute bar timestamp."""
+    d = bar_time.date() if hasattr(bar_time, 'date') else bar_time
+    return daily_regime.get(d, True)
 
 # ── Calculate indicators ──────────────────────────────────────────
 def calculate_ema(series, period):
@@ -182,13 +184,6 @@ def calculate_bollinger_bands(series, period, std):
     lower = middle - (std * deviation)
     return upper, middle, lower
 
-def calculate_macd(series, fast=12, slow=26, signal=9):
-    ema_fast = series.ewm(span=fast, adjust=False).mean()
-    ema_slow = series.ewm(span=slow, adjust=False).mean()
-    macd_line = ema_fast - ema_slow
-    signal_line = macd_line.ewm(span=signal, adjust=False).mean()
-    return macd_line, signal_line
-
 def calculate_atr(bars, period=ATR_PERIOD):
     high = bars["high"]
     low = bars["low"]
@@ -199,30 +194,19 @@ def calculate_atr(bars, period=ATR_PERIOD):
     true_range = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
     return true_range.rolling(window=period).mean()
 
-def calculate_vwap(bars):
-    typical_price = (bars["high"] + bars["low"] + bars["close"]) / 3
-    tp_vol = typical_price * bars["volume"]
-    # Group by date to reset VWAP daily
-    cum_tp_vol = tp_vol.groupby(tp_vol.index.date).cumsum()
-    cum_vol = bars["volume"].groupby(bars["volume"].index.date).cumsum()
-    vwap = cum_tp_vol / cum_vol
-    return vwap
-
 # ── Single backtest ───────────────────────────────────────────────
-def run_single_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sell):
+def run_single_backtest(bars, daily_regime, fast, slow, rsi_period, rsi_buy, rsi_sell):
     close = bars["close"]
 
     fast_ema = calculate_ema(close, fast)
     slow_ema = calculate_ema(close, slow)
     rsi = calculate_rsi(close, rsi_period)
     bb_upper, bb_middle, bb_lower = calculate_bollinger_bands(close, BB_PERIOD, BB_STD)
-    macd_line, signal_line = calculate_macd(close)
     atr = calculate_atr(bars)
-    vwap = calculate_vwap(bars)
 
-    # Regime detection using SPY
-    spy_close = spy_bars["close"].reindex(close.index, method="ffill")
-    spy_regime_ema = calculate_ema(spy_close, REGIME_EMA)
+    # Volume: 20-period rolling average
+    volume = bars["volume"]
+    avg_volume = volume.rolling(window=20).mean()
 
     cash = STARTING_CASH
     position = 0
@@ -230,26 +214,22 @@ def run_single_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sel
     buy_price = 0
     buy_atr = 0
     buy_cost_stored = 0
-    last_trade_bar = -10
+    buy_bar = 0
 
-    for i in range(max(slow, BB_PERIOD, rsi_period, REGIME_EMA, 35) + 1, len(bars)):
-        if i - last_trade_bar < 2:
-            continue
-
+    start_bar = max(slow, BB_PERIOD, rsi_period) + 1
+    for i in range(start_bar, len(bars)):
         price = close.iloc[i]
         fast_val = fast_ema.iloc[i]
         slow_val = slow_ema.iloc[i]
         rsi_val = rsi.iloc[i]
         upper = bb_upper.iloc[i]
         lower = bb_lower.iloc[i]
-        spy_price = spy_close.iloc[i]
-        spy_ema = spy_regime_ema.iloc[i]
-        cur_vwap = vwap.iloc[i]
+        cur_volume = volume.iloc[i]
+        cur_avg_volume = avg_volume.iloc[i]
 
-        # Regime filter — only buy if SPY is above its 50 EMA
-        market_uptrend = spy_price > spy_ema
+        market_uptrend = get_regime_for_bar(daily_regime, bars.index[i])
 
-        # ATR-based stop loss and take profit check
+        # ATR-based stop loss and take profit (ignore min hold)
         if position > 0:
             stop_price = buy_price - (ATR_STOP_MULT * buy_atr)
             target_price = buy_price + (ATR_PROFIT_MULT * buy_atr)
@@ -259,7 +239,6 @@ def run_single_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sel
                 cash += (price * position) - sell_cost
                 trades.append({"action": "STOP", "price": price, "pnl": pnl})
                 position = 0
-                last_trade_bar = i
                 continue
             elif price >= target_price:
                 sell_cost = calculate_trade_cost(STOCK, price, position, "sell")
@@ -267,15 +246,19 @@ def run_single_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sel
                 cash += (price * position) - sell_cost
                 trades.append({"action": "TAKE PROFIT", "price": price, "pnl": pnl})
                 position = 0
-                last_trade_bar = i
                 continue
 
-        # Buy signal (weighted scoring)
+        # Min hold time — skip signal-based exits if too soon
+        if position > 0 and (i - buy_bar) < MIN_HOLD_BARS:
+            continue
+
+        # Buy signal (gradient scoring)
         buy_score, _ = signals.calculate_buy_score(
             fast_val, slow_val, rsi_val, rsi_buy,
             price, lower,
-            macd_line.iloc[i], signal_line.iloc[i],
-            cur_vwap, market_uptrend, 0
+            bb_upper=upper,
+            regime_uptrend=market_uptrend,
+            current_volume=cur_volume, avg_volume=cur_avg_volume
         )
 
         if (buy_score >= signals.BUY_THRESHOLD_T1 and
@@ -288,16 +271,15 @@ def run_single_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sel
             buy_price = price
             buy_atr = atr.iloc[i]
             buy_cost_stored = buy_cost
-            last_trade_bar = i
+            buy_bar = i
             trades.append({"action": "BUY", "price": price})
 
-        # Sell signal (weighted scoring)
+        # Sell signal (gradient scoring)
         elif position > 0:
             sell_score, _ = signals.calculate_sell_score(
                 fast_val, slow_val, rsi_val, rsi_sell,
                 price, upper,
-                macd_line.iloc[i], signal_line.iloc[i],
-                cur_vwap
+                bb_lower=lower
             )
 
             if sell_score < signals.SELL_THRESHOLD_T1:
@@ -305,7 +287,6 @@ def run_single_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sel
             sell_cost = calculate_trade_cost(STOCK, price, position, "sell")
             pnl = (price - buy_price) * position - buy_cost_stored - sell_cost
             cash += (price * position) - sell_cost
-            last_trade_bar = i
             trades.append({"action": "SELL", "price": price, "pnl": pnl})
             position = 0
 
@@ -334,19 +315,18 @@ def run_single_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sel
     }
 
 # ── Full backtest with chart ──────────────────────────────────────
-def run_full_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sell):
+def run_full_backtest(bars, daily_regime, fast, slow, rsi_period, rsi_buy, rsi_sell):
     close = bars["close"]
 
     fast_ema = calculate_ema(close, fast)
     slow_ema = calculate_ema(close, slow)
     rsi = calculate_rsi(close, rsi_period)
     bb_upper, bb_middle, bb_lower = calculate_bollinger_bands(close, BB_PERIOD, BB_STD)
-    macd_line, signal_line = calculate_macd(close)
     atr = calculate_atr(bars)
-    vwap = calculate_vwap(bars)
 
-    spy_close = spy_bars["close"].reindex(close.index, method="ffill")
-    spy_regime_ema = calculate_ema(spy_close, REGIME_EMA)
+    # Volume: 20-period rolling average
+    volume = bars["volume"]
+    avg_volume = volume.rolling(window=20).mean()
 
     cash = STARTING_CASH
     position = 0
@@ -355,12 +335,10 @@ def run_full_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sell)
     buy_price = 0
     buy_atr = 0
     buy_cost_stored = 0
-    last_trade_bar = -10
+    buy_bar = 0
 
-    for i in range(max(slow, BB_PERIOD, rsi_period, REGIME_EMA, 35) + 1, len(bars)):
-        if i - last_trade_bar < 2:
-            continue
-
+    start_bar = max(slow, BB_PERIOD, rsi_period) + 1
+    for i in range(start_bar, len(bars)):
         price = close.iloc[i]
         fast_val = fast_ema.iloc[i]
         slow_val = slow_ema.iloc[i]
@@ -368,15 +346,14 @@ def run_full_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sell)
         upper = bb_upper.iloc[i]
         lower = bb_lower.iloc[i]
         date = bars.index[i]
-        spy_price = spy_close.iloc[i]
-        spy_ema = spy_regime_ema.iloc[i]
-        cur_vwap = vwap.iloc[i]
+        cur_volume = volume.iloc[i]
+        cur_avg_volume = avg_volume.iloc[i]
 
-        market_uptrend = spy_price > spy_ema
+        market_uptrend = get_regime_for_bar(daily_regime, bars.index[i])
         portfolio_value = cash + (position * price)
         portfolio_values.append({"date": date, "value": portfolio_value})
 
-        # ATR-based stop loss and take profit check
+        # ATR-based stop loss and take profit (ignore min hold)
         if position > 0:
             stop_price = buy_price - (ATR_STOP_MULT * buy_atr)
             target_price = buy_price + (ATR_PROFIT_MULT * buy_atr)
@@ -389,7 +366,6 @@ def run_full_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sell)
                     "price": price, "rsi": rsi_val, "pnl": pnl
                 })
                 position = 0
-                last_trade_bar = i
                 continue
             elif price >= target_price:
                 sell_cost = calculate_trade_cost(STOCK, price, position, "sell")
@@ -400,15 +376,19 @@ def run_full_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sell)
                     "price": price, "rsi": rsi_val, "pnl": pnl
                 })
                 position = 0
-                last_trade_bar = i
                 continue
 
-        # Buy signal (weighted scoring)
+        # Min hold time — skip signal-based exits if too soon
+        if position > 0 and (i - buy_bar) < MIN_HOLD_BARS:
+            continue
+
+        # Buy signal (gradient scoring)
         buy_score, _ = signals.calculate_buy_score(
             fast_val, slow_val, rsi_val, rsi_buy,
             price, lower,
-            macd_line.iloc[i], signal_line.iloc[i],
-            cur_vwap, market_uptrend, 0
+            bb_upper=upper,
+            regime_uptrend=market_uptrend,
+            current_volume=cur_volume, avg_volume=cur_avg_volume
         )
 
         if (buy_score >= signals.BUY_THRESHOLD_T1 and
@@ -421,7 +401,7 @@ def run_full_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sell)
             buy_price = price
             buy_atr = atr.iloc[i]
             buy_cost_stored = buy_cost
-            last_trade_bar = i
+            buy_bar = i
             trades.append({
                 "date": date, "action": "BUY",
                 "price": price, "rsi": rsi_val
@@ -431,8 +411,7 @@ def run_full_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sell)
             sell_score, _ = signals.calculate_sell_score(
                 fast_val, slow_val, rsi_val, rsi_sell,
                 price, upper,
-                macd_line.iloc[i], signal_line.iloc[i],
-                cur_vwap
+                bb_lower=lower
             )
 
             if sell_score < signals.SELL_THRESHOLD_T1:
@@ -440,7 +419,6 @@ def run_full_backtest(bars, spy_bars, fast, slow, rsi_period, rsi_buy, rsi_sell)
             sell_cost = calculate_trade_cost(STOCK, price, position, "sell")
             pnl = (price - buy_price) * position - buy_cost_stored - sell_cost
             cash += (price * position) - sell_cost
-            last_trade_bar = i
             trades.append({
                 "date": date, "action": "SELL",
                 "price": price, "rsi": rsi_val, "pnl": pnl
@@ -471,7 +449,7 @@ def calculate_metrics(trades, portfolio_values, final_cash, fast, slow, rsi_peri
     print(f"  RSI:              Period {rsi_period} | Levels {rsi_buy}/{rsi_sell}")
     print(f"  Stop Loss:        {ATR_STOP_MULT}x ATR")
     print(f"  Take Profit:      {ATR_PROFIT_MULT}x ATR")
-    print(f"  Regime Filter:    SPY > {REGIME_EMA} EMA")
+    print(f"  Regime Filter:    SPY > {DAILY_REGIME_EMA}-day EMA (daily)")
     print(f"  Starting Cash:    ${STARTING_CASH:,.2f}")
     print(f"  Final Cash:       ${final_cash:,.2f}")
     print(f"  Total Return:     {total_return:+.2f}%")
@@ -559,11 +537,14 @@ def calculate_metrics(trades, portfolio_values, final_cash, fast, slow, rsi_peri
         print(f"\n  📊 Chart saved as backtest_minutes.png")
 
 # ── Run everything ────────────────────────────────────────────────
-print(f"📊 Fetching SPY data for regime detection...")
-spy_bars = get_spy_bars(LOOKBACK_DAYS)
+print(f"Fetching SPY daily bars for regime detection...")
+spy_daily = get_spy_daily_bars(LOOKBACK_DAYS)
 bars = get_minute_bars(STOCK, LOOKBACK_DAYS)
 
-if bars is not None and spy_bars is not None:
+if bars is not None and spy_daily is not None:
+    daily_regime = compute_daily_regime(spy_daily)
+    regime_up = sum(1 for v in daily_regime.values() if v)
+    print(f"  Regime: {regime_up}/{len(daily_regime)} uptrend days (daily {DAILY_REGIME_EMA}-day EMA)")
     print(f"\n{'='*80}")
     print("GRID SEARCH — MINUTE BARS + STOP LOSS + REGIME DETECTION")
     print(f"{'='*80}")
@@ -573,7 +554,7 @@ if bars is not None and spy_bars is not None:
     results = []
     for p in PARAM_GRID:
         result = run_single_backtest(
-            bars, spy_bars, p["fast"], p["slow"],
+            bars, daily_regime, p["fast"], p["slow"],
             p["rsi_period"], p["rsi_buy"], p["rsi_sell"]
         )
         result["params"] = p
@@ -601,7 +582,7 @@ if bars is not None and spy_bars is not None:
 
     print(f"\nRunning full backtest with best parameters...")
     trades, portfolio_values, final_cash = run_full_backtest(
-        bars, spy_bars,
+        bars, daily_regime,
         best_p["fast"], best_p["slow"],
         best_p["rsi_period"], best_p["rsi_buy"], best_p["rsi_sell"]
     )
@@ -619,7 +600,7 @@ if bars is not None and spy_bars is not None:
     # Run best params WITHOUT costs
     COST_MODEL_ENABLED = False
     no_cost_trades, _, no_cost_cash = run_full_backtest(
-        bars, spy_bars,
+        bars, daily_regime,
         best_p["fast"], best_p["slow"],
         best_p["rsi_period"], best_p["rsi_buy"], best_p["rsi_sell"]
     )
@@ -627,7 +608,7 @@ if bars is not None and spy_bars is not None:
     # Run best params WITH costs
     COST_MODEL_ENABLED = True
     cost_trades, _, cost_cash = run_full_backtest(
-        bars, spy_bars,
+        bars, daily_regime,
         best_p["fast"], best_p["slow"],
         best_p["rsi_period"], best_p["rsi_buy"], best_p["rsi_sell"]
     )

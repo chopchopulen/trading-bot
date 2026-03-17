@@ -4,41 +4,41 @@ Shared Signal Module
 Single source of truth for all indicator calculations, signal scoring,
 and transaction cost modeling. Imported by bot.py, walk_forward.py,
 backtest_minutes.py, overnight_pipeline.py, and permutation_test.py.
+
+v2: Gradient scoring with 3 scored indicators + 2 hard gates.
+    Dropped MACD (too slow on 1-min), VWAP (weak), Sentiment (unreliable).
+    Regime is now a hard gate, not a scored component.
+    Volume is a hard gate (blocks thin-volume entries).
+    Max possible score: 7.0 (EMA 3.0 + RSI 2.0 + BB 2.0)
 """
 
 import numpy as np
 import pandas as pd
 
-# ── Signal Weights ──────────────────────────────────────────────────
-# Buy signal weights (long entry)
-W_EMA       = 3.0   # EMA trend (fast > slow)
-W_RSI       = 2.0   # RSI oversold
-W_BB        = 2.0   # Price <= BB lower band
-W_MACD      = 1.5   # MACD bullish crossover
-W_VWAP      = 1.0   # Price below VWAP
-W_REGIME    = 2.5   # SPY regime (uptrend for longs, downtrend for shorts)
-W_SENTIMENT = 0.5   # News sentiment
-W_VOLUME    = 1.0   # Volume above 20-period average
-W_VOLUME_PENALTY = -0.5  # Volume below 50% of average (low conviction)
+# ── Signal Weight Caps ────────────────────────────────────────────
+W_EMA_MAX = 3.0    # EMA trend gradient (0 to 3.0 based on separation)
+W_RSI_MAX = 2.0    # RSI gradient (0 to 2.0 based on how oversold/overbought)
+W_BB_MAX  = 2.0    # Bollinger %B gradient (0 to 2.0 based on band position)
 
-# Max possible: 13.5 (13.0 without sentiment in backtests)
+# Max possible score: 7.0
 
-# ── Tier Thresholds ─────────────────────────────────────────────────
-BUY_THRESHOLD_T1  = 6.0    # Tier 1: proven edge
-BUY_THRESHOLD_T2  = 7.0    # Tier 2: promising
-BUY_THRESHOLD_T3  = 8.0    # Tier 3: monitoring
+# ── Tier Thresholds ───────────────────────────────────────────────
+# Lower than v1 because max score is 7.0 (was 13.5)
+BUY_THRESHOLD_T1  = 3.5    # Tier 1: proven edge
+BUY_THRESHOLD_T2  = 4.0    # Tier 2: promising
+BUY_THRESHOLD_T3  = 4.5    # Tier 3: monitoring
 
-SELL_THRESHOLD_T1 = 5.5
-SELL_THRESHOLD_T2 = 6.0
-SELL_THRESHOLD_T3 = 7.0
+SELL_THRESHOLD_T1 = 3.0
+SELL_THRESHOLD_T2 = 3.5
+SELL_THRESHOLD_T3 = 4.0
 
-SHORT_THRESHOLD_T1 = 7.0   # Shorts are more conservative
-SHORT_THRESHOLD_T2 = 8.0
+SHORT_THRESHOLD_T1 = 4.5   # Shorts are more conservative
+SHORT_THRESHOLD_T2 = 5.0
 
-COVER_THRESHOLD_T1 = 5.5
-COVER_THRESHOLD_T2 = 6.0
+COVER_THRESHOLD_T1 = 3.0
+COVER_THRESHOLD_T2 = 3.5
 
-# ── Indicator Defaults ──────────────────────────────────────────────
+# ── Indicator Defaults ────────────────────────────────────────────
 DEFAULT_FAST_MA = 4
 DEFAULT_SLOW_MA = 10
 DEFAULT_RSI_PERIOD = 7
@@ -46,13 +46,9 @@ DEFAULT_RSI_OVERSOLD = 30
 DEFAULT_RSI_OVERBOUGHT = 65
 DEFAULT_BB_PERIOD = 15
 DEFAULT_BB_STD = 1.5
-DEFAULT_MACD_FAST = 12
-DEFAULT_MACD_SLOW = 26
-DEFAULT_MACD_SIGNAL = 9
 DEFAULT_ATR_PERIOD = 14
-DEFAULT_REGIME_EMA = 50
 
-# ── Transaction Cost Model ──────────────────────────────────────────
+# ── Transaction Cost Model ────────────────────────────────────────
 SPREAD_ESTIMATES = {
     "AAPL": 0.02, "MSFT": 0.02, "NVDA": 0.03, "GOOGL": 0.05,
     "AMZN": 0.04, "TSLA": 0.05, "META": 0.03, "AMD": 0.03,
@@ -79,7 +75,7 @@ SEC_FEE_RATE = 0.0000278
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  INDICATOR FUNCTIONS
+#  INDICATOR FUNCTIONS (current value for live trading)
 # ═══════════════════════════════════════════════════════════════════
 
 def calculate_ema(close, span):
@@ -128,22 +124,6 @@ def get_bollinger_bands(bars, bb_period=None, bb_std=None):
     upper = middle + (bb_std * std)
     lower = middle - (bb_std * std)
     return upper, middle, lower
-
-
-def get_macd(bars, fast=None, slow=None, signal=None):
-    """Return (macd_line, signal_line, histogram) current values."""
-    fast = fast or DEFAULT_MACD_FAST
-    slow = slow or DEFAULT_MACD_SLOW
-    signal = signal or DEFAULT_MACD_SIGNAL
-    if len(bars) < slow + signal:
-        return None, None, None
-    close = bars["close"]
-    ema_fast = close.ewm(span=fast, adjust=False).mean()
-    ema_slow = close.ewm(span=slow, adjust=False).mean()
-    macd_line = ema_fast - ema_slow
-    signal_line = macd_line.ewm(span=signal, adjust=False).mean()
-    histogram = macd_line - signal_line
-    return macd_line.iloc[-1], signal_line.iloc[-1], histogram.iloc[-1]
 
 
 def get_atr(bars, period=None):
@@ -200,19 +180,6 @@ def calculate_bb_series(close, period=None, std_dev=None):
     return upper, middle, lower
 
 
-def calculate_macd_series(close, fast=None, slow=None, signal=None):
-    """Return (macd_line, signal_line, histogram) series."""
-    fast = fast or DEFAULT_MACD_FAST
-    slow = slow or DEFAULT_MACD_SLOW
-    signal = signal or DEFAULT_MACD_SIGNAL
-    ema_fast = close.ewm(span=fast, adjust=False).mean()
-    ema_slow = close.ewm(span=slow, adjust=False).mean()
-    macd_line = ema_fast - ema_slow
-    signal_line = macd_line.ewm(span=signal, adjust=False).mean()
-    histogram = macd_line - signal_line
-    return macd_line, signal_line, histogram
-
-
 def calculate_atr_series(bars, period=None):
     """Return full ATR series for backtesting."""
     period = period or DEFAULT_ATR_PERIOD
@@ -245,191 +212,213 @@ def calculate_vwap_series(bars):
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  SCORING FUNCTIONS
+#  SCORING FUNCTIONS (v2 — gradient scoring)
 # ═══════════════════════════════════════════════════════════════════
 
+def _ema_buy_gradient(fast_val, slow_val):
+    """EMA trend gradient: 0 to 3.0 based on percentage separation."""
+    if fast_val <= slow_val or slow_val == 0:
+        return 0.0
+    sep = (fast_val - slow_val) / slow_val
+    return min(sep / 0.001, W_EMA_MAX)
+
+
+def _ema_sell_gradient(fast_val, slow_val):
+    """EMA bearish gradient: 0 to 3.0 based on how far fast is below slow."""
+    if fast_val >= slow_val or slow_val == 0:
+        return 0.0
+    sep = (slow_val - fast_val) / slow_val
+    return min(sep / 0.001, W_EMA_MAX)
+
+
+def _rsi_oversold_gradient(rsi_val, rsi_buy_level):
+    """RSI oversold gradient: 0 to 2.0 based on depth below buy level."""
+    if rsi_val >= rsi_buy_level:
+        return 0.0
+    depth = (rsi_buy_level - rsi_val) / 15.0  # Normalize: 15 pts below = full score
+    return min(depth, 1.0) * W_RSI_MAX
+
+
+def _rsi_overbought_gradient(rsi_val, rsi_sell_level):
+    """RSI overbought gradient: 0 to 2.0 based on how far above sell level."""
+    if rsi_val <= rsi_sell_level:
+        return 0.0
+    excess = (rsi_val - rsi_sell_level) / 15.0
+    return min(excess, 1.0) * W_RSI_MAX
+
+
+def _bb_lower_gradient(price, bb_lower, bb_upper):
+    """BB buy gradient: 0 to 2.0 based on %B position (lower = higher score)."""
+    if bb_lower is None or bb_upper is None:
+        return 0.0
+    bb_range = bb_upper - bb_lower
+    if bb_range <= 0:
+        return 0.0
+    pct_b = (price - bb_lower) / bb_range  # 0 = at lower, 1 = at upper
+    if pct_b >= 0.3:
+        return 0.0
+    return (0.3 - pct_b) / 0.3 * W_BB_MAX
+
+
+def _bb_upper_gradient(price, bb_lower, bb_upper):
+    """BB sell gradient: 0 to 2.0 based on %B position (higher = higher score)."""
+    if bb_lower is None or bb_upper is None:
+        return 0.0
+    bb_range = bb_upper - bb_lower
+    if bb_range <= 0:
+        return 0.0
+    pct_b = (price - bb_lower) / bb_range
+    if pct_b <= 0.7:
+        return 0.0
+    return (pct_b - 0.7) / 0.3 * W_BB_MAX
+
+
 def calculate_buy_score(fast_val, slow_val, rsi_val, rsi_buy_level,
-                        price, bb_lower, macd_line, signal_line,
-                        vwap, regime_uptrend, sentiment=0,
-                        current_volume=None, avg_volume=None):
+                        price, bb_lower, bb_upper=None,
+                        regime_uptrend=True,
+                        current_volume=None, avg_volume=None,
+                        **kwargs):
     """
-    Calculate weighted buy score for a long entry.
+    Calculate gradient buy score for a long entry.
     Returns (score, breakdown_dict).
+
+    Hard gates: regime must be uptrend, volume must not be thin.
+    Scored: EMA separation (0-3), RSI depth (0-2), BB %B position (0-2).
+    Max possible: 7.0
     """
     score = 0.0
     breakdown = {}
 
-    # EMA trend
-    if fast_val > slow_val:
-        score += W_EMA
-        breakdown["ema"] = W_EMA
+    # HARD GATE: Regime — no longs in downtrend
+    if not regime_uptrend:
+        return 0.0, {"regime": "blocked"}
 
-    # RSI oversold
-    if rsi_val < rsi_buy_level:
-        score += W_RSI
-        breakdown["rsi"] = W_RSI
-
-    # Bollinger Band lower
-    if bb_lower is not None and price <= bb_lower:
-        score += W_BB
-        breakdown["bb"] = W_BB
-
-    # MACD bullish
-    if macd_line is not None and signal_line is not None and macd_line > signal_line:
-        score += W_MACD
-        breakdown["macd"] = W_MACD
-
-    # VWAP
-    if vwap is not None and not (isinstance(vwap, float) and np.isnan(vwap)) and price < vwap:
-        score += W_VWAP
-        breakdown["vwap"] = W_VWAP
-
-    # Regime
-    if regime_uptrend:
-        score += W_REGIME
-        breakdown["regime"] = W_REGIME
-
-    # Sentiment
-    if sentiment > 0.15:
-        score += W_SENTIMENT
-        breakdown["sentiment"] = W_SENTIMENT
-
-    # Volume confirmation
+    # HARD GATE: Volume — no entries on thin volume
     if current_volume is not None and avg_volume is not None and avg_volume > 0:
-        if current_volume > avg_volume:
-            score += W_VOLUME
-            breakdown["volume"] = W_VOLUME
-        elif current_volume < avg_volume * 0.5:
-            score += W_VOLUME_PENALTY
-            breakdown["volume"] = W_VOLUME_PENALTY
+        if current_volume < avg_volume * 0.5:
+            return 0.0, {"volume": "too_low"}
+
+    # 1. EMA trend gradient (0 to 3.0)
+    ema_score = _ema_buy_gradient(fast_val, slow_val)
+    if ema_score > 0:
+        score += ema_score
+        breakdown["ema"] = round(ema_score, 2)
+
+    # 2. RSI oversold gradient (0 to 2.0)
+    rsi_score = _rsi_oversold_gradient(rsi_val, rsi_buy_level)
+    if rsi_score > 0:
+        score += rsi_score
+        breakdown["rsi"] = round(rsi_score, 2)
+
+    # 3. Bollinger Band %B gradient (0 to 2.0)
+    bb_score = _bb_lower_gradient(price, bb_lower, bb_upper)
+    if bb_score > 0:
+        score += bb_score
+        breakdown["bb"] = round(bb_score, 2)
 
     return score, breakdown
 
 
 def calculate_sell_score(fast_val, slow_val, rsi_val, rsi_sell_level,
-                         price, bb_upper, macd_line, signal_line, vwap):
+                         price, bb_upper, bb_lower=None, **kwargs):
     """
-    Calculate weighted sell score for closing a long position.
-    No regime in sell scoring — always exit deteriorating positions.
-    Returns (score, breakdown_dict).
+    Calculate gradient sell score for closing a long.
+    No regime gate — always exit deteriorating positions.
+    Max possible: 7.0
     """
     score = 0.0
     breakdown = {}
 
-    if fast_val < slow_val:
-        score += W_EMA
-        breakdown["ema"] = W_EMA
+    ema_score = _ema_sell_gradient(fast_val, slow_val)
+    if ema_score > 0:
+        score += ema_score
+        breakdown["ema"] = round(ema_score, 2)
 
-    if rsi_val > rsi_sell_level:
-        score += W_RSI
-        breakdown["rsi"] = W_RSI
+    rsi_score = _rsi_overbought_gradient(rsi_val, rsi_sell_level)
+    if rsi_score > 0:
+        score += rsi_score
+        breakdown["rsi"] = round(rsi_score, 2)
 
-    if bb_upper is not None and price >= bb_upper:
-        score += W_BB
-        breakdown["bb"] = W_BB
-
-    if macd_line is not None and signal_line is not None and macd_line < signal_line:
-        score += W_MACD
-        breakdown["macd"] = W_MACD
-
-    if vwap is not None and not (isinstance(vwap, float) and np.isnan(vwap)) and price > vwap:
-        score += W_VWAP
-        breakdown["vwap"] = W_VWAP
+    bb_score = _bb_upper_gradient(price, bb_lower, bb_upper)
+    if bb_score > 0:
+        score += bb_score
+        breakdown["bb"] = round(bb_score, 2)
 
     return score, breakdown
 
 
 def calculate_short_score(fast_val, slow_val, rsi_val, rsi_sell_level,
-                          price, bb_upper, macd_line, signal_line,
-                          vwap, regime_downtrend, sentiment=0,
-                          current_volume=None, avg_volume=None):
+                          price, bb_upper, bb_lower=None,
+                          regime_downtrend=False,
+                          current_volume=None, avg_volume=None,
+                          **kwargs):
     """
-    Calculate weighted short entry score (mirror of buy score, inverted).
-    Returns (score, breakdown_dict).
+    Calculate gradient short entry score (bearish mirror of buy).
+    Hard gate: regime must be downtrend for shorts.
+    Max possible: 7.0
     """
     score = 0.0
     breakdown = {}
 
-    # EMA bearish
-    if fast_val < slow_val:
-        score += W_EMA
-        breakdown["ema"] = W_EMA
+    # HARD GATE: Regime — no shorts in uptrend
+    if not regime_downtrend:
+        return 0.0, {"regime": "blocked"}
 
-    # RSI overbought
-    if rsi_val > rsi_sell_level:
-        score += W_RSI
-        breakdown["rsi"] = W_RSI
-
-    # Price at/above BB upper (overextended)
-    if bb_upper is not None and price >= bb_upper:
-        score += W_BB
-        breakdown["bb"] = W_BB
-
-    # MACD bearish
-    if macd_line is not None and signal_line is not None and macd_line < signal_line:
-        score += W_MACD
-        breakdown["macd"] = W_MACD
-
-    # Above VWAP (overvalued)
-    if vwap is not None and not (isinstance(vwap, float) and np.isnan(vwap)) and price > vwap:
-        score += W_VWAP
-        breakdown["vwap"] = W_VWAP
-
-    # Regime downtrend (tailwind for shorts)
-    if regime_downtrend:
-        score += W_REGIME
-        breakdown["regime"] = W_REGIME
-
-    # Negative sentiment
-    if sentiment < -0.15:
-        score += W_SENTIMENT
-        breakdown["sentiment"] = W_SENTIMENT
-
-    # Volume confirmation
+    # HARD GATE: Volume
     if current_volume is not None and avg_volume is not None and avg_volume > 0:
-        if current_volume > avg_volume:
-            score += W_VOLUME
-            breakdown["volume"] = W_VOLUME
-        elif current_volume < avg_volume * 0.5:
-            score += W_VOLUME_PENALTY
-            breakdown["volume"] = W_VOLUME_PENALTY
+        if current_volume < avg_volume * 0.5:
+            return 0.0, {"volume": "too_low"}
+
+    # 1. EMA bearish gradient (0 to 3.0)
+    ema_score = _ema_sell_gradient(fast_val, slow_val)
+    if ema_score > 0:
+        score += ema_score
+        breakdown["ema"] = round(ema_score, 2)
+
+    # 2. RSI overbought gradient (0 to 2.0)
+    rsi_score = _rsi_overbought_gradient(rsi_val, rsi_sell_level)
+    if rsi_score > 0:
+        score += rsi_score
+        breakdown["rsi"] = round(rsi_score, 2)
+
+    # 3. BB upper gradient (0 to 2.0)
+    bb_score = _bb_upper_gradient(price, bb_lower, bb_upper)
+    if bb_score > 0:
+        score += bb_score
+        breakdown["bb"] = round(bb_score, 2)
 
     return score, breakdown
 
 
 def calculate_cover_score(fast_val, slow_val, rsi_val, rsi_buy_level,
-                          price, bb_lower, macd_line, signal_line, vwap):
+                          price, bb_lower, bb_upper=None, **kwargs):
     """
-    Calculate score for closing a short position (covering).
-    Returns (score, breakdown_dict).
+    Calculate gradient score for closing a short (covering).
+    No regime gate — always exit deteriorating shorts.
+    Max possible: 7.0
     """
     score = 0.0
     breakdown = {}
 
-    if fast_val > slow_val:
-        score += W_EMA
-        breakdown["ema"] = W_EMA
+    ema_score = _ema_buy_gradient(fast_val, slow_val)
+    if ema_score > 0:
+        score += ema_score
+        breakdown["ema"] = round(ema_score, 2)
 
-    if rsi_val < rsi_buy_level:
-        score += W_RSI
-        breakdown["rsi"] = W_RSI
+    rsi_score = _rsi_oversold_gradient(rsi_val, rsi_buy_level)
+    if rsi_score > 0:
+        score += rsi_score
+        breakdown["rsi"] = round(rsi_score, 2)
 
-    if bb_lower is not None and price <= bb_lower:
-        score += W_BB
-        breakdown["bb"] = W_BB
-
-    if macd_line is not None and signal_line is not None and macd_line > signal_line:
-        score += W_MACD
-        breakdown["macd"] = W_MACD
-
-    if vwap is not None and not (isinstance(vwap, float) and np.isnan(vwap)) and price < vwap:
-        score += W_VWAP
-        breakdown["vwap"] = W_VWAP
+    bb_score = _bb_lower_gradient(price, bb_lower, bb_upper)
+    if bb_score > 0:
+        score += bb_score
+        breakdown["bb"] = round(bb_score, 2)
 
     return score, breakdown
 
 
-# ── Threshold helpers ───────────────────────────────────────────────
+# ── Threshold helpers ─────────────────────────────────────────────
 
 def get_buy_threshold(stock, tier1_stocks, tier2_stocks):
     if stock in tier1_stocks:

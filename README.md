@@ -4,71 +4,77 @@ A fully automated intraday trading bot running on **Alpaca Paper Trading** ($100
 
 ## What It Does
 
-The bot trades a **tiered stock universe** (18 validated stocks across 3 tiers) on 1-minute bars during market hours (9:45 AM - 3:45 PM ET). It uses a **weighted signal scoring system** to generate buy, sell, short, and cover signals, manages risk with ATR-based position sizing and dynamic stop losses, supports **short selling in downtrends**, and serves a real-time dashboard. Stocks are validated through a 3-stage pipeline: backtest -> walk-forward optimization -> permutation test.
+The bot trades a **tiered stock universe** on 1-minute bars during market hours (9:45 AM - 3:45 PM ET). It uses a **gradient signal scoring system** (v2) to generate buy, sell, short, and cover signals with 3 scored indicators and 2 hard gates. Risk is managed with ATR-based position sizing and dynamic stop losses. Stocks are validated through a 3-stage pipeline: backtest -> walk-forward optimization -> permutation test.
 
 ## Architecture
 
 ```
-signals.py            <- Shared signal module (scoring, indicators, thresholds)
-bot.py                <- Live trading engine (scoring, shorts, tiered stocks)
-overnight_pipeline.py <- Master overnight test runner (4 phases)
+signals.py            <- Shared signal module (gradient scoring v2, indicators, costs)
+bot.py                <- Live trading engine (gradient scoring, shorts, tiered stocks)
+overnight_pipeline.py <- Master overnight test runner (4 phases, 53 stocks)
 dashboard.py          <- Flask web dashboard (portfolio, positions, trades)
-walk_forward.py       <- Walk-forward parameter optimizer (3,312 combos/stock)
+walk_forward.py       <- Walk-forward parameter optimizer (~500 combos/stock)
 permutation_test.py   <- Statistical significance testing (dual methods)
 backtest_minutes.py   <- Minute-bar backtester with charting
 backtest.py           <- Daily-bar backtester with grid search
 diagnose_signals.py   <- Signal diagnostics & debugging tool
 ```
 
-## Signal Scoring System
+## Signal Scoring System (v2 — Gradient)
 
-The bot uses a **weighted scoring system** instead of strict AND conditions. Each indicator contributes a weight, and the total score must exceed a tier-based threshold to trigger a trade.
+The bot uses a **gradient scoring system** where each indicator contributes a continuous score based on signal strength, not binary on/off. This replaced the original 8-indicator binary system that was producing a 40% win rate.
 
-### Buy Signal Weights
+### Scored Indicators
 
-| Signal | Weight | Condition |
-|--------|--------|-----------|
-| EMA Trend | 3.0 | Fast EMA > Slow EMA |
-| RSI Oversold | 2.0 | RSI < buy threshold |
-| Bollinger Band | 2.0 | Price <= BB lower band |
-| MACD Bullish | 1.5 | MACD line > signal line |
-| VWAP | 1.0 | Price < VWAP |
-| Regime (Uptrend) | 2.5 | SPY > 50 EMA |
-| Sentiment | 0.5 | News sentiment > 0.15 |
+| Signal | Max Score | How It Works |
+|--------|-----------|-------------|
+| EMA Trend | 3.0 | Gradient based on % separation between fast/slow EMA. Wider gap = higher score |
+| RSI Oversold | 2.0 | Gradient based on depth below buy level. RSI at 15 scores higher than RSI at 29 |
+| Bollinger %B | 2.0 | Gradient based on position within bands. Closer to lower band = higher score |
 
-**Max possible score: 12.5**
+**Max possible score: 7.0**
 
-### Thresholds by Tier
+### Hard Gates (block entry, not scored)
 
-| Tier | Buy | Sell | Short Entry | Short Cover |
-|------|-----|------|-------------|-------------|
-| Tier 1 (proven) | 6.0 | 5.5 | 7.0 | 5.5 |
-| Tier 2 (promising) | 7.0 | 6.0 | 8.0 | 6.0 |
-| Tier 3 (monitoring) | 8.0 | 7.0 | disabled | disabled |
+| Gate | Condition | Effect |
+|------|-----------|--------|
+| Regime | SPY must be above 20-day EMA (daily bars) | Blocks all longs in downtrends |
+| Volume | Current volume must be > 50% of 20-bar average | Blocks entries on thin volume |
 
-**Key design decision:** The SPY regime filter is a **soft signal** (2.5 points), not a hard gate. In strong downtrends, longs can still fire if other signals are overwhelmingly bullish. This also enables short selling when the regime is bearish.
+### Buy Thresholds by Tier
 
-All scoring logic lives in `signals.py` — a single source of truth shared by the live bot, backtester, walk-forward optimizer, and overnight pipeline.
+| Tier | Buy Threshold | Sell Threshold | Short Threshold |
+|------|--------------|----------------|-----------------|
+| Tier 1 (proven) | 3.5 | 3.0 | 4.5 |
+| Tier 2 (promising) | 4.0 | 3.5 | 5.0 |
+| Tier 3 (monitoring) | 4.5 | 4.0 | disabled |
+
+**Key design decisions:**
+- Regime is a **hard gate**, not a soft signal — no longs in downtrends, period
+- Dropped MACD (too slow on 1-min bars), VWAP (weak signal), Sentiment (unreliable)
+- Gradient scoring means strong confluence naturally scores high without threshold gaming
+- All scoring logic lives in `signals.py` — single source of truth across all files
+
+## Regime Detection (Daily 20-Day EMA)
+
+The regime filter uses **SPY daily bars with a 20-day EMA** — not intraday. This flips at most once per day, compared to the old 50-bar intraday EMA that flipped dozens of times per day on noise.
+
+```
+SPY close > 20-day EMA on daily bars → UPTREND (longs allowed)
+SPY close < 20-day EMA on daily bars → DOWNTREND (shorts allowed, longs blocked)
+```
+
+For backtests, daily regime is mapped to each minute bar by date.
 
 ## Short Selling
 
-When the market is in a **downtrend** (SPY < 50 EMA), the bot can short highly liquid stocks:
+When the market is in a **downtrend** (SPY < 20-day EMA on daily), the bot can short highly liquid stocks:
 
 ```
 SHORT_ELIGIBLE = AAPL, MSFT, META, AMD, TSLA, NFLX, NVDA, AMZN, GS
 ```
 
-### Short Signals (inverted buy signals)
-
-| Signal | Weight | Condition |
-|--------|--------|-----------|
-| EMA Bearish | 3.0 | Fast EMA < Slow EMA |
-| RSI Overbought | 2.0 | RSI > sell threshold |
-| BB Upper | 2.0 | Price >= BB upper band |
-| MACD Bearish | 1.5 | MACD < signal line |
-| Above VWAP | 1.0 | Price > VWAP |
-| Regime (Downtrend) | 2.5 | SPY < 50 EMA |
-| Negative Sentiment | 0.5 | Sentiment < -0.15 |
+Short signals use the same gradient scoring system (inverted: EMA bearish, RSI overbought, BB upper).
 
 ### Short Risk Guardrails
 
@@ -88,12 +94,12 @@ SHORT_ELIGIBLE = AAPL, MSFT, META, AMD, TSLA, NFLX, NVDA, AMZN, GS
 | **Position Sizing** | ATR-based: `qty = (portfolio * 1%) / ATR(14)` — T1 full, T2 50%, T3 25% |
 | **Stop Loss** | Dynamic: `entry - 1.5 * ATR(14)` (longs) / `entry + 1.5 * ATR` (shorts) |
 | **Take Profit** | Dynamic: `entry + 3.0 * ATR(14)` (longs) / `entry - 3.0 * ATR` (shorts) |
+| **Min Hold Time** | 5 bars (5 minutes) — prevents whipsaw exits |
 | **Max Positions** | 5 concurrent (longs) + 3 concurrent (shorts) |
 | **Daily Loss Limit** | -$500 (longs), -$300 (shorts) |
 | **Market Window** | Only trades 9:45 AM - 3:45 PM ET |
 | **Backtest Gate** | No buys if stock's backtest profit factor < 1.0 |
 | **Sector Limits** | Max 2 positions per sector |
-| **Anti-Whipsaw** | 5-bar cooldown after trades, 10-min minimum hold |
 
 ### Sector Diversification
 
@@ -106,39 +112,50 @@ etf:      SPY
 other:    SPOT
 ```
 
-## Stock Universe (Tiered)
+## Stock Universe
 
-Stocks are assigned to tiers based on permutation test p-values and backtest performance:
+Stocks are assigned to tiers based on permutation test p-values, backtest performance, and walk-forward results:
 
-| Tier | Sizing | Stocks | Criteria |
-|------|--------|--------|----------|
-| **Tier 1** | Full ATR | MSFT, META, AMD, SPY | p < 0.05, proven edge |
-| **Tier 2** | 50% ATR | AAPL, TSLA, NFLX, WMT, COST, GS, HOOD, UBER, COIN | p < 0.15, promising |
-| **Tier 3** | 25% ATR | SPOT, CRM, QCOM, AMZN, NVDA | Monitoring, higher thresholds |
+| Tier | Sizing | Criteria |
+|------|--------|----------|
+| **Tier 1** | Full ATR | p < 0.05, PF >= 1.5, WR >= 45%, 5-100 trades |
+| **Tier 2** | 50% ATR | p < 0.15, PF >= 1.3, WR >= 42%, trades >= 5 |
+| **Tier 3** | 25% ATR | p < 0.30, PF >= 1.1, return > 0 |
 
-**Pipeline candidates** (tested overnight, not yet traded): AVGO, LLY, MA, PANW, CRWD, SNOW
+**Pipeline stocks** (53 total tested across original 26, 10 new, and 17 pipeline candidates).
 
 The overnight pipeline auto-classifies stocks into tiers based on p-values and profit factors.
-
-## Sentiment Analysis
-
-The bot uses **NewsAPI + VADER** to score each stock's news sentiment:
-- Fetches recent headlines for each stock
-- Scores each headline with VADER compound sentiment
-- Time-weights scores (recent news counts more)
-- Caches results for 30 minutes to stay within API limits
-- Pre-market scan at 4 AM ET identifies high-sentiment opportunities
 
 ## Walk-Forward Optimizer
 
 `walk_forward.py` prevents overfitting by splitting data into training and test windows:
 - **Lookback:** 90 days of 1-minute bars
-- **Train:** 60 days — find best parameters from 3,312 combinations
+- **Train:** 60 days — find best parameters from ~500 combinations
 - **Test:** 30 days — validate on unseen data
+- **Regime:** Daily SPY 20-day EMA mapped to minute bars
 - **Pass criteria:** Test return > 0%, trades >= 2, Sharpe > 1.0
-- **Parameter grid:** EMA fast/slow (24 combos), RSI buy/sell thresholds, BB period/std
-- **Simple signal mode:** Optional flag to test EMA + RSI only (10-20x more trades)
-- **All 26+ stocks** tested with per-stock JSON output to `walk_forward_results/`
+
+### Quality Gates (strict)
+
+| Gate | Threshold |
+|------|-----------|
+| Minimum trades | 15 |
+| Maximum trades | 80 |
+| Minimum profit factor | 1.5 |
+| Minimum win rate | 48% |
+| Minimum avg $/trade | $0.50 |
+
+### Parameter Grid (~500 combos)
+
+```
+EMA fast:         [3, 5, 8]
+EMA slow:         [12, 18, 25]
+RSI buy:          [25, 30, 35]
+RSI sell:         [65, 70, 75]
+BB period:        [15, 20]
+BB std:           [1.5, 2.0]
+Score threshold:  [3.5, 4.0, 4.5, 5.0]
+```
 
 Includes a transaction cost model (per-stock spread estimates, slippage, SEC fees) for realistic results.
 
@@ -151,20 +168,10 @@ Includes a transaction cost model (per-stock spread estimates, slippage, SEC fee
 2. **Signal shift** — randomly offset entry signal indices and simulate ATR stop/target outcomes at shifted locations (tests whether entry timing matters)
 
 **Statistical framework:**
-- **1,000 permutations** per stock (p-value resolution: 0.001)
-- **Bonferroni correction** for 26 stocks: alpha = 0.05/26 = 0.00192
+- **500+ permutations** per stock
+- **Bonferroni correction** for multiple comparisons
 - **Fisher's method** combines per-stock p-values into a single portfolio-level number
-- **White's Reality Check** adjustment for data mining bias: `0.05 / sqrt(3312) = 0.000869`
-- **Sharpe cap:** Returns 0 when trades < 2 to prevent Sharpe explosion
-- **Tiered summary** with actionable recommendations per stock
-
-### Latest Results
-
-| Verdict | Stocks |
-|---------|--------|
-| **Strong** (p < 0.05) | META (p=0.012), GS (p=0.002), AMD (p=0.002), SPY (p=0.002), HOOD (p=0.022), SPOT (p=0.020) |
-| **Promising** (p < 0.15) | WMT (p=0.072), COST (p=0.092), MSFT (p=0.026), NFLX (p=0.064), UBER (p=0.106), QCOM (p=0.104), COIN (p=0.122), CRM (p=0.136) |
-| **Weak** (p < 0.30) | AAPL, TSLA, AMZN, NVDA |
+- **White's Reality Check** adjustment for data mining bias
 
 ## Overnight Pipeline
 
@@ -172,8 +179,8 @@ Includes a transaction cost model (per-stock spread estimates, slippage, SEC fee
 
 | Phase | What | Output |
 |-------|------|--------|
-| **Phase 1** | Backtest all stocks (grid search, 10 param sets) | `backtest_results/{STOCK}.json` |
-| **Phase 2** | Walk-forward on untested stocks | `walk_forward_results/{STOCK}.json` |
+| **Phase 1** | Backtest all 26 original stocks (grid search, 10 param sets) + run walk-forward first if needed | `backtest_results/{STOCK}.json` |
+| **Phase 2** | Walk-forward on 10 new stocks | `walk_forward_results/{STOCK}.json` |
 | **Phase 3** | Permutation test on profitable stocks (500 perms) | `permutation_test_results/{STOCK}.json` |
 | **Phase 4** | Master summary report with tiered recommendations | `results/overnight_summary.txt` |
 
@@ -183,7 +190,18 @@ python3 overnight_pipeline.py --dry-run    # Show what would run
 python3 overnight_pipeline.py --skip-phase 1  # Skip backtest phase
 ```
 
-Features: skips stocks with recent results, catches exceptions per-stock (won't crash if one stock fails), prints progress per phase, Fisher combined p-value across all tested stocks.
+Features: per-stock optimal thresholds from walk-forward, daily regime detection, skips stocks with recent results, catches exceptions per-stock, Fisher combined p-value.
+
+## Sentiment Analysis
+
+The bot uses **NewsAPI + VADER** to score each stock's news sentiment for pre-market scanning:
+- Fetches recent headlines for each stock
+- Scores each headline with VADER compound sentiment
+- Time-weights scores (recent news counts more)
+- Caches results for 30 minutes to stay within API limits
+- Pre-market scan at 4 AM ET identifies high-sentiment opportunities
+
+Note: Sentiment is used for pre-market watchlist filtering only — it was removed from the signal scoring system (v2) due to unreliability.
 
 ## Dashboard
 
@@ -234,7 +252,7 @@ python3 walk_forward.py
 # Diagnose signal issues
 python3 diagnose_signals.py
 
-# Permutation test (statistical validation, ~30-45 min for all stocks)
+# Permutation test (statistical validation)
 python3 permutation_test.py
 
 # Quick test on specific stocks
@@ -265,10 +283,10 @@ Added **SPY regime detection** (only buy in uptrends) and **VWAP filter** (only 
 Integrated **NewsAPI + VADER sentiment analysis** with time-weighted scoring and 30-minute caching. Added a pre-market scan at 4 AM ET to identify stocks with positive news.
 
 ### Phase 6: Walk-Forward Optimization
-Built a walk-forward optimizer to find optimal parameters without overfitting. Discovered that 6 AND conditions on 1-minute bars produce zero signals — **the progressive AND elimination problem**. Fixed by switching RSI and Bollinger Bands from AND to OR logic (both measure oversold, only one needs to trigger).
+Built a walk-forward optimizer to find optimal parameters without overfitting. Discovered that 6 AND conditions on 1-minute bars produce zero signals — **the progressive AND elimination problem**. Fixed by switching RSI and Bollinger Bands from AND to OR logic.
 
 ### Phase 7: Signal Relaxation & Full Expansion
-Relaxed MACD + VWAP from AND to OR logic. Extended data window from 30 to 60 days, widened RSI grid, reduced trade cooldown from 5 to 2 bars. Expanded optimizer to all 26 stocks with **per-stock JSON output**. Results: **9/26 stocks PASS** (up from 1/10).
+Relaxed MACD + VWAP from AND to OR logic. Extended data window from 30 to 60 days, widened RSI grid, reduced trade cooldown. Expanded optimizer to all 26 stocks. Results: **9/26 stocks PASS** (up from 1/10).
 
 ### Phase 8: Statistical Validation (Permutation Testing)
 Built a **permutation test module** to determine if strategy performance is real or data-mining luck. Uses day-block shuffling (1,000 permutations), Bonferroni correction for 26 stocks, and Fisher's method to combine p-values.
@@ -280,17 +298,31 @@ Extended data windows (90-day lookback, 60-day train, 30-day test). Added dual-m
 Built `overnight_pipeline.py`. First live paper trading day: 0 trades fired — market in sustained downtrend (tariff sell-off), SPY regime filter blocked all buys. Bot correctly preserved capital (+0.03%).
 
 ### Phase 11: Weighted Scoring, Short Selling & Universe Expansion
-Three major upgrades to address Day 1's 0-trade problem:
-- **Weighted signal scoring** — replaced strict AND conditions with weighted scores. Regime filter changed from hard gate to 2.5-point soft signal. Shared `signals.py` module eliminates duplication across 4 files.
-- **Short selling** — bot can now short eligible stocks in downtrends with full risk management (ATR stops, hard 5% cap, regime-switch auto-cover, separate position/loss limits).
-- **Expanded universe** — 18 active stocks across 3 tiers (up from 12 across 2 tiers). Added Tier 3 at 25% sizing for monitoring stocks. 6 pipeline candidates for future testing.
+Replaced strict AND conditions with weighted scores. Added short selling with full risk management. Expanded universe to 18 active stocks across 3 tiers. Added 6 pipeline candidates.
+
+### Phase 12: Gradient Scoring Overhaul & Strategy Diagnosis
+Diagnosed the strategy as **fundamentally broken** after overnight pipeline revealed:
+- Mean win rate: 40%, mean profit factor: 0.81, mean Sharpe: -1.36
+- Only 4/26 stocks profitable (COST, XOM, CVX, JNJ — all marginal)
+- 250-350 trades per 90 days per stock — too many, mostly noise
+- 14 stocks had p < 0.05 but were **losing** — reliably worse than random
+
+**Root cause:** 8 binary indicators with threshold gaming + regime filter on 1-min bars flipping constantly + MACD too slow for 1-min.
+
+**Fixes implemented:**
+- **Gradient scoring (v2)** — replaced 8 binary indicators with 3 gradient + 2 hard gates
+- **Daily regime filter** — 20-day EMA on daily SPY bars (flips once/day, not dozens of times)
+- **Dropped MACD, VWAP, Sentiment** from scoring entirely
+- **Tighter quality gates** — min 15 trades, max 80, PF >= 1.5, WR >= 48%, avg $/trade >= $0.50
+- **Smaller parameter grid** — ~500 combos (was 7,200), prevents optimizer from finding noise
+- **Minimum hold time** — 5 bars to prevent whipsaw exits
 
 ### Next Steps
-- Live paper trading with scoring + shorts (validate real-time performance)
-- Run overnight pipeline with expanded universe
-- Tune scoring thresholds based on live results
-- Permutation test on short signals
-- VIX regime filter (reduce size in high-volatility markets)
+- Validate gradient scoring with full overnight pipeline run
+- Opening Range Breakout (ORB) strategy as secondary signal
+- Pairs trading (market-neutral) for cointegrated stock pairs
+- Slippage sensitivity analysis to find break-even cost levels
+- Paper trade validated stocks and monitor live performance
 
 ## Results & Output Files
 

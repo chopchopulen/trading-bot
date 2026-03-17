@@ -91,10 +91,10 @@ def shuffle_bars_by_day(bars, rng):
     return result
 
 
-def run_backtest_safe(bars, spy_bars, params):
+def run_backtest_safe(bars, daily_regime, params):
     """Run walk_forward.run_backtest with Sharpe capped for low trade counts."""
     result = walk_forward.run_backtest(
-        bars, spy_bars,
+        bars, daily_regime,
         params["fast"], params["slow"],
         params["rsi_buy"], params["rsi_sell"],
         params["bb_period"], params["bb_std"]
@@ -105,13 +105,14 @@ def run_backtest_safe(bars, spy_bars, params):
     return result
 
 
-def run_day_shuffle_test(stock, bars, spy_bars, params, actual_sharpe,
+def run_day_shuffle_test(stock, bars, daily_regime, params, actual_sharpe,
                           n_perms=N_PERMUTATIONS, seed=42):
     """Test 1: Day-block shuffle permutation test.
 
     Shuffle the order of trading days and re-run the backtest.
     The null hypothesis: the strategy would achieve this Sharpe
     even on randomly-ordered days.
+    Daily regime is NOT shuffled — it represents the true market state per date.
     """
     walk_forward.STOCK = stock
     rng = np.random.default_rng(seed)
@@ -119,8 +120,7 @@ def run_day_shuffle_test(stock, bars, spy_bars, params, actual_sharpe,
 
     for i in range(n_perms):
         shuffled_bars = shuffle_bars_by_day(bars, rng)
-        shuffled_spy = shuffle_bars_by_day(spy_bars, rng)
-        result = run_backtest_safe(shuffled_bars, shuffled_spy, params)
+        result = run_backtest_safe(shuffled_bars, daily_regime, params)
         perm_sharpes.append(result["sharpe"])
 
         if (i + 1) % 100 == 0:
@@ -137,7 +137,7 @@ def run_day_shuffle_test(stock, bars, spy_bars, params, actual_sharpe,
     }
 
 
-def run_signal_shift_test(stock, bars, spy_bars, params, actual_sharpe,
+def run_signal_shift_test(stock, bars, daily_regime, params, actual_sharpe,
                            n_perms=N_PERMUTATIONS, seed=123):
     """Test 2: Signal shift permutation test.
 
@@ -156,82 +156,75 @@ def run_signal_shift_test(stock, bars, spy_bars, params, actual_sharpe,
 
     # First, find the actual entry points by running the real backtest
     # and recording buy bar indices
+    import signals as sig
+
     close = bars["close"]
     fast_ema = walk_forward.calculate_ema(close, params["fast"])
     slow_ema = walk_forward.calculate_ema(close, params["slow"])
     rsi = walk_forward.calculate_rsi(close, walk_forward.RSI_PERIOD)
     bb_upper, bb_mid, bb_lower = walk_forward.calculate_bb(
         close, params["bb_period"], params["bb_std"])
-    macd_line, signal_line = walk_forward.calculate_macd(close)
     atr = walk_forward.calculate_atr(bars)
-    vwap = walk_forward.calculate_vwap(bars)
+    volume = bars["volume"]
+    avg_volume = volume.rolling(window=20).mean()
 
-    spy_close = spy_bars["close"].reindex(close.index, method="ffill")
-    spy_ema = walk_forward.calculate_ema(spy_close, walk_forward.REGIME_EMA)
+    score_threshold = params.get("score_threshold", 4.0)
+    sell_threshold = score_threshold - 0.5
 
     start_bar = max(params["slow"], params["bb_period"],
-                    walk_forward.RSI_PERIOD, walk_forward.REGIME_EMA, 35) + 1
+                    walk_forward.RSI_PERIOD) + 1
     n_bars = len(bars)
 
-    # Find real buy signal indices
+    # Find real buy signal indices using gradient scoring
     buy_indices = []
-    last_trade = -10
+    buy_bar = 0
     in_position = False
     for i in range(start_bar, n_bars):
-        if i - last_trade < 2:
-            continue
         price = close.iloc[i]
 
-        # Exit check
+        # Exit check (ATR stops ignore min hold)
         if in_position:
             stop_price = entry_price - (walk_forward.ATR_STOP_MULT * entry_atr)
             target_price = entry_price + (walk_forward.ATR_PROFIT_MULT * entry_atr)
             if price <= stop_price or price >= target_price:
                 in_position = False
-                last_trade = i
                 continue
 
+        # Min hold time
+        if in_position and (i - buy_bar) < walk_forward.MIN_HOLD_BARS:
+            continue
+
         if not in_position and not pd.isna(atr.iloc[i]):
-            uptrend = spy_close.iloc[i] > spy_ema.iloc[i]
-            macd_bull = macd_line.iloc[i] > signal_line.iloc[i]
-            cur_vwap = vwap.iloc[i]
+            uptrend = walk_forward.get_regime_for_bar(daily_regime, bars.index[i])
+            cur_vol = volume.iloc[i]
+            cur_avg_vol = avg_volume.iloc[i]
 
-            if walk_forward.SIMPLE_SIGNAL_MODE:
-                buy_sig = (uptrend and
-                           fast_ema.iloc[i] > slow_ema.iloc[i] and
-                           rsi.iloc[i] < params["rsi_buy"])
-            else:
-                buy_sig = (uptrend and
-                           fast_ema.iloc[i] > slow_ema.iloc[i] and
-                           (rsi.iloc[i] < params["rsi_buy"] or
-                            price <= bb_lower.iloc[i]) and
-                           (macd_bull or
-                            (pd.isna(cur_vwap) or price < cur_vwap)))
+            buy_score, _ = sig.calculate_buy_score(
+                fast_ema.iloc[i], slow_ema.iloc[i],
+                rsi.iloc[i], params["rsi_buy"],
+                price, bb_lower.iloc[i],
+                bb_upper=bb_upper.iloc[i],
+                regime_uptrend=uptrend,
+                current_volume=cur_vol, avg_volume=cur_avg_vol
+            )
 
-            if buy_sig:
+            if buy_score >= score_threshold:
                 buy_indices.append(i)
                 entry_price = price
                 entry_atr = atr.iloc[i]
                 in_position = True
-                last_trade = i
+                buy_bar = i
 
         elif in_position:
-            macd_bear = macd_line.iloc[i] < signal_line.iloc[i]
-            cur_vwap = vwap.iloc[i]
+            sell_score, _ = sig.calculate_sell_score(
+                fast_ema.iloc[i], slow_ema.iloc[i],
+                rsi.iloc[i], params["rsi_sell"],
+                price, bb_upper.iloc[i],
+                bb_lower=bb_lower.iloc[i]
+            )
 
-            if walk_forward.SIMPLE_SIGNAL_MODE:
-                sell_sig = (fast_ema.iloc[i] < slow_ema.iloc[i] and
-                            rsi.iloc[i] > params["rsi_sell"])
-            else:
-                sell_sig = (fast_ema.iloc[i] < slow_ema.iloc[i] and
-                            (rsi.iloc[i] > params["rsi_sell"] or
-                             price >= bb_upper.iloc[i]) and
-                            (macd_bear or
-                             (pd.isna(cur_vwap) or price > cur_vwap)))
-
-            if sell_sig:
+            if sell_score >= sell_threshold:
                 in_position = False
-                last_trade = i
 
     if len(buy_indices) < 2:
         return {
@@ -507,34 +500,32 @@ def print_summary_table(results, fisher_day_p, fisher_shift_p, fisher_combined_p
     print(f"{'=' * 80}\n")
 
 
-def run_all(stocks=None, n_perms=None, simple_mode=None):
+def run_all(stocks=None, n_perms=None, simple_mode=None):  # simple_mode kept for compat
     """Main entry point. Fetch data, run both tests, save results."""
     global N_PERMUTATIONS
     if n_perms is not None:
         N_PERMUTATIONS = n_perms
-
-    if simple_mode is not None:
-        walk_forward.SIMPLE_SIGNAL_MODE = simple_mode
 
     if stocks is None:
         stocks = walk_forward.STOCKS_TO_TEST
 
     os.makedirs(RESULTS_DIR, exist_ok=True)
 
-    mode_str = "SIMPLE (EMA+RSI only)" if walk_forward.SIMPLE_SIGNAL_MODE else "FULL"
     print(f"Permutation Test — {len(stocks)} stocks, "
           f"{N_PERMUTATIONS} permutations each")
-    print(f"Signal mode: {mode_str}")
+    print(f"Signal mode: GRADIENT SCORING")
     print(f"Bonferroni alpha: {BONFERRONI_ALPHA:.6f}")
     wrc = whites_reality_check_threshold(COMBINATIONS_TESTED)
     print(f"White's Reality Check threshold: {wrc:.6f} "
           f"(0.05 / sqrt({COMBINATIONS_TESTED}))")
     print()
 
-    # Fetch SPY bars once
-    print("Fetching SPY bars...")
-    spy_bars = walk_forward.get_spy_bars(walk_forward.LOOKBACK_DAYS)
-    print(f"  Got {len(spy_bars)} SPY bars\n")
+    # Fetch SPY daily bars for regime detection
+    print("Fetching SPY daily bars for regime...")
+    spy_daily = walk_forward.get_spy_daily_bars(walk_forward.LOOKBACK_DAYS)
+    daily_regime = walk_forward.compute_daily_regime(spy_daily)
+    regime_up = sum(1 for v in daily_regime.values() if v)
+    print(f"  Regime: {regime_up}/{len(daily_regime)} uptrend days\n")
 
     all_results = []
 
@@ -570,8 +561,8 @@ def run_all(stocks=None, n_perms=None, simple_mode=None):
         print(f"  Got {len(bars)} bars")
 
         # Split into train/test — use test portion only
-        _, test_bars, _, test_spy = walk_forward.split_data(
-            bars, spy_bars, walk_forward.TEST_DAYS
+        _, test_bars = walk_forward.split_data(
+            bars, walk_forward.TEST_DAYS
         )
         print(f"  Test period: {len(test_bars)} bars "
               f"({test_bars.index[0].date()} to {test_bars.index[-1].date()})")
@@ -579,14 +570,14 @@ def run_all(stocks=None, n_perms=None, simple_mode=None):
         # Test 1: Day-block shuffle
         print(f"  Running day-shuffle test ({N_PERMUTATIONS} perms)...")
         day_result = run_day_shuffle_test(
-            stock, test_bars, test_spy, params, actual_sharpe,
+            stock, test_bars, daily_regime, params, actual_sharpe,
             n_perms=N_PERMUTATIONS
         )
 
         # Test 2: Signal shift
         print(f"  Running signal-shift test ({N_PERMUTATIONS} perms)...")
         shift_result = run_signal_shift_test(
-            stock, test_bars, test_spy, params, actual_sharpe,
+            stock, test_bars, daily_regime, params, actual_sharpe,
             n_perms=N_PERMUTATIONS
         )
 
@@ -615,7 +606,7 @@ def run_all(stocks=None, n_perms=None, simple_mode=None):
         json_out = {k: v for k, v in result.items()
                     if k not in ("day_perm_sharpes", "shift_perm_sharpes")}
         json_out["timestamp"] = datetime.now().isoformat()
-        json_out["signal_mode"] = "simple" if walk_forward.SIMPLE_SIGNAL_MODE else "full"
+        json_out["signal_mode"] = "gradient"
         with open(f"{RESULTS_DIR}/{stock}.json", "w") as f:
             json.dump(json_out, f, indent=2)
 
@@ -668,7 +659,7 @@ def run_all(stocks=None, n_perms=None, simple_mode=None):
     combined_out = {
         "timestamp": datetime.now().isoformat(),
         "n_permutations": N_PERMUTATIONS,
-        "signal_mode": "simple" if walk_forward.SIMPLE_SIGNAL_MODE else "full",
+        "signal_mode": "gradient",
         "bonferroni_alpha": BONFERRONI_ALPHA,
         "whites_reality_check_threshold": whites_reality_check_threshold(COMBINATIONS_TESTED),
         "combinations_tested_per_stock": COMBINATIONS_TESTED,

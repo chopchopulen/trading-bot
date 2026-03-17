@@ -37,27 +37,22 @@ TEST_DAYS = 30
 ATR_PERIOD = 14
 ATR_STOP_MULT = 1.5
 ATR_PROFIT_MULT = 3.0
-REGIME_EMA = 50
 
-# ── Simple signal mode ──────────────────────────────────────────
-# When True: use ONLY EMA crossover + RSI + ATR stops (no BB, MACD, VWAP)
-# Produces 10-20x more trades for better statistical testing
-SIMPLE_SIGNAL_MODE = False
-
-# ── Fine grained parameter ranges ────────────────────────────────
-# ── Stage 1 — EMA + RSI (coarse) ─────────────────────────────────
-EMA_FAST_RANGE = range(2, 10, 2)      # 2, 4, 6, 8
-EMA_SLOW_RANGE = range(7, 25, 4)      # 7, 11, 15, 19, 23
-RSI_BUY_RANGE = range(30, 50, 5)      # 30, 35, 40, 45
-RSI_SELL_RANGE = range(50, 70, 5)     # 50, 55, 60, 65
+# ── Parameter ranges (gradient scoring — max score 7.0) ──────────
+EMA_FAST_RANGE = [3, 5, 8]
+EMA_SLOW_RANGE = [12, 18, 25]
+RSI_BUY_RANGE = [25, 30, 35]
+RSI_SELL_RANGE = [65, 70, 75]
 RSI_PERIOD = 7
 
-# ── Stage 2 — BB (tested separately after EMA+RSI found) ─────────
-BB_PERIOD_RANGE = [15, 20, 25]
-BB_STD_RANGE = [1.5, 2.0, 2.5]
+BB_PERIOD_RANGE = [15, 20]
+BB_STD_RANGE = [1.5, 2.0]
 
-# ── Score threshold range ─────────────────────────────────────────
-SCORE_THRESHOLD_RANGE = [5.5, 6.0, 6.5, 7.0, 7.5]
+# ── Score threshold range (max possible = 7.0) ───────────────────
+SCORE_THRESHOLD_RANGE = [3.5, 4.0, 4.5, 5.0]
+
+# ── Minimum hold time ────────────────────────────────────────────
+MIN_HOLD_BARS = 5  # Hold at least 5 minutes — no whipsaw exits
 
 # ── Transaction cost model ───────────────────────────────────────
 COST_MODEL_ENABLED = True
@@ -126,39 +121,55 @@ def get_minute_bars(stock, days):
     combined = combined.between_time("09:30", "16:00")
     return combined
 
-def get_spy_bars(days):
+def get_spy_daily_bars(days):
+    """Fetch DAILY SPY bars for regime detection.
+    Returns DataFrame with daily OHLCV, or None on failure.
+    """
     end = datetime.now()
-    start = end - timedelta(days=days)
-    all_bars = []
-    current_start = start
-
-    while current_start < end:
-        chunk_end = min(current_start + timedelta(days=7), end)
-        try:
-            bars = api.get_bars(
-                "SPY",
-                tradeapi.rest.TimeFrame.Minute,
-                start=current_start.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                end=chunk_end.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                feed="iex"
-            ).df
-            if isinstance(bars.index, pd.MultiIndex):
-                bars = bars.xs("SPY", level="symbol")
-            if len(bars) > 0:
-                all_bars.append(bars)
-        except Exception as e:
-            pass
-        current_start = chunk_end
-
-    if not all_bars:
+    start = end - timedelta(days=days + 30)  # Extra for EMA warmup
+    try:
+        bars = api.get_bars(
+            "SPY",
+            tradeapi.rest.TimeFrame.Day,
+            start=start.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            end=end.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            feed="iex"
+        ).df
+        if isinstance(bars.index, pd.MultiIndex):
+            bars = bars.xs("SPY", level="symbol")
+        bars.index = pd.to_datetime(bars.index)
+        return bars
+    except Exception as e:
+        print(f"  Failed to fetch SPY daily bars: {e}")
         return None
 
-    combined = pd.concat(all_bars)
-    combined = combined[~combined.index.duplicated(keep="first")]
-    combined = combined.sort_index()
-    combined.index = pd.to_datetime(combined.index)
-    combined = combined.between_time("09:30", "16:00")
-    return combined
+
+DAILY_REGIME_EMA = 20  # 20-day EMA on daily bars (~1 month lookback)
+
+
+def compute_daily_regime(spy_daily):
+    """Compute regime from daily SPY bars.
+    Returns dict mapping date -> bool (True = uptrend).
+    Uses 20-day EMA: SPY close > 20-day EMA = uptrend.
+    """
+    close = spy_daily["close"]
+    ema = close.ewm(span=DAILY_REGIME_EMA, adjust=False).mean()
+    regime = close > ema
+    # Convert to dict {date -> bool}
+    result = {}
+    for idx, val in regime.items():
+        d = idx.date() if hasattr(idx, 'date') else idx
+        result[d] = bool(val)
+    return result
+
+
+def get_regime_for_bar(daily_regime, bar_time):
+    """Look up the daily regime for a given minute bar timestamp.
+    Returns True (uptrend) or False (downtrend).
+    Falls back to True if date not found.
+    """
+    d = bar_time.date() if hasattr(bar_time, 'date') else bar_time
+    return daily_regime.get(d, True)
 
 # ── Calculate indicators ──────────────────────────────────────────
 def calculate_ema(series, period):
@@ -178,13 +189,6 @@ def calculate_bb(series, period, std):
     deviation = series.rolling(window=period).std()
     return middle + (std * deviation), middle, middle - (std * deviation)
 
-def calculate_macd(series, fast=12, slow=26, signal=9):
-    ema_fast = series.ewm(span=fast, adjust=False).mean()
-    ema_slow = series.ewm(span=slow, adjust=False).mean()
-    macd_line = ema_fast - ema_slow
-    signal_line = macd_line.ewm(span=signal, adjust=False).mean()
-    return macd_line, signal_line
-
 def calculate_atr(bars, period=ATR_PERIOD):
     high = bars["high"]
     low = bars["low"]
@@ -195,33 +199,21 @@ def calculate_atr(bars, period=ATR_PERIOD):
     true_range = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
     return true_range.rolling(window=period).mean()
 
-def calculate_vwap(bars):
-    typical_price = (bars["high"] + bars["low"] + bars["close"]) / 3
-    tp_vol = typical_price * bars["volume"]
-    cum_tp_vol = tp_vol.groupby(tp_vol.index.date).cumsum()
-    cum_vol = bars["volume"].groupby(bars["volume"].index.date).cumsum()
-    return cum_tp_vol / cum_vol
-
 # ── Run single backtest ───────────────────────────────────────────
-def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_std,
+def run_backtest(bars, daily_regime, fast, slow, rsi_buy, rsi_sell, bb_period, bb_std,
                  score_threshold=6.0):
     close = bars["close"]
     fast_ema = calculate_ema(close, fast)
     slow_ema = calculate_ema(close, slow)
     rsi = calculate_rsi(close, RSI_PERIOD)
     bb_upper, bb_mid, bb_lower = calculate_bb(close, bb_period, bb_std)
-    macd_line, signal_line = calculate_macd(close)
     atr = calculate_atr(bars)
-    vwap = calculate_vwap(bars)
 
     # Volume: 20-period rolling average
     volume = bars["volume"]
     avg_volume = volume.rolling(window=20).mean()
 
-    spy_close = spy_bars["close"].reindex(close.index, method="ffill")
-    spy_ema = calculate_ema(spy_close, REGIME_EMA)
-
-    # Sell threshold is buy threshold - 0.5 (matches tier gap pattern)
+    # Sell threshold is buy threshold - 0.5
     sell_threshold = score_threshold - 0.5
 
     cash = STARTING_CASH
@@ -229,20 +221,17 @@ def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_st
     buy_price = 0
     buy_atr = 0
     buy_cost_stored = 0
+    buy_bar = 0
     pnls = []
-    last_trade = -10
 
-    for i in range(max(slow, bb_period, RSI_PERIOD, REGIME_EMA, 35) + 1, len(bars)):
-        if i - last_trade < 2:
-            continue
-
+    start_bar = max(slow, bb_period, RSI_PERIOD) + 1
+    for i in range(start_bar, len(bars)):
         price = close.iloc[i]
-        uptrend = spy_close.iloc[i] > spy_ema.iloc[i]
-        cur_vwap = vwap.iloc[i]
+        uptrend = get_regime_for_bar(daily_regime, bars.index[i])
         cur_volume = volume.iloc[i]
         cur_avg_volume = avg_volume.iloc[i]
 
-        # ATR-based stop loss and take profit
+        # ATR-based stop loss and take profit (ignore min hold)
         if position > 0:
             stop_price = buy_price - (ATR_STOP_MULT * buy_atr)
             target_price = buy_price + (ATR_PROFIT_MULT * buy_atr)
@@ -252,16 +241,19 @@ def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_st
                 cash += (price * position) - sell_cost
                 pnls.append(pnl)
                 position = 0
-                last_trade = i
                 continue
 
-        # Buy signal (weighted scoring with volume)
+        # Min hold time — skip signal-based exits if too soon
+        if position > 0 and (i - buy_bar) < MIN_HOLD_BARS:
+            continue
+
+        # Buy signal (gradient scoring)
         buy_score, _ = signals.calculate_buy_score(
             fast_ema.iloc[i], slow_ema.iloc[i],
             rsi.iloc[i], rsi_buy,
             price, bb_lower.iloc[i],
-            macd_line.iloc[i], signal_line.iloc[i],
-            cur_vwap, uptrend, 0,
+            bb_upper=bb_upper.iloc[i],
+            regime_uptrend=uptrend,
             current_volume=cur_volume, avg_volume=cur_avg_volume
         )
         if (buy_score >= score_threshold and
@@ -273,16 +265,15 @@ def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_st
             buy_price = price
             buy_atr = atr.iloc[i]
             buy_cost_stored = buy_cost
-            last_trade = i
+            buy_bar = i
 
-        # Sell signal (weighted scoring)
+        # Sell signal (gradient scoring)
         elif position > 0:
             sell_score, _ = signals.calculate_sell_score(
                 fast_ema.iloc[i], slow_ema.iloc[i],
                 rsi.iloc[i], rsi_sell,
                 price, bb_upper.iloc[i],
-                macd_line.iloc[i], signal_line.iloc[i],
-                cur_vwap
+                bb_lower=bb_lower.iloc[i]
             )
             if sell_score < sell_threshold:
                 continue
@@ -291,7 +282,6 @@ def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_st
             cash += (price * position) - sell_cost
             pnls.append(pnl)
             position = 0
-            last_trade = i
 
     if position > 0:
         final_price = close.iloc[-1]
@@ -314,14 +304,17 @@ def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_st
 
     # Quality gates — disqualify bad parameter sets
     num_trades = len(pnls)
-    if num_trades < 5:
+    avg_profit = np.mean(pnls) if pnls else 0
+    if num_trades < 15:
         score = -999       # Not enough data
-    elif num_trades > 150:
+    elif num_trades > 80:
         score = -999       # Over-trading
-    elif profit_factor < 1.2:
+    elif profit_factor < 1.5:
         score = -999       # Losing strategy
-    elif win_rate < 42:
+    elif win_rate < 48:
         score = -999       # Too many losers
+    elif avg_profit < 0.50:
+        score = -999       # Avg $/trade doesn't cover costs
     else:
         score = sharpe
 
@@ -335,13 +328,11 @@ def run_backtest(bars, spy_bars, fast, slow, rsi_buy, rsi_sell, bb_period, bb_st
     }
 
 # ── Split data ────────────────────────────────────────────────────
-def split_data(bars, spy_bars, test_days):
+def split_data(bars, test_days):
     cutoff = bars.index[-1] - timedelta(days=test_days)
     train_bars = bars[bars.index < cutoff]
     test_bars = bars[bars.index >= cutoff]
-    train_spy = spy_bars[spy_bars.index < cutoff]
-    test_spy = spy_bars[spy_bars.index >= cutoff]
-    return train_bars, test_bars, train_spy, test_spy
+    return train_bars, test_bars
 
 # ── Build parameter grid ──────────────────────────────────────────
 def build_param_grid():
@@ -366,23 +357,25 @@ def run_walk_forward():
     global STOCK
     print(f"\nFetching data for {STOCK}...")
     bars = get_minute_bars(STOCK, LOOKBACK_DAYS)
-    spy_bars = get_spy_bars(LOOKBACK_DAYS)
+    spy_daily = get_spy_daily_bars(LOOKBACK_DAYS)
 
-    if bars is None or spy_bars is None:
+    if bars is None or spy_daily is None:
         print(f"Failed to fetch data for {STOCK}!")
         return None
 
+    daily_regime = compute_daily_regime(spy_daily)
+    regime_days = sum(1 for v in daily_regime.values() if v)
+    total_days = len(daily_regime)
     print(f"Got {len(bars)} minute bars for {STOCK}")
+    print(f"Regime: {regime_days}/{total_days} uptrend days (daily 20-day EMA)")
 
-    train_bars, test_bars, train_spy, test_spy = split_data(
-        bars, spy_bars, TEST_DAYS
-    )
+    train_bars, test_bars = split_data(bars, TEST_DAYS)
 
     print(f"Train: {len(train_bars)} bars | Test: {len(test_bars)} bars")
 
     param_grid = build_param_grid()
     total = len(param_grid)
-    print(f"\n🔍 Testing {total:,} combinations on training data...")
+    print(f"\nTesting {total:,} combinations on training data...")
 
     results = []
     for i, p in enumerate(param_grid):
@@ -391,7 +384,7 @@ def run_walk_forward():
             print(f"   Progress: {pct:.0f}% ({i:,}/{total:,})", flush=True)
 
         result = run_backtest(
-            train_bars, train_spy,
+            train_bars, daily_regime,
             p["fast"], p["slow"],
             p["rsi_buy"], p["rsi_sell"],
             p["bb_period"], p["bb_std"],
@@ -430,7 +423,7 @@ def run_walk_forward():
     for r in top_10:
         p = r["params"]
         test_result = run_backtest(
-            test_bars, test_spy,
+            test_bars, daily_regime,
             p["fast"], p["slow"],
             p["rsi_buy"], p["rsi_sell"],
             p["bb_period"], p["bb_std"],
@@ -494,7 +487,6 @@ def run_walk_forward():
 if __name__ == "__main__":
     try:
         all_verified = {}
-        spy_bars_cache = None
 
         os.makedirs("walk_forward_results", exist_ok=True)
 
