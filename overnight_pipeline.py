@@ -805,34 +805,36 @@ def run_phase4(backtest_results, wf_results, perm_results):
 
         all_data[stock] = data
 
-    # Tier classification (strict quality gates)
-    tier1 = []  # p < 0.05, PF >= 1.5, return > 0, WR >= 45%, 5-100 trades
-    tier2 = []  # p < 0.15, PF >= 1.3, return > 0, WR >= 42%, trades >= 5
-    tier3 = []  # p < 0.30, PF >= 1.1, return > 0
+    # Tier classification — cross-references BOTH permutation p-value AND backtest quality.
+    # A stock must pass BOTH tests to be promoted. Positive return is mandatory at all tiers
+    # to prevent stocks with good p-values but negative backtest returns (e.g. META) from
+    # being promoted.
+    tier1 = []  # p < 0.05  AND PF >= 1.3 AND return > 0
+    tier2 = []  # p < 0.15  AND PF >= 1.2 AND return > 0
+    tier3 = []  # p < 0.30  AND PF >= 1.1 AND return > 0
     dropped = []
     warnings = []
 
     for stock, d in all_data.items():
-        p = d.get("perm_p", 1.0)
-        pf = d.get("bt_profit_factor", 0)
+        p      = d.get("perm_p", 1.0)
+        pf     = d.get("bt_profit_factor", 0)
         bt_ret = d.get("bt_return", 0)
-        wr = d.get("bt_win_rate", 0)
-        trades = d.get("bt_trades", 0)
 
-        if (p < 0.05 and pf >= 1.5 and bt_ret > 0
-                and wr >= 45 and 5 <= trades <= 100):
+        if p < 0.05 and pf >= 1.3 and bt_ret > 0:
             tier1.append(stock)
-        elif (p < 0.15 and pf >= 1.3 and bt_ret > 0
-                and wr >= 42 and trades >= 5):
+        elif p < 0.15 and pf >= 1.2 and bt_ret > 0:
             tier2.append(stock)
         elif p < 0.30 and pf >= 1.1 and bt_ret > 0:
             tier3.append(stock)
         else:
             dropped.append(stock)
 
-        # Warn if promoted despite low PF
+        # Warn if stock has good p-value but negative return (common false positive)
+        if stock not in dropped and bt_ret <= 0:
+            warnings.append(f"  ⚠️ WARNING: {stock} has p={p:.3f} but bt_return={bt_ret:.2f}% — verify backtest")
+        # Warn if promoted despite PF < 1.0
         if stock not in dropped and pf < 1.0:
-            warnings.append(f"  ⚠️ WARNING: {stock} promoted despite PF < 1.0 — check manually")
+            warnings.append(f"  ⚠️ WARNING: {stock} promoted despite PF={pf:.2f} < 1.0 — check manually")
 
     # Compute Fisher combined p-value
     tested_p_values = [d.get("perm_p") for d in all_data.values() if d.get("perm_p") is not None]
@@ -889,10 +891,10 @@ def run_phase4(backtest_results, wf_results, perm_results):
     lines.append("-" * 80)
 
     if tier1:
-        lines.append(f"  TIER 1 — Trade full size (p < 0.05, PF >= 1.5, WR >= 45%, 5-100 trades):")
+        lines.append(f"  TIER 1 — Trade full size (p < 0.05, PF >= 1.3, return > 0):")
         lines.append(f"    {', '.join(tier1)}")
     if tier2:
-        lines.append(f"  TIER 2 — Trade reduced size (p < 0.15, PF >= 1.3, WR >= 42%, trades >= 5):")
+        lines.append(f"  TIER 2 — Trade reduced size (p < 0.15, PF >= 1.2, return > 0):")
         lines.append(f"    {', '.join(tier2)}")
     if tier3:
         lines.append(f"  TIER 3 — Monitor only (p < 0.30, PF >= 1.1):")

@@ -27,13 +27,13 @@ newsapi = NewsApiClient(api_key=NEWS_API_KEY)
 analyzer = SentimentIntensityAnalyzer()
 
 # ── Tiered Stock Universe ───────────────────────────────────────────
-# Tier 1 — Full size (p < 0.05, PF >= 1.5 — validated by permutation test with gradient scoring)
-TIER1_STOCKS = ["MSFT", "AAPL", "META", "AMD", "QQQ"]
-# Tier 2 — Half size (promising, p < 0.15 or strong walk-forward)
-TIER2_STOCKS = ["NFLX", "WMT", "GS", "V", "UNH", "HOOD", "UBER"]
-# Tier 3 — Quarter size (monitoring, accumulating data)
-TIER3_STOCKS = ["COST", "AMZN", "COIN", "ROKU", "ABNB", "PYPL", "SPOT"]
-# Pending validation — strong p-values but backtest confirmation needed before active trading
+# Tier 1 — Full size (p < 0.05 + PF >= 1.3 + positive BT return — cross-validated both tests)
+TIER1_STOCKS = ["MSFT", "AAPL", "MS", "BLK"]
+# Tier 2 — Half size (p < 0.15 + PF >= 1.2 + positive BT return)
+TIER2_STOCKS = ["V", "WMT", "GS", "AMZN"]
+# Tier 3 — Quarter size (pipeline T3 or borderline perm — monitor only)
+TIER3_STOCKS = ["QQQ", "COST", "MA", "NET", "AMD"]
+# Pending validation — passed permutation but negative backtest return; need better backtest
 PENDING_VALIDATION = ["SHOP", "PLTR"]
 
 STOCKS = TIER1_STOCKS + TIER2_STOCKS + TIER3_STOCKS
@@ -58,14 +58,14 @@ ORB_DATA = {}  # {stock: {"high": float, "low": float, "date": str, "finalized":
 
 # ── Sector diversification ──────────────────────────────────────────
 SECTOR_MAP = {
-    "tech":       ["MSFT", "META", "AAPL", "AMZN", "NFLX", "CRM", "UBER", "ROKU", "SPOT", "SHOP", "PLTR"],
-    "semi":       ["AMD", "NVDA", "QCOM"],
-    "finance":    ["GS", "HOOD", "V", "PYPL"],
-    "consumer":   ["WMT", "COST", "TSLA", "ABNB"],
-    "healthcare": ["UNH"],
-    "crypto":     ["COIN"],
-    "etf":        ["SPY", "QQQ"],
+    "tech":     ["MSFT", "META", "AAPL", "AMZN", "NFLX", "NET", "CRM", "UBER", "SPOT", "SHOP", "PLTR"],
+    "semi":     ["AMD", "NVDA", "QCOM"],
+    "finance":  ["GS", "MS", "BLK", "V", "MA", "COIN", "HOOD", "PYPL"],
+    "consumer": ["WMT", "COST", "TSLA", "UBER", "ABNB"],
+    "etf":      ["SPY", "QQQ"],
 }
+# Note: finance sector has 5 active stocks (GS, MS, BLK, V, MA).
+# MAX_POSITIONS_PER_SECTOR = 2 caps portfolio heat — correct behavior.
 MAX_POSITIONS_PER_SECTOR = 2
 
 STOCK_NAMES = {
@@ -74,13 +74,12 @@ STOCK_NAMES = {
     "META": "Meta", "AMD": "AMD", "NFLX": "Netflix",
     "CRM": "Salesforce", "JPM": "JPMorgan", "BAC": "Bank of America",
     "GS": "Goldman Sachs", "V": "Visa", "SPY": "S&P 500",
-    "QQQ": "Nasdaq", "XOM": "Exxon", "CVX": "Chevron",
+    "QQQ": "Nasdaq ETF", "XOM": "Exxon", "CVX": "Chevron",
     "JNJ": "Johnson and Johnson", "PFE": "Pfizer",
     "UNH": "UnitedHealth", "WMT": "Walmart", "COST": "Costco",
     "NKE": "Nike", "INTC": "Intel", "QCOM": "Qualcomm",
     "UBER": "Uber", "COIN": "Coinbase", "HOOD": "Robinhood",
-    "SPOT": "Spotify", "QQQ": "Nasdaq", "V": "Visa",
-    "UNH": "UnitedHealth", "ROKU": "Roku", "ABNB": "Airbnb",
+    "SPOT": "Spotify", "ROKU": "Roku", "ABNB": "Airbnb",
     "PYPL": "PayPal", "SHOP": "Shopify", "PLTR": "Palantir",
     "AVGO": "Broadcom", "LLY": "Eli Lilly",
     "MA": "Mastercard", "PANW": "Palo Alto Networks",
@@ -944,17 +943,23 @@ def run_bot():
                     buy_threshold = max(0.5, buy_threshold - 1.0)
                     short_threshold = max(0.5, short_threshold - 1.0)
 
-                # DIAGNOSTIC_MODE: show full score breakdown every cycle
+                # DIAGNOSTIC_MODE: full per-stock breakdown every cycle
                 if DIAGNOSTIC_MODE:
                     regime_str = "UPTREND" if uptrend else "DOWNTREND"
+                    bt_pf = BACKTEST_RESULTS.get(stock, {}).get("profit_factor", None)
+                    pf_str = f"PF:{bt_pf:.2f}" if bt_pf is not None else "PF:?"
+                    short_ok = stock in SHORT_ELIGIBLE
+                    short_tag = "short:✓" if short_ok else "short:✗"
+                    hdr = f"  DIAG {stock} [{tier_label} | {pf_str} | {short_tag}]  [{regime_str}]"
+
                     if uptrend:
                         r_gate = buy_bd.get("regime")
                         v_gate = buy_bd.get("volume")
                         if r_gate == "blocked":
-                            print(f"  DIAG {stock} [{regime_str}] BUY: regime blocked | SHORT: regime blocked (uptrend)")
+                            print(f"{hdr}  BUY: regime blocked | SHORT: N/A (uptrend)")
                         elif v_gate == "too_low":
                             vol_ratio = (cur_volume / cur_avg_volume) if cur_avg_volume else 0
-                            print(f"  DIAG {stock} [{regime_str}] BUY: volume blocked ({vol_ratio:.2f}x avg) | SHORT: regime blocked")
+                            print(f"{hdr}  BUY: volume too low ({vol_ratio:.2f}x avg) | SHORT: N/A (uptrend)")
                         else:
                             ema_s  = buy_bd.get("ema",  0.0)
                             rsi_s  = buy_bd.get("rsi",  0.0)
@@ -962,22 +967,24 @@ def run_bot():
                             rs_s   = buy_bd.get("rs",   0.0)
                             orb_s  = buy_bd.get("orb",  0.0)
                             vwap_s = buy_bd.get("vwap", 0.0)
-                            status = ">>> FIRE <<<" if buy_score >= buy_threshold else f"gap -{buy_threshold - buy_score:.1f}"
-                            print(f"  DIAG {stock} [{regime_str}] BUY | "
-                                  f"EMA:{ema_s:.1f}/3 RSI:{rsi_s:.1f}/2 BB:{bb_s:.1f}/2 "
+                            buy_gap = buy_score - buy_threshold
+                            fire = ">>> FIRE <<<" if buy_gap >= 0 else ""
+                            print(f"{hdr}")
+                            print(f"    BUY   EMA:{ema_s:.1f}/3 RSI:{rsi_s:.1f}/2 BB:{bb_s:.1f}/2 "
                                   f"RS:{rs_s:.1f}[{_rs_label(rel_strength)}] "
                                   f"ORB:{orb_s:.1f}[{_orb_label(orb_data)}] "
-                                  f"VWAP:{vwap_s:.1f}[{_vwap_label(price, vwap_data)}] | "
-                                  f"Total:{buy_score:.1f}/{signals.MAX_SCORE} Thresh:{buy_threshold:.1f} | {status}")
+                                  f"VWAP:{vwap_s:.1f}[{_vwap_label(price, vwap_data)}]")
+                            print(f"          Score:{buy_score:.1f}/{signals.MAX_SCORE}  "
+                                  f"thresh:{buy_threshold:.1f}  gap:{buy_gap:+.1f}  {fire}")
+                            print(f"    SHORT N/A (regime: uptrend)")
                     else:
                         r_gate = short_bd.get("regime")
                         v_gate = short_bd.get("volume")
-                        short_elig = "eligible" if stock in SHORT_ELIGIBLE else "NOT eligible"
                         if r_gate == "blocked":
-                            print(f"  DIAG {stock} [{regime_str}] SHORT: regime blocked | BUY: regime blocked (downtrend)")
+                            print(f"{hdr}  SHORT: regime blocked | BUY: N/A (downtrend)")
                         elif v_gate == "too_low":
                             vol_ratio = (cur_volume / cur_avg_volume) if cur_avg_volume else 0
-                            print(f"  DIAG {stock} [{regime_str}] SHORT: volume blocked ({vol_ratio:.2f}x avg) | BUY: regime blocked")
+                            print(f"{hdr}  SHORT: volume too low ({vol_ratio:.2f}x avg) | BUY: N/A (downtrend)")
                         else:
                             ema_s  = short_bd.get("ema",  0.0)
                             rsi_s  = short_bd.get("rsi",  0.0)
@@ -985,18 +992,21 @@ def run_bot():
                             rs_s   = short_bd.get("rs",   0.0)
                             orb_s  = short_bd.get("orb",  0.0)
                             vwap_s = short_bd.get("vwap", 0.0)
-                            if short_score >= short_threshold and stock in SHORT_ELIGIBLE:
-                                status = ">>> FIRE <<<"
-                            elif short_score < short_threshold:
-                                status = f"gap -{short_threshold - short_score:.1f}"
+                            short_gap = short_score - short_threshold
+                            if short_gap >= 0 and short_ok:
+                                fire = ">>> FIRE <<<"
+                            elif short_gap >= 0 and not short_ok:
+                                fire = "score OK — not short-eligible"
                             else:
-                                status = f"score OK but {short_elig}"
-                            print(f"  DIAG {stock} [{regime_str}] SHORT | "
-                                  f"EMA:{ema_s:.1f}/3 RSI:{rsi_s:.1f}/2 BB:{bb_s:.1f}/2 "
+                                fire = ""
+                            print(f"{hdr}")
+                            print(f"    SHORT EMA:{ema_s:.1f}/3 RSI:{rsi_s:.1f}/2 BB:{bb_s:.1f}/2 "
                                   f"RS:{rs_s:.1f}[{_rs_label(rel_strength)}] "
                                   f"ORB:{orb_s:.1f}[{_orb_label(orb_data)}] "
-                                  f"VWAP:{vwap_s:.1f}[{_vwap_label(price, vwap_data)}] | "
-                                  f"Total:{short_score:.1f}/{signals.MAX_SCORE} Thresh:{short_threshold:.1f} | {short_elig} | {status}")
+                                  f"VWAP:{vwap_s:.1f}[{_vwap_label(price, vwap_data)}]")
+                            print(f"          Score:{short_score:.1f}/{signals.MAX_SCORE}  "
+                                  f"thresh:{short_threshold:.1f}  gap:{short_gap:+.1f}  {fire}")
+                            print(f"    BUY   N/A (regime: downtrend)")
 
                 can_buy = (buy_score >= buy_threshold and
                           not buys_blocked and
