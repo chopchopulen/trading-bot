@@ -403,7 +403,12 @@ SENTIMENT_CACHE = {}         # {stock: (score, timestamp)}
 SENTIMENT_TTL = 1800         # 30 minutes in seconds
 
 def get_sentiment(stock):
-    # Return cached value if fresh
+    """Fetch sentiment score for a stock.
+    Returns a float on success, or None on any API error / rate limit / empty result.
+    None means "no data" — callers must treat as neutral, never as negative.
+    Only real, successful API responses are saved to the in-memory cache.
+    """
+    # Return in-memory cached value if fresh
     if stock in SENTIMENT_CACHE:
         cached_score, cached_time = SENTIMENT_CACHE[stock]
         if (datetime.now() - cached_time).total_seconds() < SENTIMENT_TTL:
@@ -418,7 +423,8 @@ def get_sentiment(stock):
             from_param=(datetime.now() - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%S")
         )
         if not articles["articles"]:
-            return 0
+            # No articles found — ambiguous, not confirmed negative; do NOT cache
+            return None
         scores = []
         weights = []
         now = datetime.now()
@@ -434,11 +440,12 @@ def get_sentiment(stock):
             scores.append(score)
             weights.append(weight)
         result = np.average(scores, weights=weights)
+        # Only cache confirmed real API results (Fix 1)
         SENTIMENT_CACHE[stock] = (result, datetime.now())
         return result
     except Exception as e:
         print(f"  Sentiment error for {stock}: {e}")
-        return None  # None = API failed; caller treats as neutral (0.1), not negative
+        return None  # API failed / rate-limited — caller includes with neutral score
 
 # ── Sentiment thresholds (for pre-market scan only) ──────────────
 SENTIMENT_THRESHOLD_BUY = 0.15
@@ -457,18 +464,34 @@ def run_premarket_scan():
             with open(SENTIMENT_CACHE_FILE, "r") as f:
                 cache_data = json.load(f)
             if cache_data.get("date") == today_str:
+                raw_scores = cache_data.get("scores", {})
+
+                # Fix 2 — Poison detection: all-zero cache means API errors were saved
+                real_scores = [v for v in raw_scores.values() if v is not None]
+                if real_scores and all(s == 0.0 for s in real_scores):
+                    print(f"  ⚠️  Cache appears poisoned (all zeros) — ignoring, fetching fresh")
+                    raise ValueError("poisoned cache")
+
                 print(f"  📋 Loading sentiment from today's cache ({SENTIMENT_CACHE_FILE})")
-                scores = cache_data.get("scores", {})
                 WATCHLIST = []
                 for stock in STOCKS:
-                    sentiment = scores.get(stock, 0)
-                    if sentiment > SENTIMENT_THRESHOLD_BUY:
+                    score = raw_scores.get(stock)  # None = error was recorded, not a real score
+
+                    # Fix 3 — Treat None (null in JSON) and exact 0.0 as "no data → include"
+                    if score is None:
                         WATCHLIST.append(stock)
-                        print(f"  ✅ {stock} added | Sentiment: {sentiment:.3f} (cached)")
+                        print(f"  ⚠️  {stock} — no cached score (prior error), included neutral")
+                    elif score == 0.0:
+                        WATCHLIST.append(stock)
+                        print(f"  ⚠️  {stock} — cached 0.0 is suspicious, included neutral")
+                    elif score > SENTIMENT_THRESHOLD_BUY:
+                        WATCHLIST.append(stock)
+                        print(f"  ✅ {stock} added | Sentiment: {score:.3f} (cached)")
                     else:
-                        print(f"  ❌ {stock} excluded | Sentiment: {sentiment:.3f} (cached)")
+                        print(f"  ❌ {stock} excluded | Sentiment: {score:.3f} (confirmed negative, cached)")
+
                 if not WATCHLIST:
-                    print(f"\n  ⚠️ No stocks passed filter — trading ALL stocks today")
+                    print(f"\n  ⚠️  No stocks passed filter — trading ALL stocks today")
                     WATCHLIST = STOCKS.copy()
                 else:
                     print(f"\n  📋 Today's watchlist: {WATCHLIST}")
@@ -481,33 +504,41 @@ def run_premarket_scan():
 
     # No valid cache — fetch fresh from NewsAPI and save for the day
     WATCHLIST = []
+    # Fix 1 — only real API results go into the file cache.
+    # None (errors, empty results) are stored as JSON null so restarts know
+    # "no data for this stock" rather than mistaking it for a genuine 0.0 score.
     fresh_scores = {}
-    SENTIMENT_NEUTRAL = 0.1  # Fallback when API fails — include the stock, don't penalise it
+    any_api_error = False
     for stock in STOCKS:
         raw = get_sentiment(stock)
         if raw is None:
-            # API error (rate-limited, network, etc.) — do NOT exclude; use neutral score
-            sentiment = SENTIMENT_NEUTRAL
-            fresh_scores[stock] = sentiment
+            # API error or no articles — include the stock, record null in cache
+            any_api_error = True
+            fresh_scores[stock] = None  # saved as JSON null — never treated as negative on reload
             WATCHLIST.append(stock)
-            print(f"  ⚠️  {stock} — rate limited, using neutral sentiment, included")
+            print(f"  ⚠️  {stock} — no API data, using neutral sentiment, included")
         else:
-            sentiment = raw
-            fresh_scores[stock] = sentiment
-            if sentiment > SENTIMENT_THRESHOLD_BUY:
+            fresh_scores[stock] = raw  # only real scores saved
+            if raw > SENTIMENT_THRESHOLD_BUY:
                 WATCHLIST.append(stock)
-                print(f"  ✅ {stock} added | Sentiment: {sentiment:.3f}")
+                print(f"  ✅ {stock} added | Sentiment: {raw:.3f}")
             else:
-                print(f"  ❌ {stock} excluded | Sentiment: {sentiment:.3f} (confirmed negative)")
+                print(f"  ❌ {stock} excluded | Sentiment: {raw:.3f} (confirmed negative)")
+
     if not WATCHLIST:
-        print(f"\n  ⚠️ No stocks passed filter — trading ALL stocks today")
+        print(f"\n  ⚠️  No stocks passed filter — trading ALL stocks today")
         WATCHLIST = STOCKS.copy()
     else:
         print(f"\n  📋 Today's watchlist: {WATCHLIST}")
     with open("watchlist.txt", "w") as f:
         f.write("\n".join(WATCHLIST))
         f.write(f"\nLast updated: {datetime.now().strftime('%b %d %Y, %I:%M %p')}")
-    # Save cache so bot restarts today reuse the same scores
+
+    # Save cache — always write so restarts don't re-hit the API for stocks we already tried.
+    # Stocks with API errors are stored as null (not 0.0) so the poison-detection check
+    # on the next restart won't incorrectly treat them as confirmed negative sentiment.
+    if any_api_error:
+        print(f"  ⚠️  Some stocks had API errors — their scores saved as null (will re-include on restart)")
     try:
         with open(SENTIMENT_CACHE_FILE, "w") as f:
             json.dump({"date": today_str, "scores": fresh_scores}, f, indent=2)
