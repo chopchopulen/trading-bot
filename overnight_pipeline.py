@@ -85,6 +85,8 @@ RESULTS_DIR = "backtest_results"
 SUMMARY_DIR = "results"
 SKIP_IF_RECENT_HOURS = 12  # Skip stocks with results less than this many hours old
 FORCE_REPERM = True        # Ignore existing permutation results and re-run all (set True when signals.py changes)
+DISABLE_SENTIMENT = True   # Pipeline is purely price-based — never call NewsAPI here.
+                           # All 100 daily NewsAPI requests are reserved for bot.py morning scan.
 
 # ── Backtest settings (match backtest_minutes.py) ────────────────
 STARTING_CASH = 100000

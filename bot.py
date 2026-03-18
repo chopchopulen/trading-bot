@@ -105,7 +105,7 @@ DEFAULT_SELL_THRESHOLD = 3.5
 
 # ── Diagnostic and test modes ─────────────────────────────────────
 DIAGNOSTIC_MODE = True   # Print full score breakdowns each minute per stock
-TEST_MODE = True         # Subtract 1.0 from all thresholds (calibration only — NOT for live trading)
+TEST_MODE = False         # Subtract 1.0 from all thresholds (calibration only — NOT for live trading)
 
 # ── Load per-stock optimized parameters from walk-forward results ──
 STOCK_PARAMS = {}
@@ -438,7 +438,7 @@ def get_sentiment(stock):
         return result
     except Exception as e:
         print(f"  Sentiment error for {stock}: {e}")
-        return 0
+        return None  # None = API failed; caller treats as neutral (0.1), not negative
 
 # ── Sentiment thresholds (for pre-market scan only) ──────────────
 SENTIMENT_THRESHOLD_BUY = 0.15
@@ -482,14 +482,23 @@ def run_premarket_scan():
     # No valid cache — fetch fresh from NewsAPI and save for the day
     WATCHLIST = []
     fresh_scores = {}
+    SENTIMENT_NEUTRAL = 0.1  # Fallback when API fails — include the stock, don't penalise it
     for stock in STOCKS:
-        sentiment = get_sentiment(stock)
-        fresh_scores[stock] = sentiment
-        if sentiment > SENTIMENT_THRESHOLD_BUY:
+        raw = get_sentiment(stock)
+        if raw is None:
+            # API error (rate-limited, network, etc.) — do NOT exclude; use neutral score
+            sentiment = SENTIMENT_NEUTRAL
+            fresh_scores[stock] = sentiment
             WATCHLIST.append(stock)
-            print(f"  ✅ {stock} added | Sentiment: {sentiment:.3f}")
+            print(f"  ⚠️  {stock} — rate limited, using neutral sentiment, included")
         else:
-            print(f"  ❌ {stock} excluded | Sentiment: {sentiment:.3f}")
+            sentiment = raw
+            fresh_scores[stock] = sentiment
+            if sentiment > SENTIMENT_THRESHOLD_BUY:
+                WATCHLIST.append(stock)
+                print(f"  ✅ {stock} added | Sentiment: {sentiment:.3f}")
+            else:
+                print(f"  ❌ {stock} excluded | Sentiment: {sentiment:.3f} (confirmed negative)")
     if not WATCHLIST:
         print(f"\n  ⚠️ No stocks passed filter — trading ALL stocks today")
         WATCHLIST = STOCKS.copy()
