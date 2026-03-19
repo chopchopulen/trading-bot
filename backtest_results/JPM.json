@@ -1,0 +1,20 @@
+{
+  "stock": "JPM",
+  "total_return": 0.020707647589966655,
+  "profit_factor": 1.0717677421500256,
+  "sharpe": 0.46635200862836484,
+  "win_rate": 50.81967213114754,
+  "max_drawdown": 3.356878271171704,
+  "trades": 61,
+  "edge_survives_costs": true,
+  "best_params": {
+    "fast": 2,
+    "slow": 22,
+    "rsi_period": 7,
+    "rsi_buy": 25,
+    "rsi_sell": 55
+  },
+  "score_threshold": 4.5,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T17:21:22.124639"
+}

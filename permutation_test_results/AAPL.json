@@ -1,0 +1,15 @@
+{
+  "stock": "AAPL",
+  "actual_sharpe": 32.771269334792926,
+  "wf_status": "PASS",
+  "wf_trades": 2,
+  "day_shuffle_p": 0.017964071856287425,
+  "day_shuffle_mean": -1.019463293813663,
+  "day_shuffle_std": 62.258185425472874,
+  "signal_shift_p": 0.13373253493013973,
+  "signal_shift_mean": -1216.329443278643,
+  "signal_shift_std": 25985.732745581983,
+  "combined_p": 0.017964071856287425,
+  "timestamp": "2026-03-17T18:08:23.923471",
+  "signal_mode": "gradient"
+}

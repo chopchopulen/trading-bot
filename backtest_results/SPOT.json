@@ -1,0 +1,20 @@
+{
+  "stock": "SPOT",
+  "total_return": 0.08447163396999531,
+  "profit_factor": 1.0590317708740382,
+  "sharpe": 0.31659182919221623,
+  "win_rate": 38.38383838383838,
+  "max_drawdown": 5.887131218540556,
+  "trades": 99,
+  "edge_survives_costs": true,
+  "best_params": {
+    "fast": 8,
+    "slow": 13,
+    "rsi_period": 7,
+    "rsi_buy": 35,
+    "rsi_sell": 55
+  },
+  "score_threshold": 4.0,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T18:06:02.145844"
+}

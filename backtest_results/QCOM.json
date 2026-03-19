@@ -1,0 +1,20 @@
+{
+  "stock": "QCOM",
+  "total_return": 0.016650312690006105,
+  "profit_factor": 1.0568652096012563,
+  "sharpe": 0.30500638328770324,
+  "win_rate": 50.526315789473685,
+  "max_drawdown": 1.821167823054876,
+  "trades": 95,
+  "edge_survives_costs": true,
+  "best_params": {
+    "fast": 6,
+    "slow": 10,
+    "rsi_period": 7,
+    "rsi_buy": 40,
+    "rsi_sell": 55
+  },
+  "score_threshold": 4.0,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T17:20:51.637013"
+}

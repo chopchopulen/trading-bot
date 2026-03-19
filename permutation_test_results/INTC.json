@@ -1,0 +1,15 @@
+{
+  "stock": "INTC",
+  "actual_sharpe": 2.05572582649403,
+  "wf_status": "PASS",
+  "wf_trades": 11,
+  "day_shuffle_p": 0.36726546906187624,
+  "day_shuffle_mean": -9.144853272600153,
+  "day_shuffle_std": 148.14328482944322,
+  "signal_shift_p": 0.18562874251497005,
+  "signal_shift_mean": -3.9906255128725463,
+  "signal_shift_std": 8.85592943337484,
+  "combined_p": 0.18562874251497005,
+  "timestamp": "2026-03-17T18:16:27.174062",
+  "signal_mode": "gradient"
+}

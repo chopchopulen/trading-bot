@@ -1,0 +1,20 @@
+{
+  "stock": "NVDA",
+  "total_return": 0.07830418487997667,
+  "profit_factor": 1.5225491340184307,
+  "sharpe": 2.648455863476595,
+  "win_rate": 47.82608695652174,
+  "max_drawdown": 1.9544710641225542,
+  "trades": 46,
+  "edge_survives_costs": true,
+  "best_params": {
+    "fast": 8,
+    "slow": 22,
+    "rsi_period": 7,
+    "rsi_buy": 25,
+    "rsi_sell": 70
+  },
+  "score_threshold": 5.0,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T17:21:10.216869"
+}

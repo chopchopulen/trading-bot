@@ -1,0 +1,20 @@
+{
+  "stock": "INTC",
+  "total_return": -0.04667803720002121,
+  "profit_factor": 0.7930025316443382,
+  "sharpe": -1.2988905168862366,
+  "win_rate": 39.603960396039604,
+  "max_drawdown": 0.5573604512455577,
+  "trades": 101,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 6,
+    "slow": 10,
+    "rsi_period": 7,
+    "rsi_buy": 30,
+    "rsi_sell": 60
+  },
+  "score_threshold": 3.5,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T17:22:33.535796"
+}

@@ -1,0 +1,15 @@
+{
+  "stock": "ORCL",
+  "actual_sharpe": 3.0363223570532236,
+  "wf_status": "PASS",
+  "wf_trades": 11,
+  "day_shuffle_p": 0.31736526946107785,
+  "day_shuffle_mean": -3.2327671167795016,
+  "day_shuffle_std": 35.02718940405563,
+  "signal_shift_p": 0.2275449101796407,
+  "signal_shift_mean": -3.3054018494945425,
+  "signal_shift_std": 8.04836827889003,
+  "combined_p": 0.2275449101796407,
+  "timestamp": "2026-03-17T18:22:38.462414",
+  "signal_mode": "gradient"
+}

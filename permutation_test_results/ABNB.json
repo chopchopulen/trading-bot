@@ -1,0 +1,15 @@
+{
+  "stock": "ABNB",
+  "actual_sharpe": 5.908858328116782,
+  "wf_status": "PASS",
+  "wf_trades": 3,
+  "day_shuffle_p": 0.0998003992015968,
+  "day_shuffle_mean": -19.232830421016875,
+  "day_shuffle_std": 520.491827904358,
+  "signal_shift_p": 0.2714570858283433,
+  "signal_shift_mean": -16.111621213199005,
+  "signal_shift_std": 75.63435854615251,
+  "combined_p": 0.0998003992015968,
+  "timestamp": "2026-03-17T18:08:47.643803",
+  "signal_mode": "gradient"
+}

@@ -1,0 +1,15 @@
+{
+  "stock": "PANW",
+  "actual_sharpe": 1.8762764115792034,
+  "wf_status": "PASS",
+  "wf_trades": 2,
+  "day_shuffle_p": 0.25948103792415167,
+  "day_shuffle_mean": -10.674354345400266,
+  "day_shuffle_std": 231.6146711047052,
+  "signal_shift_p": 0.46107784431137727,
+  "signal_shift_mean": -43.5343578233077,
+  "signal_shift_std": 243.08971286702717,
+  "combined_p": 0.25948103792415167,
+  "timestamp": "2026-03-17T18:23:05.372634",
+  "signal_mode": "gradient"
+}

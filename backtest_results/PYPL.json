@@ -1,0 +1,20 @@
+{
+  "stock": "PYPL",
+  "total_return": -0.05407757354999194,
+  "profit_factor": 0.6447699822414232,
+  "sharpe": -1.7359333984449221,
+  "win_rate": 34.90566037735849,
+  "max_drawdown": 0.602556314667178,
+  "trades": 106,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 8,
+    "slow": 22,
+    "rsi_period": 7,
+    "rsi_buy": 25,
+    "rsi_sell": 70
+  },
+  "score_threshold": 3.5,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T18:05:57.846984"
+}

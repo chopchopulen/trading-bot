@@ -1,0 +1,15 @@
+{
+  "stock": "JPM",
+  "actual_sharpe": 5.141371297247561,
+  "wf_status": "PASS",
+  "wf_trades": 2,
+  "day_shuffle_p": 0.17564870259481039,
+  "day_shuffle_mean": 8.758034000151483,
+  "day_shuffle_std": 239.93785067982094,
+  "signal_shift_p": 0.3093812375249501,
+  "signal_shift_mean": -72.8147487091537,
+  "signal_shift_std": 478.1939588455194,
+  "combined_p": 0.17564870259481039,
+  "timestamp": "2026-03-17T18:17:24.177449",
+  "signal_mode": "gradient"
+}

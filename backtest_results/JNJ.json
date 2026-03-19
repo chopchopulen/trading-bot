@@ -1,0 +1,20 @@
+{
+  "stock": "JNJ",
+  "total_return": -0.08417155955992348,
+  "profit_factor": 0.7109752511256766,
+  "sharpe": -2.1793733620719826,
+  "win_rate": 45.1219512195122,
+  "max_drawdown": 2.5012749362531816,
+  "trades": 82,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 6,
+    "slow": 10,
+    "rsi_period": 7,
+    "rsi_buy": 35,
+    "rsi_sell": 55
+  },
+  "score_threshold": 4.0,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T17:22:01.032692"
+}

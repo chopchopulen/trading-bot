@@ -1,0 +1,15 @@
+{
+  "stock": "QCOM",
+  "actual_sharpe": 3.077552144168184,
+  "wf_status": "PASS",
+  "wf_trades": 2,
+  "day_shuffle_p": 0.23353293413173654,
+  "day_shuffle_mean": 28.922139647763117,
+  "day_shuffle_std": 411.2071839306885,
+  "signal_shift_p": 0.25349301397205587,
+  "signal_shift_mean": -331.03751636562697,
+  "signal_shift_std": 4692.4574419855135,
+  "combined_p": 0.23353293413173654,
+  "timestamp": "2026-03-17T18:24:32.827468",
+  "signal_mode": "gradient"
+}

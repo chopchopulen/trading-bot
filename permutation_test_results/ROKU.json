@@ -1,0 +1,15 @@
+{
+  "stock": "ROKU",
+  "actual_sharpe": 11.189399532648904,
+  "wf_status": "PASS",
+  "wf_trades": 4,
+  "day_shuffle_p": 0.12375249500998003,
+  "day_shuffle_mean": 1421.7245867775973,
+  "day_shuffle_std": 22495.641533371072,
+  "signal_shift_p": 0.1437125748502994,
+  "signal_shift_mean": -8.900908931992733,
+  "signal_shift_std": 34.22415587543285,
+  "combined_p": 0.12375249500998003,
+  "timestamp": "2026-03-17T18:25:28.123728",
+  "signal_mode": "gradient"
+}

@@ -1,0 +1,15 @@
+{
+  "stock": "SPY",
+  "actual_sharpe": -0.8379218196507277,
+  "wf_status": "WEAK",
+  "wf_trades": 4,
+  "day_shuffle_p": 1.0,
+  "day_shuffle_mean": 0.020070966602329824,
+  "day_shuffle_std": 0.27567712223390367,
+  "signal_shift_p": 0.5109780439121756,
+  "signal_shift_mean": -8.725221628518437,
+  "signal_shift_std": 36.246668932582544,
+  "combined_p": 0.5109780439121756,
+  "timestamp": "2026-03-17T18:28:25.757326",
+  "signal_mode": "gradient"
+}

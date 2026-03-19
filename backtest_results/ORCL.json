@@ -1,0 +1,20 @@
+{
+  "stock": "ORCL",
+  "total_return": 0.016582825739926192,
+  "profit_factor": 1.0268716599771892,
+  "sharpe": 0.16509192640675488,
+  "win_rate": 49.532710280373834,
+  "max_drawdown": 2.0631241966095413,
+  "trades": 107,
+  "edge_survives_costs": true,
+  "best_params": {
+    "fast": 6,
+    "slow": 10,
+    "rsi_period": 7,
+    "rsi_buy": 40,
+    "rsi_sell": 55
+  },
+  "score_threshold": 4.0,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T18:07:04.361486"
+}

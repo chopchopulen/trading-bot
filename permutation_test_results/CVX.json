@@ -1,0 +1,15 @@
+{
+  "stock": "CVX",
+  "actual_sharpe": -4.205351211116849,
+  "wf_status": "WEAK",
+  "wf_trades": 5,
+  "day_shuffle_p": 0.6986027944111777,
+  "day_shuffle_mean": -15.142377179077128,
+  "day_shuffle_std": 140.8833371083043,
+  "signal_shift_p": 0.688622754491018,
+  "signal_shift_mean": -0.557485925254711,
+  "signal_shift_std": 15.536792924418277,
+  "combined_p": 0.688622754491018,
+  "timestamp": "2026-03-17T18:13:39.401394",
+  "signal_mode": "gradient"
+}

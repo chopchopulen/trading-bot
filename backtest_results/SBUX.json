@@ -1,0 +1,20 @@
+{
+  "stock": "SBUX",
+  "total_return": -0.016308169140000245,
+  "profit_factor": 0.9000793833004257,
+  "sharpe": -0.5912269709004708,
+  "win_rate": 46.835443037974684,
+  "max_drawdown": 1.010763415782551,
+  "trades": 79,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 8,
+    "slow": 13,
+    "rsi_period": 7,
+    "rsi_buy": 35,
+    "rsi_sell": 55
+  },
+  "score_threshold": 4.5,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T18:07:52.113663"
+}

@@ -1,0 +1,20 @@
+{
+  "stock": "ZM",
+  "total_return": -0.17912895427997863,
+  "profit_factor": 0.4454001654708679,
+  "sharpe": -4.800350199582963,
+  "win_rate": 36.61971830985916,
+  "max_drawdown": 0.996684384611417,
+  "trades": 71,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 8,
+    "slow": 13,
+    "rsi_period": 7,
+    "rsi_buy": 35,
+    "rsi_sell": 55
+  },
+  "score_threshold": 4.0,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T18:06:05.831181"
+}

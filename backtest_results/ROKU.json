@@ -1,0 +1,20 @@
+{
+  "stock": "ROKU",
+  "total_return": -0.08688775559997884,
+  "profit_factor": 0.6880251301996785,
+  "sharpe": -2.522717292316273,
+  "win_rate": 39.130434782608695,
+  "max_drawdown": 1.165195508188351,
+  "trades": 69,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 6,
+    "slow": 10,
+    "rsi_period": 7,
+    "rsi_buy": 30,
+    "rsi_sell": 60
+  },
+  "score_threshold": 3.5,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T18:05:49.565656"
+}

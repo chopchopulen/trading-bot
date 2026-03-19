@@ -1,0 +1,20 @@
+{
+  "stock": "QQQ",
+  "total_return": 0.14910042625988718,
+  "profit_factor": 1.310458044656244,
+  "sharpe": 1.4265606046108452,
+  "win_rate": 41.77215189873418,
+  "max_drawdown": 6.353225815309532,
+  "trades": 79,
+  "edge_survives_costs": true,
+  "best_params": {
+    "fast": 2,
+    "slow": 22,
+    "rsi_period": 7,
+    "rsi_buy": 25,
+    "rsi_sell": 55
+  },
+  "score_threshold": 4.5,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T17:21:41.763086"
+}

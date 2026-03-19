@@ -1,0 +1,20 @@
+{
+  "stock": "LLY",
+  "total_return": -0.9116764412900666,
+  "profit_factor": 0.7419631640071903,
+  "sharpe": -1.8098363946457,
+  "win_rate": 39.84375,
+  "max_drawdown": 11.48859578562039,
+  "trades": 128,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 6,
+    "slow": 10,
+    "rsi_period": 7,
+    "rsi_buy": 40,
+    "rsi_sell": 55
+  },
+  "score_threshold": 3.5,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T18:06:19.887772"
+}

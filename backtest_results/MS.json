@@ -1,0 +1,20 @@
+{
+  "stock": "MS",
+  "total_return": 0.05713824574001774,
+  "profit_factor": 1.606529615095496,
+  "sharpe": 3.3054357310918836,
+  "win_rate": 58.97435897435898,
+  "max_drawdown": 1.9086176402827246,
+  "trades": 39,
+  "edge_survives_costs": true,
+  "best_params": {
+    "fast": 8,
+    "slow": 13,
+    "rsi_period": 7,
+    "rsi_buy": 35,
+    "rsi_sell": 55
+  },
+  "score_threshold": 5.0,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T18:07:11.846702"
+}

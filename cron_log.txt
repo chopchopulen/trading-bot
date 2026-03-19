@@ -1,0 +1,540 @@
+Traceback (most recent call last):
+  File "/Users/harry/trading-bot/bot.py", line 1, in <module>
+    import alpaca_trade_api as tradeapi
+ModuleNotFoundError: No module named 'alpaca_trade_api'
+Traceback (most recent call last):
+  File "/Users/harry/trading-bot/bot.py", line 1, in <module>
+    import alpaca_trade_api as tradeapi
+ModuleNotFoundError: No module named 'alpaca_trade_api'
+
+============================================================
+🚀 TRADING BOT — STARTUP SUMMARY
+============================================================
+
+  Signal Mode: GRADIENT SCORING (signals.py, max score 7.0)
+  Defaults: EMA 4/10 | RSI 30/65 | BB 15/1.5
+  Risk: Stop 1.5x ATR | Target 3.0x ATR | Max 5 longs, 3 shorts | Daily limit $-500
+
+  Tier 1 — Full size (4 stocks):
+    MSFT, META, AMD, SPY
+    Buy threshold: 3.5 | Short threshold: 4.5
+
+  Tier 2 — Half size (9 stocks, 50% qty):
+    AAPL, TSLA, NFLX, WMT, COST, GS, HOOD, UBER, COIN
+    Buy threshold: 4.0 | Short threshold: 5.0
+
+  Tier 3 — Quarter size (5 stocks, 25% qty):
+    SPOT, CRM, QCOM, AMZN, NVDA
+    Buy threshold: 4.5 | Short: disabled
+
+  Short eligible: AAPL, MSFT, META, AMD, TSLA, NFLX, NVDA, AMZN, GS
+
+  Walk-forward params loaded: 0 stocks
+    ⚠️ None — using defaults for all stocks
+
+  Backtest results loaded: 0 stocks
+    ⚠️ None — no backtest filtering active
+
+  Total stocks monitored: 18
+============================================================
+  Checks every minute during market hours.
+  Press Ctrl+C to stop.
+============================================================
+
+
+==================================================
+🌅 PRE-MARKET SCAN at 00:57:02
+==================================================
+  ✅ MSFT added | Sentiment: 0.172
+  ❌ META excluded | Sentiment: 0.054
+  ✅ AMD added | Sentiment: 0.353
+  ❌ SPY excluded | Sentiment: -0.298
+  ✅ AAPL added | Sentiment: 0.226
+  ❌ TSLA excluded | Sentiment: 0.068
+  ✅ NFLX added | Sentiment: 0.491
+  ✅ WMT added | Sentiment: 0.536
+  ✅ COST added | Sentiment: 0.876
+  ❌ GS excluded | Sentiment: -0.127
+  ❌ HOOD excluded | Sentiment: 0.000
+  ✅ UBER added | Sentiment: 0.219
+  ✅ COIN added | Sentiment: 0.742
+  ❌ SPOT excluded | Sentiment: 0.136
+  ❌ CRM excluded | Sentiment: 0.000
+  ✅ QCOM added | Sentiment: 0.293
+  ✅ AMZN added | Sentiment: 0.452
+  ❌ NVDA excluded | Sentiment: 0.105
+
+  📋 Today's watchlist: ['MSFT', 'AMD', 'AAPL', 'NFLX', 'WMT', 'COST', 'UBER', 'COIN', 'QCOM', 'AMZN']
+  Market is closed. Waiting... (00:57:06)
+  Market is closed. Waiting... (00:57:06)
+
+============================================================
+🚀 TRADING BOT — STARTUP SUMMARY
+============================================================
+
+  Signal Mode: GRADIENT SCORING (signals.py, max score 7.0)
+  Defaults: EMA 4/10 | RSI 30/65 | BB 15/1.5
+  Risk: Stop 1.5x ATR | Target 3.0x ATR | Max 5 longs, 3 shorts | Daily limit $-500
+
+  Tier 1 — Full size (4 stocks):
+    MSFT, META, AMD, SPY
+    Buy threshold: 3.5 | Short threshold: 4.5
+
+  Tier 2 — Half size (9 stocks, 50% qty):
+    AAPL, TSLA, NFLX, WMT, COST, GS, HOOD, UBER, COIN
+    Buy threshold: 4.0 | Short threshold: 5.0
+
+  Tier 3 — Quarter size (5 stocks, 25% qty):
+    SPOT, CRM, QCOM, AMZN, NVDA
+    Buy threshold: 4.5 | Short: disabled
+
+  Short eligible: AAPL, MSFT, META, AMD, TSLA, NFLX, NVDA, AMZN, GS
+
+  Walk-forward params loaded: 0 stocks
+    ⚠️ None — using defaults for all stocks
+
+  Backtest results loaded: 0 stocks
+    ⚠️ None — no backtest filtering active
+
+  Total stocks monitored: 18
+============================================================
+  Checks every minute during market hours.
+  Press Ctrl+C to stop.
+============================================================
+
+
+==================================================
+🌅 PRE-MARKET SCAN at 00:58:01
+==================================================
+  ✅ MSFT added | Sentiment: 0.172
+  ❌ META excluded | Sentiment: 0.054
+  ✅ AMD added | Sentiment: 0.353
+  ❌ SPY excluded | Sentiment: -0.298
+  ✅ AAPL added | Sentiment: 0.180
+  ❌ TSLA excluded | Sentiment: 0.068
+  ✅ NFLX added | Sentiment: 0.523
+  ✅ WMT added | Sentiment: 0.536
+  ✅ COST added | Sentiment: 0.876
+  ❌ GS excluded | Sentiment: -0.127
+  ❌ HOOD excluded | Sentiment: 0.000
+  ✅ UBER added | Sentiment: 0.219
+  ✅ COIN added | Sentiment: 0.742
+  ❌ SPOT excluded | Sentiment: 0.136
+  ❌ CRM excluded | Sentiment: 0.000
+  ✅ QCOM added | Sentiment: 0.293
+  ✅ AMZN added | Sentiment: 0.536
+  ❌ NVDA excluded | Sentiment: 0.105
+
+  📋 Today's watchlist: ['MSFT', 'AMD', 'AAPL', 'NFLX', 'WMT', 'COST', 'UBER', 'COIN', 'QCOM', 'AMZN']
+  Market is closed. Waiting... (00:58:05)
+  Market is closed. Waiting... (00:58:05)
+
+============================================================
+🚀 TRADING BOT — STARTUP SUMMARY
+============================================================
+
+  Signal Mode: GRADIENT SCORING (signals.py, max score 7.0)
+  Defaults: EMA 4/10 | RSI 30/65 | BB 15/1.5
+  Risk: Stop 1.5x ATR | Target 3.0x ATR | Max 5 longs, 3 shorts | Daily limit $-500
+
+  Tier 1 — Full size (4 stocks):
+    MSFT, META, AMD, SPY
+    Buy threshold: 3.5 | Short threshold: 4.5
+
+  Tier 2 — Half size (9 stocks, 50% qty):
+    AAPL, TSLA, NFLX, WMT, COST, GS, HOOD, UBER, COIN
+    Buy threshold: 4.0 | Short threshold: 5.0
+
+  Tier 3 — Quarter size (5 stocks, 25% qty):
+    SPOT, CRM, QCOM, AMZN, NVDA
+    Buy threshold: 4.5 | Short: disabled
+
+  Short eligible: AAPL, MSFT, META, AMD, TSLA, NFLX, NVDA, AMZN, GS
+
+  Walk-forward params loaded: 0 stocks
+    ⚠️ None — using defaults for all stocks
+
+  Backtest results loaded: 0 stocks
+    ⚠️ None — no backtest filtering active
+
+  Total stocks monitored: 18
+============================================================
+  Checks every minute during market hours.
+  Press Ctrl+C to stop.
+============================================================
+
+
+==================================================
+🌅 PRE-MARKET SCAN at 00:59:01
+==================================================
+  ✅ MSFT added | Sentiment: 0.267
+  ❌ META excluded | Sentiment: 0.054
+  ✅ AMD added | Sentiment: 0.353
+  ❌ SPY excluded | Sentiment: -0.298
+  ✅ AAPL added | Sentiment: 0.180
+  ❌ TSLA excluded | Sentiment: 0.068
+  ✅ NFLX added | Sentiment: 0.523
+  ✅ WMT added | Sentiment: 0.536
+  ✅ COST added | Sentiment: 0.876
+  ❌ GS excluded | Sentiment: -0.127
+  ❌ HOOD excluded | Sentiment: 0.000
+  ✅ UBER added | Sentiment: 0.219
+  ✅ COIN added | Sentiment: 0.742
+  ❌ SPOT excluded | Sentiment: 0.136
+  ❌ CRM excluded | Sentiment: 0.000
+  ✅ QCOM added | Sentiment: 0.293
+  ✅ AMZN added | Sentiment: 0.536
+  ❌ NVDA excluded | Sentiment: 0.105
+
+  📋 Today's watchlist: ['MSFT', 'AMD', 'AAPL', 'NFLX', 'WMT', 'COST', 'UBER', 'COIN', 'QCOM', 'AMZN']
+  Market is closed. Waiting... (00:59:05)
+  Market is closed. Waiting... (00:59:05)
+
+============================================================
+🚀 TRADING BOT — STARTUP SUMMARY
+============================================================
+
+  Signal Mode: GRADIENT SCORING (signals.py, max score 7.0)
+  Defaults: EMA 4/10 | RSI 30/65 | BB 15/1.5
+  Risk: Stop 1.5x ATR | Target 3.0x ATR | Max 5 longs, 3 shorts | Daily limit $-500
+
+  Tier 1 — Full size (4 stocks):
+    MSFT, META, AMD, SPY
+    Buy threshold: 3.5 | Short threshold: 4.5
+
+  Tier 2 — Half size (9 stocks, 50% qty):
+    AAPL, TSLA, NFLX, WMT, COST, GS, HOOD, UBER, COIN
+    Buy threshold: 4.0 | Short threshold: 5.0
+
+  Tier 3 — Quarter size (5 stocks, 25% qty):
+    SPOT, CRM, QCOM, AMZN, NVDA
+    Buy threshold: 4.5 | Short: disabled
+
+  Short eligible: AAPL, MSFT, META, AMD, TSLA, NFLX, NVDA, AMZN, GS
+
+  Walk-forward params loaded: 0 stocks
+    ⚠️ None — using defaults for all stocks
+
+  Backtest results loaded: 0 stocks
+    ⚠️ None — no backtest filtering active
+
+  Total stocks monitored: 18
+============================================================
+  Checks every minute during market hours.
+  Press Ctrl+C to stop.
+============================================================
+
+
+==================================================
+🌅 PRE-MARKET SCAN at 01:00:01
+==================================================
+  ✅ MSFT added | Sentiment: 0.267
+  ❌ META excluded | Sentiment: 0.054
+  ✅ AMD added | Sentiment: 0.353
+  ❌ SPY excluded | Sentiment: -0.298
+  ✅ AAPL added | Sentiment: 0.180
+  ❌ TSLA excluded | Sentiment: 0.068
+  ✅ NFLX added | Sentiment: 0.523
+  ✅ WMT added | Sentiment: 0.536
+  ✅ COST added | Sentiment: 0.876
+  ❌ GS excluded | Sentiment: -0.127
+  ❌ HOOD excluded | Sentiment: 0.000
+  ✅ UBER added | Sentiment: 0.219
+  ✅ COIN added | Sentiment: 0.742
+  ❌ SPOT excluded | Sentiment: 0.086
+  ❌ CRM excluded | Sentiment: 0.000
+  ✅ QCOM added | Sentiment: 0.293
+  ✅ AMZN added | Sentiment: 0.538
+  ❌ NVDA excluded | Sentiment: 0.105
+
+  📋 Today's watchlist: ['MSFT', 'AMD', 'AAPL', 'NFLX', 'WMT', 'COST', 'UBER', 'COIN', 'QCOM', 'AMZN']
+  Market is closed. Waiting... (01:00:06)
+  Market is closed. Waiting... (01:00:06)
+
+============================================================
+🚀 TRADING BOT — STARTUP SUMMARY
+============================================================
+
+  Signal Mode: GRADIENT SCORING (signals.py, max score 7.0)
+  Defaults: EMA 4/10 | RSI 30/65 | BB 15/1.5
+  Risk: Stop 1.5x ATR | Target 3.0x ATR | Max 5 longs, 3 shorts | Daily limit $-500
+
+  Tier 1 — Full size (4 stocks):
+    MSFT, META, AMD, SPY
+    Buy threshold: 3.5 | Short threshold: 4.5
+
+  Tier 2 — Half size (9 stocks, 50% qty):
+    AAPL, TSLA, NFLX, WMT, COST, GS, HOOD, UBER, COIN
+    Buy threshold: 4.0 | Short threshold: 5.0
+
+  Tier 3 — Quarter size (5 stocks, 25% qty):
+    SPOT, CRM, QCOM, AMZN, NVDA
+    Buy threshold: 4.5 | Short: disabled
+
+  Short eligible: AAPL, MSFT, META, AMD, TSLA, NFLX, NVDA, AMZN, GS
+
+  Walk-forward params loaded: 0 stocks
+    ⚠️ None — using defaults for all stocks
+
+  Backtest results loaded: 0 stocks
+    ⚠️ None — no backtest filtering active
+
+  Total stocks monitored: 18
+============================================================
+  Checks every minute during market hours.
+  Press Ctrl+C to stop.
+============================================================
+
+
+==================================================
+🌅 PRE-MARKET SCAN at 01:01:01
+==================================================
+  ✅ MSFT added | Sentiment: 0.267
+  ❌ META excluded | Sentiment: 0.143
+  ✅ AMD added | Sentiment: 0.412
+  ❌ SPY excluded | Sentiment: -0.298
+  ✅ AAPL added | Sentiment: 0.242
+  ❌ TSLA excluded | Sentiment: 0.068
+  ✅ NFLX added | Sentiment: 0.523
+  ✅ WMT added | Sentiment: 0.479
+  ✅ COST added | Sentiment: 0.876
+  ❌ GS excluded | Sentiment: -0.127
+  ❌ HOOD excluded | Sentiment: 0.000
+  ✅ UBER added | Sentiment: 0.219
+  ✅ COIN added | Sentiment: 0.742
+  ❌ SPOT excluded | Sentiment: 0.086
+  ❌ CRM excluded | Sentiment: 0.000
+  ✅ QCOM added | Sentiment: 0.293
+  ✅ AMZN added | Sentiment: 0.484
+  ❌ NVDA excluded | Sentiment: 0.105
+
+  📋 Today's watchlist: ['MSFT', 'AMD', 'AAPL', 'NFLX', 'WMT', 'COST', 'UBER', 'COIN', 'QCOM', 'AMZN']
+  Market is closed. Waiting... (01:01:05)
+  Market is closed. Waiting... (01:01:05)
+
+============================================================
+🚀 TRADING BOT — STARTUP SUMMARY
+============================================================
+
+  Signal Mode: GRADIENT SCORING (signals.py, max score 7.0)
+  Defaults: EMA 4/10 | RSI 30/65 | BB 15/1.5
+  Risk: Stop 1.5x ATR | Target 3.0x ATR | Max 5 longs, 3 shorts | Daily limit $-500
+
+  Tier 1 — Full size (4 stocks):
+    MSFT, META, AMD, SPY
+    Buy threshold: 3.5 | Short threshold: 4.5
+
+  Tier 2 — Half size (9 stocks, 50% qty):
+    AAPL, TSLA, NFLX, WMT, COST, GS, HOOD, UBER, COIN
+    Buy threshold: 4.0 | Short threshold: 5.0
+
+  Tier 3 — Quarter size (5 stocks, 25% qty):
+    SPOT, CRM, QCOM, AMZN, NVDA
+    Buy threshold: 4.5 | Short: disabled
+
+  Short eligible: AAPL, MSFT, META, AMD, TSLA, NFLX, NVDA, AMZN, GS
+
+  Walk-forward params loaded: 0 stocks
+    ⚠️ None — using defaults for all stocks
+
+  Backtest results loaded: 0 stocks
+    ⚠️ None — no backtest filtering active
+
+  Total stocks monitored: 18
+============================================================
+  Checks every minute during market hours.
+  Press Ctrl+C to stop.
+============================================================
+
+
+==================================================
+🌅 PRE-MARKET SCAN at 01:02:01
+==================================================
+  ✅ MSFT added | Sentiment: 0.267
+  ❌ META excluded | Sentiment: 0.143
+  ✅ AMD added | Sentiment: 0.412
+  ❌ SPY excluded | Sentiment: -0.298
+  ✅ AAPL added | Sentiment: 0.242
+  ❌ TSLA excluded | Sentiment: 0.076
+  ✅ NFLX added | Sentiment: 0.523
+  ✅ WMT added | Sentiment: 0.479
+  ✅ COST added | Sentiment: 0.876
+  ❌ GS excluded | Sentiment: -0.127
+  Sentiment error for HOOD: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ HOOD excluded | Sentiment: 0.000
+  Sentiment error for UBER: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ UBER excluded | Sentiment: 0.000
+  Sentiment error for COIN: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ COIN excluded | Sentiment: 0.000
+  Sentiment error for SPOT: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ SPOT excluded | Sentiment: 0.000
+  Sentiment error for CRM: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ CRM excluded | Sentiment: 0.000
+  Sentiment error for QCOM: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ QCOM excluded | Sentiment: 0.000
+  Sentiment error for AMZN: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ AMZN excluded | Sentiment: 0.000
+  Sentiment error for NVDA: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ NVDA excluded | Sentiment: 0.000
+
+  📋 Today's watchlist: ['MSFT', 'AMD', 'AAPL', 'NFLX', 'WMT', 'COST']
+  Market is closed. Waiting... (01:02:05)
+  Market is closed. Waiting... (01:02:05)
+
+============================================================
+🚀 TRADING BOT — STARTUP SUMMARY
+============================================================
+
+  Signal Mode: GRADIENT SCORING (signals.py, max score 7.0)
+  Defaults: EMA 4/10 | RSI 30/65 | BB 15/1.5
+  Risk: Stop 1.5x ATR | Target 3.0x ATR | Max 5 longs, 3 shorts | Daily limit $-500
+
+  Tier 1 — Full size (4 stocks):
+    MSFT, META, AMD, SPY
+    Buy threshold: 3.5 | Short threshold: 4.5
+
+  Tier 2 — Half size (9 stocks, 50% qty):
+    AAPL, TSLA, NFLX, WMT, COST, GS, HOOD, UBER, COIN
+    Buy threshold: 4.0 | Short threshold: 5.0
+
+  Tier 3 — Quarter size (5 stocks, 25% qty):
+    SPOT, CRM, QCOM, AMZN, NVDA
+    Buy threshold: 4.5 | Short: disabled
+
+  Short eligible: AAPL, MSFT, META, AMD, TSLA, NFLX, NVDA, AMZN, GS
+
+  Walk-forward params loaded: 0 stocks
+    ⚠️ None — using defaults for all stocks
+
+  Backtest results loaded: 0 stocks
+    ⚠️ None — no backtest filtering active
+
+  Total stocks monitored: 18
+============================================================
+  Checks every minute during market hours.
+  Press Ctrl+C to stop.
+============================================================
+
+
+==================================================
+🌅 PRE-MARKET SCAN at 01:03:01
+==================================================
+  Sentiment error for MSFT: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ MSFT excluded | Sentiment: 0.000
+  Sentiment error for META: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ META excluded | Sentiment: 0.000
+  Sentiment error for AMD: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ AMD excluded | Sentiment: 0.000
+  Sentiment error for SPY: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ SPY excluded | Sentiment: 0.000
+  Sentiment error for AAPL: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ AAPL excluded | Sentiment: 0.000
+  Sentiment error for TSLA: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ TSLA excluded | Sentiment: 0.000
+  Sentiment error for NFLX: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ NFLX excluded | Sentiment: 0.000
+  Sentiment error for WMT: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ WMT excluded | Sentiment: 0.000
+  Sentiment error for COST: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ COST excluded | Sentiment: 0.000
+  Sentiment error for GS: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ GS excluded | Sentiment: 0.000
+  Sentiment error for HOOD: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ HOOD excluded | Sentiment: 0.000
+  Sentiment error for UBER: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ UBER excluded | Sentiment: 0.000
+  Sentiment error for COIN: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ COIN excluded | Sentiment: 0.000
+  Sentiment error for SPOT: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ SPOT excluded | Sentiment: 0.000
+  Sentiment error for CRM: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ CRM excluded | Sentiment: 0.000
+  Sentiment error for QCOM: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ QCOM excluded | Sentiment: 0.000
+  Sentiment error for AMZN: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ AMZN excluded | Sentiment: 0.000
+  Sentiment error for NVDA: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ NVDA excluded | Sentiment: 0.000
+
+  ⚠️ No stocks passed filter — trading ALL stocks today
+  Market is closed. Waiting... (01:03:05)
+  Market is closed. Waiting... (01:03:06)
+
+============================================================
+🚀 TRADING BOT — STARTUP SUMMARY
+============================================================
+
+  Signal Mode: GRADIENT SCORING (signals.py, max score 7.0)
+  Defaults: EMA 4/10 | RSI 30/65 | BB 15/1.5
+  Risk: Stop 1.5x ATR | Target 3.0x ATR | Max 5 longs, 3 shorts | Daily limit $-500
+
+  Tier 1 — Full size (4 stocks):
+    MSFT, META, AMD, SPY
+    Buy threshold: 3.5 | Short threshold: 4.5
+
+  Tier 2 — Half size (9 stocks, 50% qty):
+    AAPL, TSLA, NFLX, WMT, COST, GS, HOOD, UBER, COIN
+    Buy threshold: 4.0 | Short threshold: 5.0
+
+  Tier 3 — Quarter size (5 stocks, 25% qty):
+    SPOT, CRM, QCOM, AMZN, NVDA
+    Buy threshold: 4.5 | Short: disabled
+
+  Short eligible: AAPL, MSFT, META, AMD, TSLA, NFLX, NVDA, AMZN, GS
+
+  Walk-forward params loaded: 0 stocks
+    ⚠️ None — using defaults for all stocks
+
+  Backtest results loaded: 0 stocks
+    ⚠️ None — no backtest filtering active
+
+  Total stocks monitored: 18
+============================================================
+  Checks every minute during market hours.
+  Press Ctrl+C to stop.
+============================================================
+
+
+==================================================
+🌅 PRE-MARKET SCAN at 06:15:02
+==================================================
+  Sentiment error for MSFT: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ MSFT excluded | Sentiment: 0.000
+  Sentiment error for META: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ META excluded | Sentiment: 0.000
+  Sentiment error for AMD: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ AMD excluded | Sentiment: 0.000
+  Sentiment error for SPY: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ SPY excluded | Sentiment: 0.000
+  Sentiment error for AAPL: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ AAPL excluded | Sentiment: 0.000
+  Sentiment error for TSLA: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ TSLA excluded | Sentiment: 0.000
+  Sentiment error for NFLX: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ NFLX excluded | Sentiment: 0.000
+  Sentiment error for WMT: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ WMT excluded | Sentiment: 0.000
+  Sentiment error for COST: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ COST excluded | Sentiment: 0.000
+  Sentiment error for GS: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ GS excluded | Sentiment: 0.000
+  Sentiment error for HOOD: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ HOOD excluded | Sentiment: 0.000
+  Sentiment error for UBER: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ UBER excluded | Sentiment: 0.000
+  Sentiment error for COIN: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ COIN excluded | Sentiment: 0.000
+  Sentiment error for SPOT: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ SPOT excluded | Sentiment: 0.000
+  Sentiment error for CRM: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ CRM excluded | Sentiment: 0.000
+  Sentiment error for QCOM: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ QCOM excluded | Sentiment: 0.000
+  Sentiment error for AMZN: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ AMZN excluded | Sentiment: 0.000
+  Sentiment error for NVDA: {'status': 'error', 'code': 'rateLimited', 'message': 'You have made too many requests recently. Developer accounts are limited to 100 requests over a 24 hour period (50 requests available every 12 hours). Please upgrade to a paid plan if you need more requests.'}
+  ❌ NVDA excluded | Sentiment: 0.000
+
+  ⚠️ No stocks passed filter — trading ALL stocks today
+  Market is closed. Waiting... (06:15:06)
+  Market is closed. Waiting... (06:15:06)

@@ -1,0 +1,15 @@
+{
+  "stock": "ADBE",
+  "actual_sharpe": 12.055580077277966,
+  "wf_status": "PASS",
+  "wf_trades": 4,
+  "day_shuffle_p": 0.10578842315369262,
+  "day_shuffle_mean": -9.73706766151498,
+  "day_shuffle_std": 281.0517072978585,
+  "signal_shift_p": 0.10179640718562874,
+  "signal_shift_mean": -4.62368088626365,
+  "signal_shift_std": 25.782833756924735,
+  "combined_p": 0.10179640718562874,
+  "timestamp": "2026-03-17T18:09:17.317420",
+  "signal_mode": "gradient"
+}

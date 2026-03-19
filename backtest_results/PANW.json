@@ -1,0 +1,20 @@
+{
+  "stock": "PANW",
+  "total_return": -0.19489155394994304,
+  "profit_factor": 0.6142950022321655,
+  "sharpe": -3.0632595872394646,
+  "win_rate": 39.130434782608695,
+  "max_drawdown": 1.939138485040551,
+  "trades": 92,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 6,
+    "slow": 10,
+    "rsi_period": 7,
+    "rsi_buy": 40,
+    "rsi_sell": 55
+  },
+  "score_threshold": 4.0,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T18:06:29.208533"
+}

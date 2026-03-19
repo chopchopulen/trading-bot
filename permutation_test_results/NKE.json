@@ -1,0 +1,15 @@
+{
+  "stock": "NKE",
+  "actual_sharpe": 1.2655732726842883,
+  "wf_status": "PASS",
+  "wf_trades": 2,
+  "day_shuffle_p": 0.2754491017964072,
+  "day_shuffle_mean": 3.3837250304681104,
+  "day_shuffle_std": 104.20915587738264,
+  "signal_shift_p": 0.19161676646706588,
+  "signal_shift_mean": -8453.077866115807,
+  "signal_shift_std": 90689.85984974126,
+  "combined_p": 0.19161676646706588,
+  "timestamp": "2026-03-17T18:21:35.246762",
+  "signal_mode": "gradient"
+}

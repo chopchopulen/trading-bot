@@ -1,0 +1,15 @@
+{
+  "stock": "SNOW",
+  "actual_sharpe": 8.753937975978427,
+  "wf_status": "PASS",
+  "wf_trades": 7,
+  "day_shuffle_p": 0.25748502994011974,
+  "day_shuffle_mean": -2.010335879052665,
+  "day_shuffle_std": 94.72112017944222,
+  "signal_shift_p": 0.023952095808383235,
+  "signal_shift_mean": -4.9697684468325605,
+  "signal_shift_std": 11.329336013883829,
+  "combined_p": 0.023952095808383235,
+  "timestamp": "2026-03-17T18:27:21.281454",
+  "signal_mode": "gradient"
+}

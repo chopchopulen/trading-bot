@@ -1,0 +1,15 @@
+{
+  "stock": "BLK",
+  "actual_sharpe": 7.147345620123537,
+  "wf_status": "PASS",
+  "wf_trades": 8,
+  "day_shuffle_p": 0.31736526946107785,
+  "day_shuffle_mean": 5.8352852031724405,
+  "day_shuffle_std": 63.05690725712857,
+  "signal_shift_p": 0.10179640718562874,
+  "signal_shift_mean": -3.137609363609481,
+  "signal_shift_std": 11.55454274640113,
+  "combined_p": 0.10179640718562874,
+  "timestamp": "2026-03-17T18:11:18.486362",
+  "signal_mode": "gradient"
+}

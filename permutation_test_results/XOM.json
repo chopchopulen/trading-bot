@@ -1,0 +1,15 @@
+{
+  "stock": "XOM",
+  "actual_sharpe": -0.9782694562269368,
+  "wf_status": "WEAK",
+  "wf_trades": 3,
+  "day_shuffle_p": 0.936127744510978,
+  "day_shuffle_mean": 3865.432771227271,
+  "day_shuffle_std": 86492.40156585233,
+  "signal_shift_p": 0.5568862275449101,
+  "signal_shift_mean": -2.5973524625617057,
+  "signal_shift_std": 49.18856332787516,
+  "combined_p": 0.5568862275449101,
+  "timestamp": "2026-03-17T20:49:41.435716",
+  "signal_mode": "gradient"
+}

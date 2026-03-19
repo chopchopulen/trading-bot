@@ -1,0 +1,15 @@
+{
+  "stock": "AMD",
+  "actual_sharpe": 12.976822266618456,
+  "wf_status": "PASS",
+  "wf_trades": 3,
+  "day_shuffle_p": 0.01996007984031936,
+  "day_shuffle_mean": 4.095426632538928,
+  "day_shuffle_std": 49.31933771168155,
+  "signal_shift_p": 0.059880239520958084,
+  "signal_shift_mean": -11.191127503416793,
+  "signal_shift_std": 36.54432421834036,
+  "combined_p": 0.01996007984031936,
+  "timestamp": "2026-03-17T18:09:48.594261",
+  "signal_mode": "gradient"
+}

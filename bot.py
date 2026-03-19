@@ -448,7 +448,7 @@ def get_sentiment(stock):
         return None  # API failed / rate-limited — caller includes with neutral score
 
 # ── Sentiment thresholds (for pre-market scan only) ──────────────
-SENTIMENT_THRESHOLD_BUY = 0.15
+SENTIMENT_THRESHOLD_BUY = 0.10
 
 # ── Pre-market scan ───────────────────────────────────────────────
 def run_premarket_scan():

@@ -1,0 +1,20 @@
+{
+  "stock": "BLK",
+  "total_return": 0.6816620221799822,
+  "profit_factor": 2.5634588908816287,
+  "sharpe": 5.064534581501524,
+  "win_rate": 51.515151515151516,
+  "max_drawdown": 11.630789969669362,
+  "trades": 33,
+  "edge_survives_costs": true,
+  "best_params": {
+    "fast": 8,
+    "slow": 22,
+    "rsi_period": 7,
+    "rsi_buy": 25,
+    "rsi_sell": 70
+  },
+  "score_threshold": 5.0,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T18:07:19.421992"
+}

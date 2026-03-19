@@ -1,0 +1,20 @@
+{
+  "stock": "BAC",
+  "total_return": -0.0053069943099835655,
+  "profit_factor": 0.8586437095181905,
+  "sharpe": -1.087287200331297,
+  "win_rate": 51.06382978723404,
+  "max_drawdown": 0.5735813586058511,
+  "trades": 47,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 2,
+    "slow": 22,
+    "rsi_period": 7,
+    "rsi_buy": 25,
+    "rsi_sell": 55
+  },
+  "score_threshold": 5.0,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T17:21:31.575183"
+}

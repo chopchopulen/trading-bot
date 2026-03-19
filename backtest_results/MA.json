@@ -1,0 +1,20 @@
+{
+  "stock": "MA",
+  "total_return": 0.08291345590999116,
+  "profit_factor": 1.117044577850496,
+  "sharpe": 0.6067926166049674,
+  "win_rate": 46.57534246575342,
+  "max_drawdown": 5.8996913071329065,
+  "trades": 73,
+  "edge_survives_costs": true,
+  "best_params": {
+    "fast": 6,
+    "slow": 10,
+    "rsi_period": 7,
+    "rsi_buy": 30,
+    "rsi_sell": 60
+  },
+  "score_threshold": 4.0,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T18:06:24.578637"
+}

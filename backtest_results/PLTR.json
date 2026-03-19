@@ -1,0 +1,20 @@
+{
+  "stock": "PLTR",
+  "total_return": -0.12358275759007667,
+  "profit_factor": 0.7005365933351584,
+  "sharpe": -2.381693540180192,
+  "win_rate": 38.666666666666664,
+  "max_drawdown": 1.9393024429991825,
+  "trades": 75,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 6,
+    "slow": 10,
+    "rsi_period": 7,
+    "rsi_buy": 30,
+    "rsi_sell": 60
+  },
+  "score_threshold": 4.5,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T18:05:36.060066"
+}

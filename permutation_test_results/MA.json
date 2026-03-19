@@ -1,0 +1,15 @@
+{
+  "stock": "MA",
+  "actual_sharpe": 12.42053585904571,
+  "wf_status": "PASS",
+  "wf_trades": 5,
+  "day_shuffle_p": 0.14770459081836326,
+  "day_shuffle_mean": 0.38203383104249905,
+  "day_shuffle_std": 102.5958347101328,
+  "signal_shift_p": 0.017964071856287425,
+  "signal_shift_mean": -9.551067017061413,
+  "signal_shift_std": 22.772006915699784,
+  "combined_p": 0.017964071856287425,
+  "timestamp": "2026-03-17T18:18:16.218771",
+  "signal_mode": "gradient"
+}

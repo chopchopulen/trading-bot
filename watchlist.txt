@@ -1,10 +1,10 @@
-AMZN
-SPY
-AAPL
 MSFT
-GS
-NVDA
-AMD
-WMT
+AAPL
+MS
+AMZN
+QQQ
 COST
-Last updated: Mar 17 2026, 11:51 AM
+MA
+NET
+AMD
+Last updated: Mar 18 2026, 09:05 AM

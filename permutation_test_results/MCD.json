@@ -1,0 +1,15 @@
+{
+  "stock": "MCD",
+  "actual_sharpe": -103.69595761977968,
+  "wf_status": "WEAK",
+  "wf_trades": 2,
+  "day_shuffle_p": 0.9560878243512974,
+  "day_shuffle_mean": -772.5584384565095,
+  "day_shuffle_std": 16684.563671899847,
+  "signal_shift_p": 0.8183632734530938,
+  "signal_shift_mean": -628.7703391885111,
+  "signal_shift_std": 9216.616376302743,
+  "combined_p": 0.8183632734530938,
+  "timestamp": "2026-03-17T18:18:40.965870",
+  "signal_mode": "gradient"
+}

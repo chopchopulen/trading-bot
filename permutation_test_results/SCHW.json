@@ -1,0 +1,15 @@
+{
+  "stock": "SCHW",
+  "actual_sharpe": 10.070683211202828,
+  "wf_status": "PASS",
+  "wf_trades": 2,
+  "day_shuffle_p": 0.04590818363273453,
+  "day_shuffle_mean": 464.47505882259213,
+  "day_shuffle_std": 34039.612228184946,
+  "signal_shift_p": 0.16966067864271456,
+  "signal_shift_mean": 2131.4536368290414,
+  "signal_shift_std": 54381.03847603059,
+  "combined_p": 0.04590818363273453,
+  "timestamp": "2026-03-17T18:26:28.410546",
+  "signal_mode": "gradient"
+}

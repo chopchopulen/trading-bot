@@ -1,0 +1,15 @@
+{
+  "stock": "SHOP",
+  "actual_sharpe": 1004.6109825639153,
+  "wf_status": "PASS",
+  "wf_trades": 2,
+  "day_shuffle_p": 0.011976047904191617,
+  "day_shuffle_mean": 107.63598468308356,
+  "day_shuffle_std": 1066.562822868725,
+  "signal_shift_p": 0.003992015968063872,
+  "signal_shift_mean": -396.43419098601447,
+  "signal_shift_std": 7736.9117323185,
+  "combined_p": 0.003992015968063872,
+  "timestamp": "2026-03-17T18:26:55.801413",
+  "signal_mode": "gradient"
+}

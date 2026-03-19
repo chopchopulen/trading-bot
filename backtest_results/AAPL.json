@@ -1,0 +1,20 @@
+{
+  "stock": "AAPL",
+  "total_return": 0.1105621885799337,
+  "profit_factor": 1.4371122218324899,
+  "sharpe": 2.241187093062165,
+  "win_rate": 51.85185185185185,
+  "max_drawdown": 2.797575464564437,
+  "trades": 81,
+  "edge_survives_costs": true,
+  "best_params": {
+    "fast": 2,
+    "slow": 22,
+    "rsi_period": 7,
+    "rsi_buy": 25,
+    "rsi_sell": 55
+  },
+  "score_threshold": 4.0,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-17T17:22:49.290507"
+}

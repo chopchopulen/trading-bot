@@ -1,0 +1,15 @@
+{
+  "stock": "UBER",
+  "actual_sharpe": 8.25070387238498,
+  "wf_status": "PASS",
+  "wf_trades": 3,
+  "day_shuffle_p": 0.10578842315369262,
+  "day_shuffle_mean": 19.14070352223086,
+  "day_shuffle_std": 145.71449095958425,
+  "signal_shift_p": 0.18363273453093812,
+  "signal_shift_mean": -17.371899317474707,
+  "signal_shift_std": 60.06795494833377,
+  "combined_p": 0.10578842315369262,
+  "timestamp": "2026-03-17T20:47:42.889323",
+  "signal_mode": "gradient"
+}

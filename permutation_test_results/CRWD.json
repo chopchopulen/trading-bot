@@ -1,0 +1,15 @@
+{
+  "stock": "CRWD",
+  "actual_sharpe": 10.63573952204845,
+  "wf_status": "PASS",
+  "wf_trades": 3,
+  "day_shuffle_p": 0.24151696606786427,
+  "day_shuffle_mean": 5.918992975006287,
+  "day_shuffle_std": 53.84303903879857,
+  "signal_shift_p": 0.16966067864271456,
+  "signal_shift_mean": -5.978299890270773,
+  "signal_shift_std": 37.47276803268392,
+  "combined_p": 0.16966067864271456,
+  "timestamp": "2026-03-17T18:13:10.663943",
+  "signal_mode": "gradient"
+}

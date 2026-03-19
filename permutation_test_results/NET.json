@@ -1,0 +1,15 @@
+{
+  "stock": "NET",
+  "actual_sharpe": 54.89519501101916,
+  "wf_status": "PASS",
+  "wf_trades": 4,
+  "day_shuffle_p": 0.05389221556886228,
+  "day_shuffle_mean": 3.3230871811461866,
+  "day_shuffle_std": 76.49031037508716,
+  "signal_shift_p": 0.017964071856287425,
+  "signal_shift_mean": -4.787811999643747,
+  "signal_shift_std": 85.24502932562164,
+  "combined_p": 0.017964071856287425,
+  "timestamp": "2026-03-17T18:20:30.099604",
+  "signal_mode": "gradient"
+}

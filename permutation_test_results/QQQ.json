@@ -1,0 +1,15 @@
+{
+  "stock": "QQQ",
+  "actual_sharpe": 7.040370565937584,
+  "wf_status": "PASS",
+  "wf_trades": 6,
+  "day_shuffle_p": 0.001996007984031936,
+  "day_shuffle_mean": -2.008258802057352,
+  "day_shuffle_std": 15.859024273837603,
+  "signal_shift_p": 0.16167664670658682,
+  "signal_shift_mean": -2.9737354338174873,
+  "signal_shift_std": 13.708220089933379,
+  "combined_p": 0.001996007984031936,
+  "timestamp": "2026-03-17T18:25:08.190021",
+  "signal_mode": "gradient"
+}

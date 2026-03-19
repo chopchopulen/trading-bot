@@ -1,0 +1,15 @@
+{
+  "stock": "LLY",
+  "actual_sharpe": 1.2690301765698893,
+  "wf_status": "PASS",
+  "wf_trades": 12,
+  "day_shuffle_p": 0.4151696606786427,
+  "day_shuffle_mean": -4.996144360540091,
+  "day_shuffle_std": 59.70195864639671,
+  "signal_shift_p": 0.3073852295409182,
+  "signal_shift_mean": -3.2933948034231655,
+  "signal_shift_std": 9.121768877716358,
+  "combined_p": 0.3073852295409182,
+  "timestamp": "2026-03-17T18:17:48.688668",
+  "signal_mode": "gradient"
+}

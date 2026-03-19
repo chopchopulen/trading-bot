@@ -1,6 +1,6 @@
 ================================================================================
   OVERNIGHT PIPELINE — MASTER SUMMARY REPORT
-  Generated: 2026-03-17 01:19:48
+  Generated: 2026-03-17 20:50:03
 ================================================================================
 
 --------------------------------------------------------------------------------
@@ -8,89 +8,89 @@
 --------------------------------------------------------------------------------
   Stock     BT Ret     PF  Sharpe   Win%  Trades    WF   Perm p   Tier
   ------------------------------------------------------------------------
-  AAPL      +0.11%   1.44    2.24    52%      81  PASS   0.0020     T2
-  MSFT      +0.16%   1.34    1.67    53%      68  PASS   0.0020     T2
-  NVDA      +0.08%   1.52    2.65    48%      46  WEAK   0.2695     T3
-  GOOGL     +0.08%   1.20    1.05    34%      64  WEAK   0.7046   DROP
-  AMZN      +0.13%   1.55    2.49    53%      60  PASS   0.0020     T1
-  TSLA      -0.17%   0.74   -2.00    36%      55  WEAK   0.0020   DROP
-  META      -0.24%   0.77   -1.76    39%      84  PASS   0.0020   DROP
-  AMD       +0.06%   1.11    0.56    49%      92  PASS   0.0020     T3
-  NFLX      -0.09%   0.40   -6.22    35%      49  PASS   0.0140   DROP
-  CRM       -0.31%   0.56   -2.94    44%      94  PASS   0.0020   DROP
-  JPM       +0.02%   1.07    0.47    51%      61  PASS   0.9621   DROP
-  BAC       -0.01%   0.86   -1.09    51%      47  WEAK   0.9421   DROP
-  GS        +0.17%   1.33    2.03    47%      32  PASS   0.0020     T2
-  V         +0.17%   1.80    3.74    55%      47  PASS   0.6527   DROP
-  SPY       +0.21%   1.71    3.26    49%      77  WEAK   0.0020     T1
-  QQQ       +0.15%   1.31    1.43    42%      79  PASS   0.7924   DROP
-  XOM       +0.02%   1.13    0.75    43%      72  WEAK   0.8363   DROP
-  CVX       +0.02%   1.32    1.99    57%      28  WEAK   0.3852   DROP
-  JNJ       -0.08%   0.71   -2.18    45%      82  WEAK   0.4651   DROP
-  PFE       -0.02%   0.37   -6.54    34%      41  WEAK   0.8004   DROP
-  UNH       -0.76%   0.37   -2.39    41%      93  PASS   0.5409   DROP
-  WMT       +0.03%   1.15    0.75    46%     105  PASS   0.0020     T3
-  COST      +0.15%   1.17    1.05    48%      67  PASS   0.0020     T3
-  NKE       -0.03%   0.76   -1.81    47%      64  PASS   0.4072   DROP
-  INTC      -0.05%   0.79   -1.30    40%     101  PASS   0.8762   DROP
-  QCOM      +0.02%   1.06    0.31    51%      95  PASS   0.0020   DROP
-  UBER         N/A    N/A     N/A    N/A     N/A  PASS   0.1218   DROP
-  PLTR         N/A    N/A     N/A    N/A     N/A  PASS   0.4810   DROP
-  COIN         N/A    N/A     N/A    N/A     N/A  PASS   0.3533   DROP
-  SHOP         N/A    N/A     N/A    N/A     N/A  PASS   0.4092   DROP
-  ROKU         N/A    N/A     N/A    N/A     N/A  PASS   0.2834   DROP
-  ABNB         N/A    N/A     N/A    N/A     N/A  PASS   0.8263   DROP
-  PYPL         N/A    N/A     N/A    N/A     N/A  PASS   0.4152   DROP
-  SPOT         N/A    N/A     N/A    N/A     N/A  PASS   0.4611   DROP
-  ZM           N/A    N/A     N/A    N/A     N/A  WEAK   0.5629   DROP
-  HOOD         N/A    N/A     N/A    N/A     N/A  PASS   0.0020   DROP
-  AVGO         N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
-  LLY          N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
-  MA           N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
-  PANW         N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
-  CRWD         N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
-  SNOW         N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
-  DDOG         N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
-  NET          N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
-  ADBE         N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
-  NOW          N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
-  ORCL         N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
-  MS           N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
-  BLK          N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
-  SCHW         N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
-  HD           N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
-  MCD          N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
-  SBUX         N/A    N/A     N/A    N/A     N/A   N/A      N/A   DROP
+  AAPL      +0.11%   1.44    2.24    52%      81  PASS   0.0180     T2
+  MSFT      +0.16%   1.34    1.67    53%      68  PASS   0.0060     T2
+  NVDA      +0.08%   1.52    2.65    48%      46  WEAK      N/A   DROP
+  GOOGL     +0.08%   1.20    1.05    34%      64  WEAK   0.5409   DROP
+  AMZN      +0.13%   1.55    2.49    53%      60  PASS   0.1437     T2
+  TSLA      -0.17%   0.74   -2.00    36%      55  WEAK   0.4850   DROP
+  META      -0.24%   0.77   -1.76    39%      84  PASS   0.0180   DROP
+  AMD       +0.06%   1.11    0.56    49%      92  PASS   0.0200     T3
+  NFLX      -0.09%   0.40   -6.22    35%      49  PASS   0.0758   DROP
+  CRM       -0.31%   0.56   -2.94    44%      94  PASS   0.2675   DROP
+  JPM       +0.02%   1.07    0.47    51%      61  PASS   0.1756   DROP
+  BAC       -0.01%   0.86   -1.09    51%      47  WEAK      N/A   DROP
+  GS        +0.17%   1.33    2.03    47%      32  PASS   0.1517     T3
+  V         +0.17%   1.80    3.74    55%      47  PASS   0.0778     T2
+  SPY       +0.21%   1.71    3.26    49%      77  WEAK   0.5110   DROP
+  QQQ       +0.15%   1.31    1.43    42%      79  PASS   0.0020     T3
+  XOM       +0.02%   1.13    0.75    43%      72  WEAK   0.5569   DROP
+  CVX       +0.02%   1.32    1.99    57%      28  WEAK   0.6886   DROP
+  JNJ       -0.08%   0.71   -2.18    45%      82  WEAK   0.4251   DROP
+  PFE       -0.02%   0.37   -6.54    34%      41  WEAK      N/A   DROP
+  UNH       -0.76%   0.37   -2.39    41%      93  PASS   0.0539   DROP
+  WMT       +0.03%   1.15    0.75    46%     105  PASS   0.0938     T3
+  COST      +0.15%   1.17    1.05    48%      67  PASS   0.1677     T3
+  NKE       -0.03%   0.76   -1.81    47%      64  PASS   0.1916   DROP
+  INTC      -0.05%   0.79   -1.30    40%     101  PASS   0.1856   DROP
+  QCOM      +0.02%   1.06    0.31    51%      95  PASS   0.2335   DROP
+  UBER      -0.07%   0.68   -2.15    43%     100  PASS   0.1058   DROP
+  PLTR      -0.12%   0.70   -2.38    39%      75  PASS   0.0100   DROP
+  COIN      +0.01%   1.02    0.13    46%      50  PASS   0.1098   DROP
+  SHOP      -0.02%   0.96   -0.27    45%      71  PASS   0.0040   DROP
+  ROKU      -0.09%   0.69   -2.52    39%      69  PASS   0.1238   DROP
+  ABNB      -0.07%   0.70   -2.49    42%      83  PASS   0.0998   DROP
+  PYPL      -0.05%   0.64   -1.74    35%     106  PASS   0.1218   DROP
+  SPOT      +0.08%   1.06    0.32    38%      99  PASS   0.1617   DROP
+  ZM        -0.18%   0.45   -4.80    37%      71  WEAK   0.6707   DROP
+  HOOD      -0.11%   0.75   -1.30    43%      83  PASS   0.0679   DROP
+  AVGO      -0.08%   0.88   -0.76    35%      68  PASS   0.2595   DROP
+  LLY       -0.91%   0.74   -1.81    40%     128  PASS   0.3074   DROP
+  MA        +0.08%   1.12    0.61    47%      73  PASS   0.0180     T3
+  PANW      -0.19%   0.61   -3.06    39%      92  PASS   0.2595   DROP
+  CRWD      -0.09%   0.93   -0.43    45%      93  PASS   0.1697   DROP
+  SNOW      +0.01%   1.01    0.07    44%      57  PASS   0.0240   DROP
+  DDOG      -0.06%   0.79   -1.53    45%      51  PASS   0.0080   DROP
+  NET       +0.06%   1.12    0.66    56%      63  PASS   0.0180     T3
+  ADBE      -0.42%   0.53   -3.68    38%      87  PASS   0.1018   DROP
+  NOW       -0.07%   0.72   -2.27    45%      55  PASS   0.0479   DROP
+  ORCL      +0.02%   1.03    0.17    50%     107  PASS   0.2275   DROP
+  MS        +0.06%   1.61    3.31    59%      39  PASS   0.0419     T1
+  BLK       +0.68%   2.56    5.06    52%      33  PASS   0.1018     T2
+  SCHW      -0.01%   0.91   -0.57    41%      75  PASS   0.0459   DROP
+  HD        -0.01%   0.98   -0.11    46%      46  PASS   0.1836   DROP
+  MCD       -0.06%   0.71   -2.41    44%      52  WEAK   0.8184   DROP
+  SBUX      -0.02%   0.90   -0.59    47%      79  PASS   0.1697   DROP
 
 --------------------------------------------------------------------------------
   TIERED RECOMMENDATIONS
 --------------------------------------------------------------------------------
   TIER 1 — Trade full size (p < 0.05, PF >= 1.5, WR >= 45%, 5-100 trades):
-    AMZN, SPY
+    MS
   TIER 2 — Trade reduced size (p < 0.15, PF >= 1.3, WR >= 42%, trades >= 5):
-    AAPL, MSFT, GS
+    AAPL, MSFT, AMZN, V, BLK
   TIER 3 — Monitor only (p < 0.30, PF >= 1.1):
-    NVDA, AMD, WMT, COST
+    AMD, GS, QQQ, WMT, COST, MA, NET
   DROP — No evidence of edge:
-    GOOGL, TSLA, META, NFLX, CRM, JPM, BAC, V, QQQ, XOM, CVX, JNJ, PFE, UNH, NKE, INTC, QCOM, UBER, PLTR, COIN, SHOP, ROKU, ABNB, PYPL, SPOT, ZM, HOOD, AVGO, LLY, MA, PANW, CRWD, SNOW, DDOG, NET, ADBE, NOW, ORCL, MS, BLK, SCHW, HD, MCD, SBUX
+    NVDA, GOOGL, TSLA, META, NFLX, CRM, JPM, BAC, SPY, XOM, CVX, JNJ, PFE, UNH, NKE, INTC, QCOM, UBER, PLTR, COIN, SHOP, ROKU, ABNB, PYPL, SPOT, ZM, HOOD, AVGO, LLY, PANW, CRWD, SNOW, DDOG, ADBE, NOW, ORCL, SCHW, HD, MCD, SBUX
 
 --------------------------------------------------------------------------------
   RECOMMENDED STOCKS LIST FOR bot.py
 --------------------------------------------------------------------------------
-  TIER1_STOCKS = ["AMZN", "SPY"]
-  TIER2_STOCKS = ["AAPL", "MSFT", "GS"]
+  TIER1_STOCKS = ["MS"]
+  TIER2_STOCKS = ["AAPL", "MSFT", "AMZN", "V", "BLK"]
   STOCKS = TIER1_STOCKS + TIER2_STOCKS
 
 --------------------------------------------------------------------------------
   STATISTICAL SUMMARY
 --------------------------------------------------------------------------------
   Fisher combined p-value: 0.000000
-  Stocks with permutation results: 36
+  Stocks with permutation results: 50
   Significant (p < 0.05): 14
-  Promising (p < 0.15): 1
+  Promising (p < 0.15): 13
 
 --------------------------------------------------------------------------------
   PHASE TIMING
 --------------------------------------------------------------------------------
-  Report generated: 2026-03-17 01:19:48
+  Report generated: 2026-03-17 20:50:03
 ================================================================================

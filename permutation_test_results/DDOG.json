@@ -1,0 +1,15 @@
+{
+  "stock": "DDOG",
+  "actual_sharpe": 261.9044261942902,
+  "wf_status": "PASS",
+  "wf_trades": 2,
+  "day_shuffle_p": 0.017964071856287425,
+  "day_shuffle_mean": 279.10097536004344,
+  "day_shuffle_std": 4184.075888386849,
+  "signal_shift_p": 0.007984031936127744,
+  "signal_shift_mean": -1175.7074285826961,
+  "signal_shift_std": 23785.57632835767,
+  "combined_p": 0.007984031936127744,
+  "timestamp": "2026-03-17T18:14:03.740310",
+  "signal_mode": "gradient"
+}
