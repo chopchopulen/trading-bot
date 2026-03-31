@@ -1,0 +1,20 @@
+{
+  "stock": "SQQQ",
+  "total_return": 0.0850470151399204,
+  "profit_factor": 1.1923456310631846,
+  "sharpe": 0.9355168632739383,
+  "win_rate": 50.0,
+  "max_drawdown": 0.8677075167407712,
+  "trades": 192,
+  "edge_survives_costs": true,
+  "best_params": {
+    "fast": 6,
+    "slow": 10,
+    "rsi_period": 7,
+    "rsi_buy": 35,
+    "rsi_sell": 55
+  },
+  "score_threshold": 3.5,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-31T01:15:07.108380"
+}

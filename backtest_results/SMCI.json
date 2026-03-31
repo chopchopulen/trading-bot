@@ -1,0 +1,20 @@
+{
+  "stock": "SMCI",
+  "total_return": -0.10562256940992666,
+  "profit_factor": 0.39660088519307507,
+  "sharpe": -5.777313618987403,
+  "win_rate": 29.629629629629626,
+  "max_drawdown": 0.35325000000001455,
+  "trades": 108,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 2,
+    "slow": 13,
+    "rsi_period": 7,
+    "rsi_buy": 35,
+    "rsi_sell": 55
+  },
+  "score_threshold": 3.5,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-31T01:15:53.520231"
+}

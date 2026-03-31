@@ -1,20 +1,20 @@
 {
   "stock": "ABNB",
-  "total_return": -0.07474690641008783,
-  "profit_factor": 0.6956069339231779,
-  "sharpe": -2.494538557234317,
-  "win_rate": 42.168674698795186,
-  "max_drawdown": 1.3978997759401008,
-  "trades": 83,
+  "total_return": -0.05637599866001983,
+  "profit_factor": 0.7029866311931957,
+  "sharpe": -2.4226243746893585,
+  "win_rate": 41.17647058823529,
+  "max_drawdown": 1.4009554355080913,
+  "trades": 68,
   "edge_survives_costs": false,
   "best_params": {
-    "fast": 6,
-    "slow": 10,
+    "fast": 2,
+    "slow": 22,
     "rsi_period": 7,
-    "rsi_buy": 30,
-    "rsi_sell": 60
+    "rsi_buy": 25,
+    "rsi_sell": 55
   },
   "score_threshold": 3.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:05:53.495722"
+  "timestamp": "2026-03-31T01:13:00.593435"
 }

@@ -1,11 +1,11 @@
 {
   "stock": "LLY",
-  "total_return": -0.9116764412900666,
-  "profit_factor": 0.7419631640071903,
-  "sharpe": -1.8098363946457,
-  "win_rate": 39.84375,
-  "max_drawdown": 11.48859578562039,
-  "trades": 128,
+  "total_return": -1.0494255886000756,
+  "profit_factor": 0.6708099786598981,
+  "sharpe": -2.4103825206767353,
+  "win_rate": 36.19047619047619,
+  "max_drawdown": 11.511550000000046,
+  "trades": 105,
   "edge_survives_costs": false,
   "best_params": {
     "fast": 6,
@@ -16,5 +16,5 @@
   },
   "score_threshold": 3.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:06:19.887772"
+  "timestamp": "2026-03-31T01:13:27.652344"
 }

@@ -61,10 +61,25 @@ NEW_STOCKS = ["UBER", "PLTR", "COIN", "SHOP", "ROKU", "ABNB", "PYPL", "SPOT", "Z
 
 # Pipeline candidates — new stocks to test for universe expansion
 PIPELINE_STOCKS = [
+    # Existing candidates worth retesting
     "AVGO", "LLY", "MA", "PANW", "CRWD", "SNOW",
     "DDOG", "NET", "ADBE", "NOW", "ORCL",
     "MS", "BLK", "SCHW", "HD", "MCD", "SBUX",
+    # Bear market instruments
+    "SQQQ", "UVXY", "GLD", "TLT", "LMT",
+    # High liquidity momentum
+    "IWM", "SMCI", "ARM", "MSTR",
+    # Financial sector (pairs trading candidates)
+    "WFC", "AXP", "C",
+    # Retest with gradient v3
+    "JPM",
 ]
+
+# Inverse ETFs — flip regime gate (long in downtrend, short in uptrend)
+INVERSE_REGIME_STOCKS = {"SQQQ", "UVXY"}
+
+# Bull market recovery watchlist — only test when SPY > 50 EMA for 5+ days
+BULL_WATCHLIST = ["NVDA", "META", "TSLA", "GOOGL", "NFLX", "COIN", "PLTR"]
 
 ALL_STOCKS = ORIGINAL_26 + NEW_STOCKS + PIPELINE_STOCKS
 
@@ -226,6 +241,17 @@ def get_regime_for_bar(daily_regime, bar_time):
     return daily_regime.get(d, True)
 
 
+def check_bull_recovery(spy_daily):
+    """Return True if market has recovered enough to retest bull watchlist.
+    Criteria: SPY above 50 EMA for 5 consecutive days."""
+    if spy_daily is None or len(spy_daily) < 55:
+        return False
+    close = spy_daily["close"]
+    ema50 = close.ewm(span=50, adjust=False).mean()
+    above_ema = close.iloc[-5:] > ema50.iloc[-5:]
+    return bool(above_ema.all())
+
+
 # ── Indicators ───────────────────────────────────────────────────
 def calculate_ema(series, period):
     return series.ewm(span=period, adjust=False).mean()
@@ -262,7 +288,7 @@ def calculate_atr(bars, period=ATR_PERIOD):
 
 # ── Backtest engine ──────────────────────────────────────────────
 def run_backtest(stock, bars, daily_regime, fast, slow, rsi_period, rsi_buy, rsi_sell,
-                 score_threshold=4.0):
+                 score_threshold=4.0, is_inverse=None):
     close = bars["close"]
 
     fast_ema = calculate_ema(close, fast)
@@ -277,6 +303,9 @@ def run_backtest(stock, bars, daily_regime, fast, slow, rsi_period, rsi_buy, rsi
 
     # Sell threshold is buy threshold - 0.5
     sell_threshold = score_threshold - 0.5
+
+    # Resolve inverse flag once
+    _is_inverse = is_inverse if is_inverse is not None else (stock in INVERSE_REGIME_STOCKS)
 
     cash = STARTING_CASH
     position = 0
@@ -298,6 +327,8 @@ def run_backtest(stock, bars, daily_regime, fast, slow, rsi_period, rsi_buy, rsi
         cur_avg_volume = avg_volume.iloc[i]
 
         market_uptrend = get_regime_for_bar(daily_regime, bars.index[i])
+        if _is_inverse:
+            market_uptrend = not market_uptrend
 
         # ATR-based stop loss and take profit (ignore min hold)
         if position > 0:
@@ -1016,6 +1047,14 @@ if __name__ == "__main__":
     backtest_results = {}
     wf_results = {}
     perm_results = {}
+
+    # Check if bull market has recovered — include recovery watchlist if so
+    if check_bull_recovery(spy_daily):
+        print("  ✅ Bull recovery detected (SPY > 50 EMA for 5+ days)")
+        print(f"     Including bull watchlist: {', '.join(BULL_WATCHLIST)}\n")
+        BACKTEST_STOCKS.extend([s for s in BULL_WATCHLIST if s not in BACKTEST_STOCKS])
+    else:
+        print("  ⬇️  Bear market — skipping bull watchlist\n")
 
     # Phase 1
     if 1 not in skip_phases:

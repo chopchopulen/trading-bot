@@ -1,11 +1,11 @@
 {
   "stock": "SHOP",
-  "total_return": -0.018357091869969734,
-  "profit_factor": 0.9567560483019641,
-  "sharpe": -0.2705465134623349,
-  "win_rate": 45.07042253521127,
-  "max_drawdown": 1.7084131089091725,
-  "trades": 71,
+  "total_return": -0.024000765219985624,
+  "profit_factor": 0.9345816356787815,
+  "sharpe": -0.4107708009160102,
+  "win_rate": 45.76271186440678,
+  "max_drawdown": 1.7087648598026448,
+  "trades": 59,
   "edge_survives_costs": false,
   "best_params": {
     "fast": 8,
@@ -16,5 +16,5 @@
   },
   "score_threshold": 4.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:05:45.932817"
+  "timestamp": "2026-03-31T01:12:50.946629"
 }

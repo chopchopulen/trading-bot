@@ -1,11 +1,11 @@
 {
   "stock": "MA",
-  "total_return": 0.08291345590999116,
-  "profit_factor": 1.117044577850496,
-  "sharpe": 0.6067926166049674,
-  "win_rate": 46.57534246575342,
-  "max_drawdown": 5.8996913071329065,
-  "trades": 73,
+  "total_return": 0.01817909373997827,
+  "profit_factor": 1.0227546024112166,
+  "sharpe": 0.12663804044591237,
+  "win_rate": 48.75,
+  "max_drawdown": 5.899016322678532,
+  "trades": 80,
   "edge_survives_costs": true,
   "best_params": {
     "fast": 6,
@@ -14,7 +14,7 @@
     "rsi_buy": 30,
     "rsi_sell": 60
   },
-  "score_threshold": 4.0,
+  "score_threshold": 3.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:06:24.578637"
+  "timestamp": "2026-03-31T01:13:32.253247"
 }

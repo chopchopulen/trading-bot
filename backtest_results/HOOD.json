@@ -1,11 +1,11 @@
 {
   "stock": "HOOD",
-  "total_return": -0.1144370435999299,
-  "profit_factor": 0.7534508299649768,
-  "sharpe": -1.303661411423361,
-  "win_rate": 43.373493975903614,
-  "max_drawdown": 1.2282491812588614,
-  "trades": 83,
+  "total_return": -0.14193944660999114,
+  "profit_factor": 0.6461613352506191,
+  "sharpe": -1.888749522972118,
+  "win_rate": 47.94520547945205,
+  "max_drawdown": 1.21325,
+  "trades": 73,
   "edge_survives_costs": false,
   "best_params": {
     "fast": 6,
@@ -14,7 +14,7 @@
     "rsi_buy": 30,
     "rsi_sell": 60
   },
-  "score_threshold": 4.0,
+  "score_threshold": 3.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:06:10.428892"
+  "timestamp": "2026-03-31T01:13:18.316245"
 }

@@ -1,11 +1,11 @@
 {
   "stock": "XOM",
-  "total_return": 0.01771809924997797,
-  "profit_factor": 1.128397790183905,
-  "sharpe": 0.7509333121864026,
-  "win_rate": 43.05555555555556,
-  "max_drawdown": 1.5064517966402386,
-  "trades": 72,
+  "total_return": 0.009932846039970173,
+  "profit_factor": 1.1336022453434196,
+  "sharpe": 0.9014094034733343,
+  "win_rate": 41.66666666666667,
+  "max_drawdown": 1.5053844058409944,
+  "trades": 36,
   "edge_survives_costs": true,
   "best_params": {
     "fast": 6,
@@ -14,7 +14,7 @@
     "rsi_buy": 40,
     "rsi_sell": 55
   },
-  "score_threshold": 4.5,
+  "score_threshold": 5.0,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T17:21:46.304851"
+  "timestamp": "2026-03-31T00:27:57.024749"
 }

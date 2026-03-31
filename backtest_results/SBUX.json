@@ -1,20 +1,20 @@
 {
   "stock": "SBUX",
-  "total_return": -0.016308169140000245,
-  "profit_factor": 0.9000793833004257,
-  "sharpe": -0.5912269709004708,
-  "win_rate": 46.835443037974684,
-  "max_drawdown": 1.010763415782551,
-  "trades": 79,
-  "edge_survives_costs": false,
+  "total_return": 0.02397284868998395,
+  "profit_factor": 1.3203898569602437,
+  "sharpe": 1.661487610829465,
+  "win_rate": 51.21951219512195,
+  "max_drawdown": 1.0128981089869913,
+  "trades": 41,
+  "edge_survives_costs": true,
   "best_params": {
-    "fast": 8,
-    "slow": 13,
+    "fast": 2,
+    "slow": 22,
     "rsi_period": 7,
-    "rsi_buy": 35,
+    "rsi_buy": 25,
     "rsi_sell": 55
   },
   "score_threshold": 4.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:07:52.113663"
+  "timestamp": "2026-03-31T01:14:56.137903"
 }

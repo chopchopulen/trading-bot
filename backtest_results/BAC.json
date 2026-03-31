@@ -1,11 +1,11 @@
 {
   "stock": "BAC",
-  "total_return": -0.0053069943099835655,
-  "profit_factor": 0.8586437095181905,
-  "sharpe": -1.087287200331297,
-  "win_rate": 51.06382978723404,
-  "max_drawdown": 0.5735813586058511,
-  "trades": 47,
+  "total_return": -0.004486865259998012,
+  "profit_factor": 0.8586851637466634,
+  "sharpe": -1.0993621677674568,
+  "win_rate": 52.77777777777778,
+  "max_drawdown": 0.573,
+  "trades": 36,
   "edge_survives_costs": false,
   "best_params": {
     "fast": 2,
@@ -16,5 +16,5 @@
   },
   "score_threshold": 5.0,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T17:21:31.575183"
+  "timestamp": "2026-03-31T00:27:36.549587"
 }

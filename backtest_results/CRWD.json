@@ -1,12 +1,12 @@
 {
   "stock": "CRWD",
-  "total_return": -0.08780896231005318,
-  "profit_factor": 0.9348187791758563,
-  "sharpe": -0.43356730173667674,
-  "win_rate": 45.16129032258064,
-  "max_drawdown": 4.914210644448715,
-  "trades": 93,
-  "edge_survives_costs": false,
+  "total_return": 0.08577491480999742,
+  "profit_factor": 1.1175131692662397,
+  "sharpe": 0.7746861989519711,
+  "win_rate": 44.230769230769226,
+  "max_drawdown": 4.983050711950032,
+  "trades": 52,
+  "edge_survives_costs": true,
   "best_params": {
     "fast": 6,
     "slow": 10,
@@ -14,7 +14,7 @@
     "rsi_buy": 40,
     "rsi_sell": 55
   },
-  "score_threshold": 4.0,
+  "score_threshold": 4.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:06:33.776111"
+  "timestamp": "2026-03-31T01:13:42.317254"
 }

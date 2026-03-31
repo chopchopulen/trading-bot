@@ -1,0 +1,20 @@
+{
+  "stock": "ARM",
+  "total_return": -0.12115715487995475,
+  "profit_factor": 0.669841321745502,
+  "sharpe": -2.7613431556346857,
+  "win_rate": 37.11340206185567,
+  "max_drawdown": 1.3188063647480532,
+  "trades": 97,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 4,
+    "slow": 10,
+    "rsi_period": 7,
+    "rsi_buy": 35,
+    "rsi_sell": 55
+  },
+  "score_threshold": 3.5,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-31T01:16:00.800845"
+}

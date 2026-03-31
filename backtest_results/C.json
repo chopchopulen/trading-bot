@@ -1,0 +1,20 @@
+{
+  "stock": "C",
+  "total_return": -0.07089449568996496,
+  "profit_factor": 0.6829486280445027,
+  "sharpe": -2.3981336787619694,
+  "win_rate": 42.69662921348314,
+  "max_drawdown": 1.2576082550285734,
+  "trades": 89,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 2,
+    "slow": 13,
+    "rsi_period": 7,
+    "rsi_buy": 35,
+    "rsi_sell": 55
+  },
+  "score_threshold": 3.5,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-31T01:16:33.655052"
+}

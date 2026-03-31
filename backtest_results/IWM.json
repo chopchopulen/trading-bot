@@ -1,0 +1,20 @@
+{
+  "stock": "IWM",
+  "total_return": -0.028187067120103163,
+  "profit_factor": 0.9103471854089403,
+  "sharpe": -0.6228051913200262,
+  "win_rate": 46.07843137254902,
+  "max_drawdown": 2.7112654237701626,
+  "trades": 102,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 6,
+    "slow": 10,
+    "rsi_period": 7,
+    "rsi_buy": 40,
+    "rsi_sell": 55
+  },
+  "score_threshold": 3.5,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-31T01:15:46.005639"
+}

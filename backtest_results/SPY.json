@@ -1,11 +1,11 @@
 {
   "stock": "SPY",
-  "total_return": 0.2142372228299646,
-  "profit_factor": 1.7135947118950958,
-  "sharpe": 3.2588152401580945,
-  "win_rate": 49.35064935064935,
-  "max_drawdown": 6.974577346005548,
-  "trades": 77,
+  "total_return": 0.10808477797995147,
+  "profit_factor": 1.5165978647223055,
+  "sharpe": 2.4875481431611015,
+  "win_rate": 47.61904761904761,
+  "max_drawdown": 7.010316694701077,
+  "trades": 42,
   "edge_survives_costs": true,
   "best_params": {
     "fast": 6,
@@ -14,7 +14,7 @@
     "rsi_buy": 30,
     "rsi_sell": 60
   },
-  "score_threshold": 4.5,
+  "score_threshold": 5.0,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T17:23:00.827849"
+  "timestamp": "2026-03-31T00:29:10.026690"
 }

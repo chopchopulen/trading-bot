@@ -1,11 +1,11 @@
 {
   "stock": "AMZN",
-  "total_return": 0.1325217679500347,
-  "profit_factor": 1.5462275831214223,
-  "sharpe": 2.4885383068855242,
-  "win_rate": 53.333333333333336,
-  "max_drawdown": 2.4828361047291176,
-  "trades": 60,
+  "total_return": 0.12305581178002467,
+  "profit_factor": 2.594816663162739,
+  "sharpe": 5.611566748042915,
+  "win_rate": 60.0,
+  "max_drawdown": 2.476111728224093,
+  "trades": 25,
   "edge_survives_costs": true,
   "best_params": {
     "fast": 2,
@@ -14,7 +14,7 @@
     "rsi_buy": 25,
     "rsi_sell": 55
   },
-  "score_threshold": 4.5,
+  "score_threshold": 5.0,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T17:21:04.996282"
+  "timestamp": "2026-03-31T00:27:14.686373"
 }

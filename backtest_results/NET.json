@@ -1,12 +1,12 @@
 {
   "stock": "NET",
-  "total_return": 0.06287006148003274,
-  "profit_factor": 1.1184784519464568,
-  "sharpe": 0.6559382343535403,
-  "win_rate": 55.55555555555556,
-  "max_drawdown": 2.2160801811108515,
-  "trades": 63,
-  "edge_survives_costs": true,
+  "total_return": -0.020977072969981237,
+  "profit_factor": 0.9593534345606489,
+  "sharpe": -0.24424792618534244,
+  "win_rate": 50.943396226415096,
+  "max_drawdown": 2.2181500000000085,
+  "trades": 53,
+  "edge_survives_costs": false,
   "best_params": {
     "fast": 6,
     "slow": 10,
@@ -16,5 +16,5 @@
   },
   "score_threshold": 4.0,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:06:46.391911"
+  "timestamp": "2026-03-31T01:13:55.815506"
 }

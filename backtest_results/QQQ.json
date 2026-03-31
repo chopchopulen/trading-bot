@@ -1,11 +1,11 @@
 {
   "stock": "QQQ",
-  "total_return": 0.14910042625988718,
-  "profit_factor": 1.310458044656244,
-  "sharpe": 1.4265606046108452,
-  "win_rate": 41.77215189873418,
-  "max_drawdown": 6.353225815309532,
-  "trades": 79,
+  "total_return": 0.1111933071599633,
+  "profit_factor": 1.491676448978957,
+  "sharpe": 2.7412392856812855,
+  "win_rate": 46.51162790697674,
+  "max_drawdown": 6.3400173252908365,
+  "trades": 43,
   "edge_survives_costs": true,
   "best_params": {
     "fast": 2,
@@ -14,7 +14,7 @@
     "rsi_buy": 25,
     "rsi_sell": 55
   },
-  "score_threshold": 4.5,
+  "score_threshold": 5.0,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T17:21:41.763086"
+  "timestamp": "2026-03-31T00:27:49.505780"
 }

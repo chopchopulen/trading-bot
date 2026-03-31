@@ -1,0 +1,20 @@
+{
+  "stock": "MSTR",
+  "total_return": -0.06092526300999452,
+  "profit_factor": 0.9002600215611771,
+  "sharpe": -0.7241137801389964,
+  "win_rate": 42.391304347826086,
+  "max_drawdown": 1.8446238384234475,
+  "trades": 92,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 6,
+    "slow": 10,
+    "rsi_period": 7,
+    "rsi_buy": 30,
+    "rsi_sell": 60
+  },
+  "score_threshold": 3.5,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-31T01:16:18.564102"
+}

@@ -1,20 +1,20 @@
 {
   "stock": "AVGO",
-  "total_return": -0.08272864467003092,
-  "profit_factor": 0.8832032585585358,
-  "sharpe": -0.7561538215973944,
-  "win_rate": 35.294117647058826,
-  "max_drawdown": 3.622496997696069,
-  "trades": 68,
+  "total_return": -0.10317553998999938,
+  "profit_factor": 0.8659970921933713,
+  "sharpe": -0.9343862050057862,
+  "win_rate": 41.37931034482759,
+  "max_drawdown": 3.5438643330218587,
+  "trades": 87,
   "edge_survives_costs": false,
   "best_params": {
     "fast": 8,
     "slow": 22,
     "rsi_period": 7,
     "rsi_buy": 25,
-    "rsi_sell": 60
+    "rsi_sell": 70
   },
-  "score_threshold": 4.5,
+  "score_threshold": 3.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:06:15.631283"
+  "timestamp": "2026-03-31T01:13:23.171849"
 }

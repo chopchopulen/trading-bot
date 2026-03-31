@@ -1,20 +1,20 @@
 {
   "stock": "SNOW",
-  "total_return": 0.005674040739992052,
-  "profit_factor": 1.013135957585649,
-  "sharpe": 0.06657898156077283,
-  "win_rate": 43.859649122807014,
-  "max_drawdown": 2.3156573737050516,
-  "trades": 57,
+  "total_return": 0.09419098287002999,
+  "profit_factor": 1.162700233347073,
+  "sharpe": 0.8176592752564108,
+  "win_rate": 47.19101123595505,
+  "max_drawdown": 2.3202397886100465,
+  "trades": 89,
   "edge_survives_costs": true,
   "best_params": {
-    "fast": 2,
-    "slow": 22,
+    "fast": 6,
+    "slow": 10,
     "rsi_period": 7,
-    "rsi_buy": 25,
+    "rsi_buy": 35,
     "rsi_sell": 55
   },
-  "score_threshold": 4.5,
+  "score_threshold": 3.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:06:38.387069"
+  "timestamp": "2026-03-31T01:13:46.519646"
 }

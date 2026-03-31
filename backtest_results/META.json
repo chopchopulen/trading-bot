@@ -1,20 +1,20 @@
 {
   "stock": "META",
-  "total_return": -0.23744005668000318,
-  "profit_factor": 0.7707735578440346,
-  "sharpe": -1.760197380465926,
-  "win_rate": 39.285714285714285,
-  "max_drawdown": 7.327550000000003,
-  "trades": 84,
-  "edge_survives_costs": false,
+  "total_return": 0.1948674209100718,
+  "profit_factor": 1.1908965739075366,
+  "sharpe": 1.0552165467799544,
+  "win_rate": 44.18604651162791,
+  "max_drawdown": 7.21182511590807,
+  "trades": 86,
+  "edge_survives_costs": true,
   "best_params": {
     "fast": 6,
-    "slow": 10,
+    "slow": 7,
     "rsi_period": 7,
-    "rsi_buy": 40,
+    "rsi_buy": 35,
     "rsi_sell": 55
   },
-  "score_threshold": 4.5,
+  "score_threshold": 3.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T17:20:30.329284"
+  "timestamp": "2026-03-31T00:26:39.433242"
 }

@@ -1,20 +1,20 @@
 {
   "stock": "ADBE",
-  "total_return": -0.4216682437400159,
-  "profit_factor": 0.5303575429846732,
-  "sharpe": -3.68261818637934,
-  "win_rate": 37.93103448275862,
-  "max_drawdown": 3.5848000000000027,
+  "total_return": -0.20277118652997886,
+  "profit_factor": 0.7145359423115192,
+  "sharpe": -1.8761573535233753,
+  "win_rate": 44.827586206896555,
+  "max_drawdown": 3.4369450354627564,
   "trades": 87,
   "edge_survives_costs": false,
   "best_params": {
-    "fast": 6,
-    "slow": 10,
+    "fast": 8,
+    "slow": 22,
     "rsi_period": 7,
-    "rsi_buy": 40,
-    "rsi_sell": 55
+    "rsi_buy": 25,
+    "rsi_sell": 60
   },
-  "score_threshold": 4.5,
+  "score_threshold": 3.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:06:51.248950"
+  "timestamp": "2026-03-31T01:14:00.930359"
 }

@@ -1,11 +1,11 @@
 {
   "stock": "BLK",
-  "total_return": 0.6816620221799822,
-  "profit_factor": 2.5634588908816287,
-  "sharpe": 5.064534581501524,
-  "win_rate": 51.515151515151516,
-  "max_drawdown": 11.630789969669362,
-  "trades": 33,
+  "total_return": 0.700110927289992,
+  "profit_factor": 2.8208592330071376,
+  "sharpe": 5.751017800192885,
+  "win_rate": 53.57142857142857,
+  "max_drawdown": 11.630215114746505,
+  "trades": 28,
   "edge_survives_costs": true,
   "best_params": {
     "fast": 8,
@@ -16,5 +16,5 @@
   },
   "score_threshold": 5.0,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:07:19.421992"
+  "timestamp": "2026-03-31T01:14:25.035937"
 }

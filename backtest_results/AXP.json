@@ -1,0 +1,20 @@
+{
+  "stock": "AXP",
+  "total_return": 0.14185178198001813,
+  "profit_factor": 1.383705022658635,
+  "sharpe": 1.793358537857613,
+  "win_rate": 45.714285714285715,
+  "max_drawdown": 3.8251311476393255,
+  "trades": 70,
+  "edge_survives_costs": true,
+  "best_params": {
+    "fast": 8,
+    "slow": 22,
+    "rsi_period": 7,
+    "rsi_buy": 25,
+    "rsi_sell": 60
+  },
+  "score_threshold": 3.5,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-31T01:16:28.744473"
+}

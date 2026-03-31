@@ -1,11 +1,11 @@
 {
   "stock": "UBER",
-  "total_return": -0.07393624728999566,
-  "profit_factor": 0.6839335811230596,
-  "sharpe": -2.148611513571137,
-  "win_rate": 43.0,
-  "max_drawdown": 0.8796962076441501,
-  "trades": 100,
+  "total_return": -0.06015418894999311,
+  "profit_factor": 0.6991779161274662,
+  "sharpe": -2.2675961321944813,
+  "win_rate": 46.808510638297875,
+  "max_drawdown": 0.8700460294994691,
+  "trades": 94,
   "edge_survives_costs": false,
   "best_params": {
     "fast": 6,
@@ -14,7 +14,7 @@
     "rsi_buy": 35,
     "rsi_sell": 55
   },
-  "score_threshold": 4.0,
+  "score_threshold": 3.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:05:31.169631"
+  "timestamp": "2026-03-31T01:12:31.468428"
 }

@@ -1,12 +1,12 @@
 {
   "stock": "SCHW",
-  "total_return": -0.01316804307993152,
-  "profit_factor": 0.9082954319313726,
-  "sharpe": -0.571922005155081,
-  "win_rate": 41.333333333333336,
-  "max_drawdown": 1.0656342330312074,
-  "trades": 75,
-  "edge_survives_costs": false,
+  "total_return": 0.02739576329999545,
+  "profit_factor": 1.4786635704574778,
+  "sharpe": 2.3658985896419895,
+  "win_rate": 46.875,
+  "max_drawdown": 1.064360951107671,
+  "trades": 32,
+  "edge_survives_costs": true,
   "best_params": {
     "fast": 2,
     "slow": 22,
@@ -14,7 +14,7 @@
     "rsi_buy": 25,
     "rsi_sell": 55
   },
-  "score_threshold": 4.0,
+  "score_threshold": 5.0,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:07:28.218508"
+  "timestamp": "2026-03-31T01:14:34.272993"
 }

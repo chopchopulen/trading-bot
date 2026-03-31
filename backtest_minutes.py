@@ -14,10 +14,8 @@ BASE_URL = "https://paper-api.alpaca.markets"
 
 api = tradeapi.REST(API_KEY, SECRET_KEY, BASE_URL)
 
-STOCK = "META"
-STOCK = "AMD"
-STOCK = "GS"
-STOCK = "SPY"
+STOCK = "BLK"
+
 STARTING_CASH = 100000
 QUANTITY = 10
 LOOKBACK_DAYS = 90

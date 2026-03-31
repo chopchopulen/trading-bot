@@ -1,20 +1,20 @@
 {
   "stock": "HD",
-  "total_return": -0.006147076879962697,
-  "profit_factor": 0.9827199929011076,
-  "sharpe": -0.11108284463956064,
-  "win_rate": 45.65217391304348,
-  "max_drawdown": 3.925419970094832,
-  "trades": 46,
-  "edge_survives_costs": false,
+  "total_return": 0.12992258224994294,
+  "profit_factor": 1.3132179507224053,
+  "sharpe": 1.4612775553675659,
+  "win_rate": 49.25373134328358,
+  "max_drawdown": 3.933939107918246,
+  "trades": 67,
+  "edge_survives_costs": true,
   "best_params": {
-    "fast": 8,
+    "fast": 2,
     "slow": 22,
     "rsi_period": 7,
     "rsi_buy": 25,
-    "rsi_sell": 70
+    "rsi_sell": 55
   },
-  "score_threshold": 5.0,
+  "score_threshold": 3.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:07:35.946092"
+  "timestamp": "2026-03-31T01:14:39.683942"
 }

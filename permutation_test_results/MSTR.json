@@ -1,0 +1,15 @@
+{
+  "stock": "MSTR",
+  "actual_sharpe": 2.6626615754731198,
+  "wf_status": "PASS",
+  "wf_trades": 3,
+  "day_shuffle_p": 0.04790419161676647,
+  "day_shuffle_mean": 0.2371625003374212,
+  "day_shuffle_std": 1.0800436101727322,
+  "signal_shift_p": 0.2894211576846307,
+  "signal_shift_mean": -48.15268884263041,
+  "signal_shift_std": 132.0940469560231,
+  "combined_p": 0.04790419161676647,
+  "timestamp": "2026-03-29T17:55:22.114580",
+  "signal_mode": "gradient"
+}

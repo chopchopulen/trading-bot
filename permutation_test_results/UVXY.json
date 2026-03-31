@@ -1,0 +1,15 @@
+{
+  "stock": "UVXY",
+  "actual_sharpe": 6.318686344769753,
+  "wf_status": "PASS",
+  "wf_trades": 4,
+  "day_shuffle_p": 0.36726546906187624,
+  "day_shuffle_mean": 4.0161647604328925,
+  "day_shuffle_std": 103.36638041705265,
+  "signal_shift_p": 1.0,
+  "signal_shift_mean": 0.0,
+  "signal_shift_std": 0.0,
+  "combined_p": 0.36726546906187624,
+  "timestamp": "2026-03-31T01:17:05.866413",
+  "signal_mode": "gradient"
+}

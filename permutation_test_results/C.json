@@ -1,0 +1,15 @@
+{
+  "stock": "C",
+  "actual_sharpe": 0.512884001144789,
+  "wf_status": "WEAK",
+  "wf_trades": 2,
+  "day_shuffle_p": 0.001996007984031936,
+  "day_shuffle_mean": 0.0,
+  "day_shuffle_std": 0.0,
+  "signal_shift_p": 0.3872255489021956,
+  "signal_shift_mean": -2273.375668359952,
+  "signal_shift_std": 49056.308613748566,
+  "combined_p": 0.001996007984031936,
+  "timestamp": "2026-03-29T17:48:12.211514",
+  "signal_mode": "gradient"
+}

@@ -27,13 +27,9 @@ newsapi = NewsApiClient(api_key=NEWS_API_KEY)
 analyzer = SentimentIntensityAnalyzer()
 
 # ── Tiered Stock Universe ───────────────────────────────────────────
-# Tier 1 — Full size (p < 0.05 + PF >= 1.3 + positive BT return — cross-validated both tests)
-TIER1_STOCKS = ["MSFT", "AAPL", "MS", "BLK"]
-# Tier 2 — Half size (p < 0.15 + PF >= 1.2 + positive BT return)
-TIER2_STOCKS = ["V", "WMT", "GS", "AMZN"]
-# Tier 3 — Quarter size (pipeline T3 or borderline perm — monitor only)
-TIER3_STOCKS = ["QQQ", "COST", "MA", "NET", "AMD"]
-# Pending validation — passed permutation but negative backtest return; need better backtest
+TIER1_STOCKS = ["AAPL", "MSFT", "AMZN", "GS", "QQQ", "WMT", "SCHW", "BLK"]
+TIER2_STOCKS = []
+TIER3_STOCKS = ["META", "CRWD", "SNOW", "MS", "HD", "SBUX"]
 PENDING_VALIDATION = ["SHOP", "PLTR"]
 
 STOCKS = TIER1_STOCKS + TIER2_STOCKS + TIER3_STOCKS
@@ -50,6 +46,12 @@ MAX_SHORT_POSITIONS = 3
 SHORT_DAILY_LOSS_LIMIT = -300
 SHORT_MAX_LOSS_PCT = 0.05  # Force close if stock rises 5% above short entry
 
+# ── Inverse ETFs — flip regime gate (long in downtrend, short in uptrend) ──
+INVERSE_REGIME = {"SQQQ", "UVXY"}
+
+# ── Market maker reserved stocks — skip in directional trading ─────────
+MM_RESERVED = {"V", "MA"}  # Reserved for pairs market maker — skip in directional trading
+
 # ── Pairs tracking (diagnostic only, no auto-trading) ───────────────
 PAIRS = {"SEMI": ("AMD", "NVDA"), "MEGACAP": ("MSFT", "AAPL")}
 
@@ -58,10 +60,10 @@ ORB_DATA = {}  # {stock: {"high": float, "low": float, "date": str, "finalized":
 
 # ── Sector diversification ──────────────────────────────────────────
 SECTOR_MAP = {
-    "tech":     ["MSFT", "META", "AAPL", "AMZN", "NFLX", "NET", "CRM", "UBER", "SPOT", "SHOP", "PLTR"],
+    "tech":     ["MSFT", "META", "AAPL", "AMZN", "NFLX", "NET", "CRM", "UBER", "SPOT", "SHOP", "PLTR", "CRWD", "SNOW"],
     "semi":     ["AMD", "NVDA", "QCOM"],
-    "finance":  ["GS", "MS", "BLK", "V", "MA", "COIN", "HOOD", "PYPL"],
-    "consumer": ["WMT", "COST", "TSLA", "UBER", "ABNB"],
+    "finance":  ["GS", "MS", "BLK", "V", "MA", "COIN", "HOOD", "PYPL", "SCHW"],
+    "consumer": ["WMT", "COST", "TSLA", "UBER", "ABNB", "HD", "SBUX"],
     "etf":      ["SPY", "QQQ"],
 }
 # Note: finance sector has 5 active stocks (GS, MS, BLK, V, MA).
@@ -108,18 +110,14 @@ DIAGNOSTIC_MODE = True   # Print full score breakdowns each minute per stock
 TEST_MODE = False         # Subtract 1.0 from all thresholds (calibration only — NOT for live trading)
 
 # ── Load per-stock optimized parameters from walk-forward results ──
-STOCK_PARAMS = {}
+STOCK_PARAMS = {}       # {stock: {"best_params": {...}, "bull_params": {...}, "bear_params": {...}, ...}}
 for _stock in STOCKS:
     _path = f"walk_forward_results/{_stock}.json"
     if os.path.exists(_path):
         with open(_path) as _f:
             _data = json.load(_f)
-            if _data.get("status") in ("PASS", "WEAK"):
-                _params = _data["best_params"]
-                # Also store optimal_threshold from top-level or from best_params
-                if "optimal_threshold" in _data:
-                    _params["optimal_threshold"] = _data["optimal_threshold"]
-                STOCK_PARAMS[_stock] = _params
+            if _data.get("status") in ("PASS", "WEAK") or _data.get("bull_status") in ("PASS", "WEAK"):
+                STOCK_PARAMS[_stock] = _data
 
 # ── Load overnight backtest results for additional filtering ──
 BACKTEST_RESULTS = {}
@@ -129,13 +127,28 @@ for _stock in STOCKS:
         with open(_path) as _f:
             BACKTEST_RESULTS[_stock] = json.load(_f)
 
-def get_params(stock):
-    """Return per-stock params if available, otherwise defaults."""
+def get_params(stock, regime="bull"):
+    """Return per-stock params for the given regime. Falls back gracefully.
+    regime: "bull" (uptrend/long) or "bear" (downtrend/short)
+    """
     if stock in STOCK_PARAMS:
-        p = STOCK_PARAMS[stock]
-        threshold = p.get("optimal_threshold", p.get("score_threshold", DEFAULT_BUY_THRESHOLD))
-        return (p["fast"], p["slow"], p["rsi_buy"], p["rsi_sell"],
-                p["bb_period"], p["bb_std"], threshold)
+        data = STOCK_PARAMS[stock]
+
+        # Try regime-specific params first (new dual-regime format)
+        regime_key = f"{regime}_params"
+        rp = data.get(regime_key)
+        if rp is not None:
+            threshold = rp.get("score_threshold", DEFAULT_BUY_THRESHOLD)
+            return (rp["fast"], rp["slow"], rp["rsi_buy"], rp["rsi_sell"],
+                    rp["bb_period"], rp["bb_std"], threshold)
+
+        # Fallback to top-level best_params (old single-regime format)
+        p = data.get("best_params")
+        if p:
+            threshold = data.get("optimal_threshold", p.get("score_threshold", DEFAULT_BUY_THRESHOLD))
+            return (p["fast"], p["slow"], p["rsi_buy"], p["rsi_sell"],
+                    p["bb_period"], p["bb_std"], threshold)
+
     return FAST_MA, SLOW_MA, RSI_OVERSOLD, RSI_OVERBOUGHT, BB_PERIOD, BB_STD, DEFAULT_BUY_THRESHOLD
 
 # ── Minimum hold time ────────────────────────────────────────────
@@ -785,11 +798,18 @@ def run_bot():
         print(f"  SPY bars fetch error (RS disabled): {e}")
 
     for stock in active_stocks:
+        # Skip stocks reserved for pairs market maker
+        if stock in MM_RESERVED:
+            continue
         try:
             bars = get_bars(stock)
 
-            # Get per-stock optimized parameters (or defaults)
-            s_fast, s_slow, s_rsi_buy, s_rsi_sell, s_bb_period, s_bb_std, s_threshold = get_params(stock)
+            # Get per-stock optimized parameters (regime-aware)
+            regime = "bull" if uptrend else "bear"
+            # For inverse ETFs, flip regime for param selection too
+            if stock in INVERSE_REGIME:
+                regime = "bear" if uptrend else "bull"
+            s_fast, s_slow, s_rsi_buy, s_rsi_sell, s_bb_period, s_bb_std, s_threshold = get_params(stock, regime)
 
             # Calculate indicators using signals module
             fast, slow = signals.get_moving_averages(bars, s_fast, s_slow)
@@ -958,11 +978,14 @@ def run_bot():
                 stock_sector = get_stock_sector(stock)
                 sector_count = count_sector_positions(stock_sector, open_positions)
 
+                # Inverse ETFs: flip regime (long SQQQ in downtrend, short in uptrend)
+                stock_uptrend = (not uptrend) if stock in INVERSE_REGIME else uptrend
+
                 # Calculate buy score (gradient scoring v3, per-stock threshold)
                 buy_score, buy_bd = signals.calculate_buy_score(
                     fast, slow, rsi, s_rsi_buy, price, bb_lower,
                     bb_upper=bb_upper,
-                    regime_uptrend=uptrend,
+                    regime_uptrend=stock_uptrend,
                     current_volume=cur_volume, avg_volume=cur_avg_volume,
                     rel_strength=rel_strength, orb_data=orb_data, vwap_data=vwap_data
                 )
@@ -972,11 +995,11 @@ def run_bot():
                 short_score, short_bd = signals.calculate_short_score(
                     fast, slow, rsi, s_rsi_sell, price, bb_upper,
                     bb_lower=bb_lower,
-                    regime_downtrend=not uptrend,
+                    regime_downtrend=not stock_uptrend,
                     current_volume=cur_volume, avg_volume=cur_avg_volume,
                     rel_strength=rel_strength, orb_data=orb_data, vwap_data=vwap_data
                 )
-                short_threshold = s_threshold
+                short_threshold = s_threshold - 0.5
 
                 # TEST_MODE: lower all entry thresholds by 1.0 to verify end-to-end flow
                 if TEST_MODE:
@@ -984,15 +1007,20 @@ def run_bot():
                     short_threshold = max(0.5, short_threshold - 1.0)
 
                 # DIAGNOSTIC_MODE: full per-stock breakdown every cycle
+                if DIAGNOSTIC_MODE and not stock_uptrend and stock in SHORT_ELIGIBLE:
+                    print(f"  DIAG {stock} Short threshold: {short_threshold:.1f} | Short score: {short_score:.1f} | Gap: {short_score - short_threshold:+.1f}")
+
                 if DIAGNOSTIC_MODE:
-                    regime_str = "UPTREND" if uptrend else "DOWNTREND"
+                    regime_str = "UPTREND" if stock_uptrend else "DOWNTREND"
+                    if stock in INVERSE_REGIME:
+                        regime_str += " (inv)"
                     bt_pf = BACKTEST_RESULTS.get(stock, {}).get("profit_factor", None)
                     pf_str = f"PF:{bt_pf:.2f}" if bt_pf is not None else "PF:?"
                     short_ok = stock in SHORT_ELIGIBLE
                     short_tag = "short:✓" if short_ok else "short:✗"
                     hdr = f"  DIAG {stock} [{tier_label} | {pf_str} | {short_tag}]  [{regime_str}]"
 
-                    if uptrend:
+                    if stock_uptrend:
                         r_gate = buy_bd.get("regime")
                         v_gate = buy_bd.get("volume")
                         if r_gate == "blocked":
@@ -1056,7 +1084,7 @@ def run_bot():
                 can_short = (short_score >= short_threshold and
                             not shorts_blocked and
                             not at_max_shorts and
-                            not uptrend and
+                            not stock_uptrend and
                             stock in SHORT_ELIGIBLE and
                             sector_count < MAX_POSITIONS_PER_SECTOR)
 
@@ -1199,8 +1227,9 @@ print(f"\n  Awaiting backtest confirmation (NOT trading): {', '.join(PENDING_VAL
 print(f"\n  Walk-forward params loaded: {len(STOCK_PARAMS)} stocks")
 if STOCK_PARAMS:
     for _s, _p in STOCK_PARAMS.items():
-        _t = _p.get("optimal_threshold", _p.get("score_threshold", DEFAULT_BUY_THRESHOLD))
-        print(f"    {_s}: EMA {_p['fast']}/{_p['slow']} | Thresh: {_t:.1f}")
+        _bp = _p.get("best_params") or _p  # handle nested vs flat format
+        _t = _p.get("optimal_threshold", _bp.get("score_threshold", DEFAULT_BUY_THRESHOLD))
+        print(f"    {_s}: EMA {_bp['fast']}/{_bp['slow']} | Thresh: {_t:.1f}")
 else:
     print("    ⚠️ None — using defaults for all stocks")
 

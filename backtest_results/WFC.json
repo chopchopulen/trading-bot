@@ -1,0 +1,20 @@
+{
+  "stock": "WFC",
+  "total_return": -0.06265926926999237,
+  "profit_factor": 0.5291533903287944,
+  "sharpe": -2.7832889899756452,
+  "win_rate": 42.5,
+  "max_drawdown": 0.9751890506843176,
+  "trades": 40,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 2,
+    "slow": 22,
+    "rsi_period": 7,
+    "rsi_buy": 25,
+    "rsi_sell": 55
+  },
+  "score_threshold": 4.5,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-31T01:16:24.618220"
+}

@@ -1,20 +1,20 @@
 {
   "stock": "NFLX",
-  "total_return": -0.08743545037998411,
-  "profit_factor": 0.3956495980329252,
-  "sharpe": -6.223179870420355,
-  "win_rate": 34.69387755102041,
-  "max_drawdown": 0.953182324054992,
-  "trades": 49,
+  "total_return": -0.1856554868999083,
+  "profit_factor": 0.2862063220743343,
+  "sharpe": -8.12730292230665,
+  "win_rate": 32.967032967032964,
+  "max_drawdown": 0.9241483436821802,
+  "trades": 91,
   "edge_survives_costs": false,
   "best_params": {
     "fast": 8,
-    "slow": 22,
+    "slow": 13,
     "rsi_period": 7,
-    "rsi_buy": 25,
-    "rsi_sell": 60
+    "rsi_buy": 35,
+    "rsi_sell": 55
   },
-  "score_threshold": 5.0,
+  "score_threshold": 3.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T17:20:47.678584"
+  "timestamp": "2026-03-31T00:26:57.040740"
 }

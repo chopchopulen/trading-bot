@@ -1,0 +1,20 @@
+{
+  "stock": "UVXY",
+  "total_return": 0.0596036041299958,
+  "profit_factor": 1.3370957724048893,
+  "sharpe": 1.7143001844606365,
+  "win_rate": 50.0,
+  "max_drawdown": 0.5866205561432585,
+  "trades": 50,
+  "edge_survives_costs": true,
+  "best_params": {
+    "fast": 8,
+    "slow": 22,
+    "rsi_period": 7,
+    "rsi_buy": 25,
+    "rsi_sell": 70
+  },
+  "score_threshold": 5.0,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-31T01:15:13.742976"
+}

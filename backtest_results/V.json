@@ -1,20 +1,20 @@
 {
   "stock": "V",
-  "total_return": 0.17051239133004856,
-  "profit_factor": 1.7958402814479464,
-  "sharpe": 3.7442291213986647,
-  "win_rate": 55.319148936170215,
-  "max_drawdown": 3.575908345533817,
-  "trades": 47,
+  "total_return": 0.018063714670046468,
+  "profit_factor": 1.0454872565679028,
+  "sharpe": 0.27602781868852544,
+  "win_rate": 49.35064935064935,
+  "max_drawdown": 3.6023710898585692,
+  "trades": 77,
   "edge_survives_costs": true,
   "best_params": {
     "fast": 8,
-    "slow": 13,
+    "slow": 22,
     "rsi_period": 7,
-    "rsi_buy": 35,
-    "rsi_sell": 55
+    "rsi_buy": 25,
+    "rsi_sell": 70
   },
-  "score_threshold": 5.0,
+  "score_threshold": 3.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T17:21:36.083807"
+  "timestamp": "2026-03-31T00:27:40.829593"
 }

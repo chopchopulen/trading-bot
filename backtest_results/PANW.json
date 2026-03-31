@@ -1,20 +1,20 @@
 {
   "stock": "PANW",
-  "total_return": -0.19489155394994304,
-  "profit_factor": 0.6142950022321655,
-  "sharpe": -3.0632595872394646,
-  "win_rate": 39.130434782608695,
-  "max_drawdown": 1.939138485040551,
-  "trades": 92,
+  "total_return": -0.04298833475995343,
+  "profit_factor": 0.8080247966181742,
+  "sharpe": -1.529206976924373,
+  "win_rate": 44.680851063829785,
+  "max_drawdown": 1.9330210601924636,
+  "trades": 47,
   "edge_survives_costs": false,
   "best_params": {
     "fast": 6,
     "slow": 10,
     "rsi_period": 7,
-    "rsi_buy": 40,
-    "rsi_sell": 55
+    "rsi_buy": 30,
+    "rsi_sell": 60
   },
-  "score_threshold": 4.0,
+  "score_threshold": 4.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:06:29.208533"
+  "timestamp": "2026-03-31T01:13:37.810243"
 }

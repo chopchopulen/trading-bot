@@ -1,0 +1,20 @@
+{
+  "stock": "GLD",
+  "total_return": -0.30635544196990666,
+  "profit_factor": 0.6867917814347531,
+  "sharpe": -1.381959462361012,
+  "win_rate": 50.0,
+  "max_drawdown": 5.115976966986892,
+  "trades": 68,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 6,
+    "slow": 10,
+    "rsi_period": 7,
+    "rsi_buy": 30,
+    "rsi_sell": 60
+  },
+  "score_threshold": 3.5,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-31T01:15:21.792380"
+}

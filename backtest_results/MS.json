@@ -1,20 +1,20 @@
 {
   "stock": "MS",
-  "total_return": 0.05713824574001774,
-  "profit_factor": 1.606529615095496,
-  "sharpe": 3.3054357310918836,
-  "win_rate": 58.97435897435898,
-  "max_drawdown": 1.9086176402827246,
-  "trades": 39,
+  "total_return": 0.029092942720031715,
+  "profit_factor": 1.1896523370630905,
+  "sharpe": 1.2348288519258936,
+  "win_rate": 50.943396226415096,
+  "max_drawdown": 1.9056701283408397,
+  "trades": 53,
   "edge_survives_costs": true,
   "best_params": {
-    "fast": 8,
-    "slow": 13,
+    "fast": 6,
+    "slow": 10,
     "rsi_period": 7,
-    "rsi_buy": 35,
-    "rsi_sell": 55
+    "rsi_buy": 30,
+    "rsi_sell": 60
   },
-  "score_threshold": 5.0,
+  "score_threshold": 3.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:07:11.846702"
+  "timestamp": "2026-03-31T01:14:17.414337"
 }

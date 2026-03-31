@@ -1,20 +1,20 @@
 {
   "stock": "MCD",
-  "total_return": -0.06267006315986509,
-  "profit_factor": 0.7066411043347749,
-  "sharpe": -2.409787715682111,
-  "win_rate": 44.230769230769226,
-  "max_drawdown": 3.400096156056689,
-  "trades": 52,
+  "total_return": -0.00633832114993129,
+  "profit_factor": 0.947828751968655,
+  "sharpe": -0.36966460452071687,
+  "win_rate": 52.77777777777778,
+  "max_drawdown": 3.3638297245132107,
+  "trades": 36,
   "edge_survives_costs": false,
   "best_params": {
-    "fast": 8,
-    "slow": 13,
+    "fast": 2,
+    "slow": 22,
     "rsi_period": 7,
-    "rsi_buy": 35,
+    "rsi_buy": 25,
     "rsi_sell": 55
   },
-  "score_threshold": 5.0,
+  "score_threshold": 4.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:07:44.028277"
+  "timestamp": "2026-03-31T01:14:50.329784"
 }

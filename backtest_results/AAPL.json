@@ -1,20 +1,20 @@
 {
   "stock": "AAPL",
-  "total_return": 0.1105621885799337,
-  "profit_factor": 1.4371122218324899,
-  "sharpe": 2.241187093062165,
-  "win_rate": 51.85185185185185,
-  "max_drawdown": 2.797575464564437,
-  "trades": 81,
+  "total_return": 0.07757972676996724,
+  "profit_factor": 1.4081665756790276,
+  "sharpe": 2.1561885679995147,
+  "win_rate": 41.30434782608695,
+  "max_drawdown": 2.8026104125657256,
+  "trades": 46,
   "edge_survives_costs": true,
   "best_params": {
-    "fast": 2,
-    "slow": 22,
+    "fast": 6,
+    "slow": 10,
     "rsi_period": 7,
-    "rsi_buy": 25,
+    "rsi_buy": 40,
     "rsi_sell": 55
   },
-  "score_threshold": 4.0,
+  "score_threshold": 5.0,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T17:22:49.290507"
+  "timestamp": "2026-03-31T00:28:58.198712"
 }

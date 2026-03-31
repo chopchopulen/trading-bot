@@ -1,20 +1,20 @@
 {
   "stock": "NOW",
-  "total_return": -0.07196280618001766,
-  "profit_factor": 0.7208951236310063,
-  "sharpe": -2.270904751797321,
-  "win_rate": 45.45454545454545,
-  "max_drawdown": 1.5605074048615912,
-  "trades": 55,
+  "total_return": -0.04788174634000461,
+  "profit_factor": 0.7036286286335695,
+  "sharpe": -2.5171920706525515,
+  "win_rate": 40.625,
+  "max_drawdown": 1.507690677203518,
+  "trades": 32,
   "edge_survives_costs": false,
   "best_params": {
-    "fast": 2,
+    "fast": 8,
     "slow": 22,
     "rsi_period": 7,
     "rsi_buy": 25,
-    "rsi_sell": 55
+    "rsi_sell": 70
   },
-  "score_threshold": 4.5,
+  "score_threshold": 5.0,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:06:56.128157"
+  "timestamp": "2026-03-31T01:14:07.538946"
 }

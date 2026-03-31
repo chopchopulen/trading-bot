@@ -1,0 +1,20 @@
+{
+  "stock": "TLT",
+  "total_return": -0.12251413748011691,
+  "profit_factor": 0.03621981835987139,
+  "sharpe": -11.185081339995962,
+  "win_rate": 7.766990291262135,
+  "max_drawdown": 0.9308253331287505,
+  "trades": 103,
+  "edge_survives_costs": false,
+  "best_params": {
+    "fast": 6,
+    "slow": 10,
+    "rsi_period": 7,
+    "rsi_buy": 40,
+    "rsi_sell": 55
+  },
+  "score_threshold": 3.5,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-31T01:15:30.097270"
+}

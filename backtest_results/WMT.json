@@ -1,11 +1,11 @@
 {
   "stock": "WMT",
-  "total_return": 0.0329587102800142,
-  "profit_factor": 1.1539669578833587,
-  "sharpe": 0.7514188218313941,
-  "win_rate": 45.714285714285715,
-  "max_drawdown": 1.3045224845135086,
-  "trades": 105,
+  "total_return": 0.051833219050022306,
+  "profit_factor": 1.317834748424052,
+  "sharpe": 1.43409898724728,
+  "win_rate": 48.05194805194805,
+  "max_drawdown": 1.3045068415535543,
+  "trades": 77,
   "edge_survives_costs": true,
   "best_params": {
     "fast": 6,
@@ -16,5 +16,5 @@
   },
   "score_threshold": 3.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T17:21:14.374870"
+  "timestamp": "2026-03-31T00:27:23.891448"
 }

@@ -1,10 +1,7 @@
-MSFT
 AAPL
-MS
-AMZN
+GS
+V
 QQQ
+WMT
 COST
-MA
-NET
-AMD
-Last updated: Mar 18 2026, 09:05 AM
+Last updated: Mar 30 2026, 02:58 PM

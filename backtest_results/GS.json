@@ -1,11 +1,11 @@
 {
   "stock": "GS",
-  "total_return": 0.16904111314001785,
-  "profit_factor": 1.3283555309302508,
-  "sharpe": 2.0289366803873072,
-  "win_rate": 46.875,
-  "max_drawdown": 9.625981586616703,
-  "trades": 32,
+  "total_return": 0.16442774022002415,
+  "profit_factor": 1.3846523998689984,
+  "sharpe": 2.346638395512937,
+  "win_rate": 48.0,
+  "max_drawdown": 9.625572855654857,
+  "trades": 25,
   "edge_survives_costs": true,
   "best_params": {
     "fast": 2,
@@ -16,5 +16,5 @@
   },
   "score_threshold": 5.0,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T17:20:38.544853"
+  "timestamp": "2026-03-31T00:26:47.648789"
 }

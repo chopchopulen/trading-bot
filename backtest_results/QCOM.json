@@ -1,12 +1,12 @@
 {
   "stock": "QCOM",
-  "total_return": 0.016650312690006105,
-  "profit_factor": 1.0568652096012563,
-  "sharpe": 0.30500638328770324,
-  "win_rate": 50.526315789473685,
-  "max_drawdown": 1.821167823054876,
-  "trades": 95,
-  "edge_survives_costs": true,
+  "total_return": -0.05477301368999179,
+  "profit_factor": 0.7988587483996387,
+  "sharpe": -1.3210543956120708,
+  "win_rate": 46.835443037974684,
+  "max_drawdown": 1.8227446902643833,
+  "trades": 79,
+  "edge_survives_costs": false,
   "best_params": {
     "fast": 6,
     "slow": 10,
@@ -16,5 +16,5 @@
   },
   "score_threshold": 4.0,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T17:20:51.637013"
+  "timestamp": "2026-03-31T00:27:01.197512"
 }

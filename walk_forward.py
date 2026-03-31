@@ -22,12 +22,15 @@ STOCKS_TO_TEST = [
     "AAPL", "MSFT", "NVDA", "GOOGL", "AMZN", "TSLA", "META", "AMD", "NFLX", "CRM",
     "JPM", "BAC", "GS", "V", "SPY", "QQQ",
     "XOM", "CVX", "JNJ", "PFE", "UNH",
-    "WMT", "COST", "NKE", "INTC", "QCOM"
+    "WMT", "COST", "NKE", "INTC", "QCOM",
+    "MS", "MA", "NET", "SQQQ",
+    "BLK", "SCHW", "CRWD", "SNOW", "HD", "SBUX"
 ]
 STOCK = "AAPL"
+PREMIUM_STOCKS = ["BLK", "AVGO", "LMT", "MA", "V", "MSFT", "GS"]  # High-priced → fewer but larger trades
 STARTING_CASH = 100000
 QUANTITY = 10
-LOOKBACK_DAYS = 90
+LOOKBACK_DAYS = 120
 
 # ── Walk forward settings ─────────────────────────────────────────
 TRAIN_DAYS = 60
@@ -65,7 +68,15 @@ SPREAD_ESTIMATES = {
     "GS": 0.05, "V": 0.03, "SPY": 0.01, "QQQ": 0.01,
     "XOM": 0.02, "CVX": 0.02, "JNJ": 0.02, "PFE": 0.01,
     "UNH": 0.05, "WMT": 0.02, "COST": 0.05, "NKE": 0.03,
-    "INTC": 0.02, "QCOM": 0.03
+    "INTC": 0.02, "QCOM": 0.03,
+    "UBER": 0.02, "PLTR": 0.02, "COIN": 0.05, "SHOP": 0.04,
+    "SQ": 0.03, "ROKU": 0.04, "ABNB": 0.04, "PYPL": 0.03,
+    "SPOT": 0.03, "ZM": 0.04, "HOOD": 0.02,
+    "AVGO": 0.05, "LLY": 0.08, "MA": 0.03, "PANW": 0.05,
+    "CRWD": 0.05, "SNOW": 0.05, "DDOG": 0.04, "NET": 0.03,
+    "ADBE": 0.05, "NOW": 0.05, "ORCL": 0.03, "MS": 0.03,
+    "BLK": 0.08, "SCHW": 0.02, "HD": 0.03, "MCD": 0.03,
+    "SBUX": 0.02, "SQQQ": 0.02,
 }
 DEFAULT_SPREAD = 0.03
 SLIPPAGE_MULT = 0.5     # 50% additional slippage on top of spread
@@ -146,6 +157,12 @@ def get_spy_daily_bars(days):
 
 DAILY_REGIME_EMA = 20  # 20-day EMA on daily bars (~1 month lookback)
 
+# Inverse ETFs — flip regime gate (long in downtrend, short in uptrend)
+INVERSE_REGIME_STOCKS = {"SQQQ", "UVXY"}
+
+# Short-eligible stocks — only run bear optimization pass on these
+SHORT_ELIGIBLE = {"NVDA", "AMD", "AMZN", "AAPL", "MSFT", "META", "NFLX", "COIN", "PLTR"}
+
 
 def compute_daily_regime(spy_daily):
     """Compute regime from daily SPY bars.
@@ -199,9 +216,19 @@ def calculate_atr(bars, period=ATR_PERIOD):
     true_range = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
     return true_range.rolling(window=period).mean()
 
+def split_bars_by_regime(bars, daily_regime):
+    """Split minute bars into uptrend and downtrend subsets based on daily regime."""
+    bars = bars.copy()
+    dates = pd.Series([idx.date() if hasattr(idx, 'date') else idx for idx in bars.index], index=bars.index)
+    is_uptrend = dates.map(lambda d: daily_regime.get(d, True))
+    uptrend_bars = bars[is_uptrend]
+    downtrend_bars = bars[~is_uptrend]
+    return uptrend_bars, downtrend_bars
+
+
 # ── Run single backtest ───────────────────────────────────────────
 def run_backtest(bars, daily_regime, fast, slow, rsi_buy, rsi_sell, bb_period, bb_std,
-                 score_threshold=6.0):
+                 score_threshold=6.0, direction="long"):
     close = bars["close"]
     fast_ema = calculate_ema(close, fast)
     slow_ema = calculate_ema(close, slow)
@@ -213,81 +240,143 @@ def run_backtest(bars, daily_regime, fast, slow, rsi_buy, rsi_sell, bb_period, b
     volume = bars["volume"]
     avg_volume = volume.rolling(window=20).mean()
 
-    # Sell threshold is buy threshold - 0.5
-    sell_threshold = score_threshold - 0.5
+    # Sell/cover threshold is entry threshold - 0.5
+    exit_threshold = score_threshold - 0.5
+
+    # Inverse ETF: flip regime
+    _is_inverse = STOCK in INVERSE_REGIME_STOCKS
 
     cash = STARTING_CASH
-    position = 0
-    buy_price = 0
-    buy_atr = 0
-    buy_cost_stored = 0
-    buy_bar = 0
+    position = 0       # >0 = long, <0 = short
+    entry_price = 0
+    entry_atr = 0
+    entry_cost_stored = 0
+    entry_bar = 0
     pnls = []
+
+    is_short_mode = (direction == "short")
 
     start_bar = max(slow, bb_period, RSI_PERIOD) + 1
     for i in range(start_bar, len(bars)):
         price = close.iloc[i]
-        uptrend = get_regime_for_bar(daily_regime, bars.index[i])
+        raw_uptrend = get_regime_for_bar(daily_regime, bars.index[i])
+        uptrend = (not raw_uptrend) if _is_inverse else raw_uptrend
         cur_volume = volume.iloc[i]
         cur_avg_volume = avg_volume.iloc[i]
 
-        # ATR-based stop loss and take profit (ignore min hold)
+        # ── Long position management ──
         if position > 0:
-            stop_price = buy_price - (ATR_STOP_MULT * buy_atr)
-            target_price = buy_price + (ATR_PROFIT_MULT * buy_atr)
+            stop_price = entry_price - (ATR_STOP_MULT * entry_atr)
+            target_price = entry_price + (ATR_PROFIT_MULT * entry_atr)
             if price <= stop_price or price >= target_price:
                 sell_cost = calculate_trade_cost(STOCK, price, position, "sell")
-                pnl = (price - buy_price) * position - buy_cost_stored - sell_cost
+                pnl = (price - entry_price) * position - entry_cost_stored - sell_cost
                 cash += (price * position) - sell_cost
                 pnls.append(pnl)
                 position = 0
                 continue
-
-        # Min hold time — skip signal-based exits if too soon
-        if position > 0 and (i - buy_bar) < MIN_HOLD_BARS:
-            continue
-
-        # Buy signal (gradient scoring)
-        buy_score, _ = signals.calculate_buy_score(
-            fast_ema.iloc[i], slow_ema.iloc[i],
-            rsi.iloc[i], rsi_buy,
-            price, bb_lower.iloc[i],
-            bb_upper=bb_upper.iloc[i],
-            regime_uptrend=uptrend,
-            current_volume=cur_volume, avg_volume=cur_avg_volume
-        )
-        if (buy_score >= score_threshold and
-            position == 0 and cash >= price * QUANTITY and
-            not pd.isna(atr.iloc[i])):
-            buy_cost = calculate_trade_cost(STOCK, price, QUANTITY, "buy")
-            position = QUANTITY
-            cash -= (price * QUANTITY) + buy_cost
-            buy_price = price
-            buy_atr = atr.iloc[i]
-            buy_cost_stored = buy_cost
-            buy_bar = i
-
-        # Sell signal (gradient scoring)
-        elif position > 0:
+            # Min hold time
+            if (i - entry_bar) < MIN_HOLD_BARS:
+                continue
+            # Sell signal
             sell_score, _ = signals.calculate_sell_score(
                 fast_ema.iloc[i], slow_ema.iloc[i],
                 rsi.iloc[i], rsi_sell,
                 price, bb_upper.iloc[i],
                 bb_lower=bb_lower.iloc[i]
             )
-            if sell_score < sell_threshold:
-                continue
-            sell_cost = calculate_trade_cost(STOCK, price, position, "sell")
-            pnl = (price - buy_price) * position - buy_cost_stored - sell_cost
-            cash += (price * position) - sell_cost
-            pnls.append(pnl)
-            position = 0
+            if sell_score >= exit_threshold:
+                sell_cost = calculate_trade_cost(STOCK, price, abs(position), "sell")
+                pnl = (price - entry_price) * position - entry_cost_stored - sell_cost
+                cash += (price * position) - sell_cost
+                pnls.append(pnl)
+                position = 0
+            continue
 
+        # ── Short position management ──
+        if position < 0:
+            qty = abs(position)
+            stop_price = entry_price + (ATR_STOP_MULT * entry_atr)
+            target_price = entry_price - (ATR_PROFIT_MULT * entry_atr)
+            if price >= stop_price or price <= target_price:
+                cover_cost = calculate_trade_cost(STOCK, price, qty, "buy")
+                pnl = (entry_price - price) * qty - entry_cost_stored - cover_cost
+                cash += pnl
+                pnls.append(pnl)
+                position = 0
+                continue
+            # Min hold time
+            if (i - entry_bar) < MIN_HOLD_BARS:
+                continue
+            # Cover signal (bullish reversal = exit short)
+            cover_score, _ = signals.calculate_cover_score(
+                fast_ema.iloc[i], slow_ema.iloc[i],
+                rsi.iloc[i], rsi_buy,
+                price, bb_lower.iloc[i],
+                bb_upper=bb_upper.iloc[i]
+            )
+            if cover_score >= exit_threshold:
+                cover_cost = calculate_trade_cost(STOCK, price, qty, "buy")
+                pnl = (entry_price - price) * qty - entry_cost_stored - cover_cost
+                cash += pnl
+                pnls.append(pnl)
+                position = 0
+            continue
+
+        # ── New entry signals (position == 0) ──
+        if not is_short_mode:
+            # Buy signal (gradient scoring)
+            buy_score, _ = signals.calculate_buy_score(
+                fast_ema.iloc[i], slow_ema.iloc[i],
+                rsi.iloc[i], rsi_buy,
+                price, bb_lower.iloc[i],
+                bb_upper=bb_upper.iloc[i],
+                regime_uptrend=uptrend,
+                current_volume=cur_volume, avg_volume=cur_avg_volume
+            )
+            if (buy_score >= score_threshold and
+                cash >= price * QUANTITY and
+                not pd.isna(atr.iloc[i])):
+                entry_cost = calculate_trade_cost(STOCK, price, QUANTITY, "buy")
+                position = QUANTITY
+                cash -= (price * QUANTITY) + entry_cost
+                entry_price = price
+                entry_atr = atr.iloc[i]
+                entry_cost_stored = entry_cost
+                entry_bar = i
+        else:
+            # Short signal (gradient scoring)
+            short_score, _ = signals.calculate_short_score(
+                fast_ema.iloc[i], slow_ema.iloc[i],
+                rsi.iloc[i], rsi_sell,
+                price, bb_upper.iloc[i],
+                bb_lower=bb_lower.iloc[i],
+                regime_downtrend=not uptrend,
+                current_volume=cur_volume, avg_volume=cur_avg_volume
+            )
+            if (short_score >= score_threshold and
+                cash >= price * QUANTITY and
+                not pd.isna(atr.iloc[i])):
+                entry_cost = calculate_trade_cost(STOCK, price, QUANTITY, "sell")
+                position = -QUANTITY
+                entry_price = price
+                entry_atr = atr.iloc[i]
+                entry_cost_stored = entry_cost
+                entry_bar = i
+
+    # Close any remaining position at end
     if position > 0:
         final_price = close.iloc[-1]
         sell_cost = calculate_trade_cost(STOCK, final_price, position, "sell")
-        pnl = (final_price - buy_price) * position - buy_cost_stored - sell_cost
+        pnl = (final_price - entry_price) * position - entry_cost_stored - sell_cost
         cash += (final_price * position) - sell_cost
+        pnls.append(pnl)
+    elif position < 0:
+        final_price = close.iloc[-1]
+        qty = abs(position)
+        cover_cost = calculate_trade_cost(STOCK, final_price, qty, "buy")
+        pnl = (entry_price - final_price) * qty - entry_cost_stored - cover_cost
+        cash += pnl
         pnls.append(pnl)
 
     total_return = ((cash - STARTING_CASH) / STARTING_CASH) * 100
@@ -303,18 +392,26 @@ def run_backtest(bars, daily_regime, fast, slow, rsi_buy, rsi_sell, bb_period, b
     profit_factor = gross_profit / gross_loss if gross_loss > 0 else 0
 
     # Quality gates — disqualify bad parameter sets
+    # Bear market has fewer opportunities → relaxed thresholds, compensated by Sharpe gate
     num_trades = len(pnls)
     avg_profit = np.mean(pnls) if pnls else 0
-    if num_trades < 15:
+    min_trades = 5 if STOCK in PREMIUM_STOCKS else 8
+    min_pf = 1.2
+    min_wr = 44
+    min_avg_profit = 0.25
+    min_sharpe = 0.5
+    if num_trades < min_trades:
         score = -999       # Not enough data
     elif num_trades > 80:
         score = -999       # Over-trading
-    elif profit_factor < 1.5:
+    elif profit_factor < min_pf:
         score = -999       # Losing strategy
-    elif win_rate < 48:
+    elif win_rate < min_wr:
         score = -999       # Too many losers
-    elif avg_profit < 0.50:
+    elif avg_profit < min_avg_profit:
         score = -999       # Avg $/trade doesn't cover costs
+    elif sharpe < min_sharpe:
+        score = -999       # Risk-adjusted return too low
     else:
         score = sharpe
 
@@ -353,7 +450,98 @@ def build_param_grid():
     return params
 
 # ── Main walk forward optimizer ───────────────────────────────────
+def _optimize_pass(train_bars, test_bars, daily_regime, param_grid, direction="long", label="BULL"):
+    """Run one optimization pass (bull or bear) on the given data split.
+    Returns (best_params_dict, status_str) or (None, status_str)."""
+    total = len(param_grid)
+    print(f"\n  [{label}] Testing {total:,} combinations ({direction} direction)...")
+
+    results = []
+    for i, p in enumerate(param_grid):
+        if i % 1000 == 0:
+            pct = i / total * 100
+            print(f"   Progress: {pct:.0f}% ({i:,}/{total:,})", flush=True)
+
+        result = run_backtest(
+            train_bars, daily_regime,
+            p["fast"], p["slow"],
+            p["rsi_buy"], p["rsi_sell"],
+            p["bb_period"], p["bb_std"],
+            p["score_threshold"],
+            direction=direction
+        )
+        result["params"] = p
+        results.append(result)
+
+    results.sort(key=lambda x: x["score"], reverse=True)
+    top_10 = results[:10]
+
+    print(f"\n  [{label}] TOP 10 — TRAINING DATA ({STOCK})")
+    for r in top_10[:5]:
+        p = r["params"]
+        print(f"    EMA {p['fast']}/{p['slow']:2} | T:{p['score_threshold']:.1f} | "
+              f"{r['return']:+.2f}% | {r['trades']} trades | Sharpe:{r['sharpe']:.2f}")
+
+    # Verify on test data
+    min_test_trades = 1 if direction == "short" else 2
+    min_test_sharpe = 0.5 if direction == "short" else 1.0
+    verified_results = []
+    for r in top_10:
+        p = r["params"]
+        test_result = run_backtest(
+            test_bars, daily_regime,
+            p["fast"], p["slow"],
+            p["rsi_buy"], p["rsi_sell"],
+            p["bb_period"], p["bb_std"],
+            p["score_threshold"],
+            direction=direction
+        )
+        test_result["params"] = p
+        test_result["train_return"] = r["return"]
+        test_result["train_sharpe"] = r["sharpe"]
+
+        if test_result["return"] > 0 and test_result["trades"] >= min_test_trades and test_result["sharpe"] > min_test_sharpe:
+            verdict = "PASS"
+        elif test_result["return"] > -0.1:
+            verdict = "WEAK"
+        else:
+            verdict = "FAIL"
+
+        verified_results.append({**test_result, "verdict": verdict})
+
+    passed = [r for r in verified_results if r["verdict"] == "PASS"]
+    weak = [r for r in verified_results if r["verdict"] == "WEAK"]
+
+    if passed:
+        best = max(passed, key=lambda x: x["sharpe"])
+        status = "PASS"
+    elif weak:
+        best = max(weak, key=lambda x: x["return"])
+        status = "WEAK"
+    else:
+        print(f"  [{label}] No parameters passed for {STOCK}")
+        return None, "FAIL"
+
+    best_p = best["params"]
+    print(f"  [{label}] ✅ {STOCK} {status}: EMA {best_p['fast']}/{best_p['slow']} | "
+          f"T:{best_p['score_threshold']:.1f} | Test:{best['return']:+.2f}% | Sharpe:{best['sharpe']:.2f}")
+
+    return {
+        "fast": best_p["fast"], "slow": best_p["slow"],
+        "rsi_buy": best_p["rsi_buy"], "rsi_sell": best_p["rsi_sell"],
+        "bb_period": best_p["bb_period"], "bb_std": best_p["bb_std"],
+        "score_threshold": best_p["score_threshold"],
+        "train_return": best["train_return"],
+        "test_return": best["return"],
+        "test_sharpe": best["sharpe"],
+        "test_trades": best["trades"],
+        "test_win_rate": best["win_rate"],
+    }, status
+
+
 def run_walk_forward():
+    """Dual-pass walk-forward: bull (long) + bear (short) optimization.
+    Returns dict with bull_params, bear_params, and backward-compat fields."""
     global STOCK
     print(f"\nFetching data for {STOCK}...")
     bars = get_minute_bars(STOCK, LOOKBACK_DAYS)
@@ -370,118 +558,62 @@ def run_walk_forward():
     print(f"Regime: {regime_days}/{total_days} uptrend days (daily 20-day EMA)")
 
     train_bars, test_bars = split_data(bars, TEST_DAYS)
-
     print(f"Train: {len(train_bars)} bars | Test: {len(test_bars)} bars")
 
+    # Split train/test by regime for regime-specific optimization
+    train_up, train_down = split_bars_by_regime(train_bars, daily_regime)
+    test_up, test_down = split_bars_by_regime(test_bars, daily_regime)
+    print(f"Train uptrend: {len(train_up)} bars | Train downtrend: {len(train_down)} bars")
+
     param_grid = build_param_grid()
-    total = len(param_grid)
-    print(f"\nTesting {total:,} combinations on training data...")
 
-    results = []
-    for i, p in enumerate(param_grid):
-        if i % 1000 == 0:
-            pct = i / total * 100
-            print(f"   Progress: {pct:.0f}% ({i:,}/{total:,})", flush=True)
-
-        result = run_backtest(
-            train_bars, daily_regime,
-            p["fast"], p["slow"],
-            p["rsi_buy"], p["rsi_sell"],
-            p["bb_period"], p["bb_std"],
-            p["score_threshold"]
-        )
-        result["params"] = p
-        results.append(result)
-
-    results.sort(key=lambda x: x["score"], reverse=True)
-    top_10 = results[:10]
-
-    print(f"\n{'='*80}")
-    print(f"TOP 10 PARAMETER SETS — TRAINING DATA ({STOCK})")
-    print(f"{'='*80}")
-    print(f"  {'EMA':<10} {'RSI':<12} {'BB':<12} {'Thresh':<8} {'Return':<10} {'Trades':<8} {'Win%':<8} {'Sharpe':<8}")
-    print(f"  {'-'*85}")
-
-    for r in top_10:
-        p = r["params"]
-        print(f"  EMA {p['fast']}/{p['slow']:2} | "
-              f"{p['rsi_buy']}/{p['rsi_sell']} | "
-              f"BB {p['bb_period']}/{p['bb_std']} | "
-              f"T:{p['score_threshold']:.1f} | "
-              f"{r['return']:+6.2f}% | "
-              f"{r['trades']:4} trades | "
-              f"{r['win_rate']:5.1f}% | "
-              f"Sharpe: {r['sharpe']:5.2f}")
-
-    print(f"\n{'='*80}")
-    print(f"VERIFYING TOP 10 ON UNSEEN TEST DATA ({STOCK})")
-    print(f"{'='*80}")
-    print(f"  {'EMA':<10} {'RSI':<12} {'BB':<12} {'Thresh':<8} {'Train':<10} {'Test':<10} {'Verdict':<10}")
-    print(f"  {'-'*80}")
-
-    verified_results = []
-    for r in top_10:
-        p = r["params"]
-        test_result = run_backtest(
-            test_bars, daily_regime,
-            p["fast"], p["slow"],
-            p["rsi_buy"], p["rsi_sell"],
-            p["bb_period"], p["bb_std"],
-            p["score_threshold"]
-        )
-        test_result["params"] = p
-        test_result["train_return"] = r["return"]
-        test_result["train_sharpe"] = r["sharpe"]
-
-        if test_result["return"] > 0 and test_result["trades"] >= 2 and test_result["sharpe"] > 1.0:
-            verdict = "✅ PASS"
-        elif test_result["return"] > -0.1:
-            verdict = "⚠️ WEAK"
-        else:
-            verdict = "❌ FAIL"
-
-        verified_results.append({**test_result, "verdict": verdict})
-
-        print(f"  EMA {p['fast']}/{p['slow']:2} | "
-              f"{p['rsi_buy']}/{p['rsi_sell']} | "
-              f"BB {p['bb_period']}/{p['bb_std']} | "
-              f"T:{p['score_threshold']:.1f} | "
-              f"Train: {r['return']:+.2f}% | "
-              f"Test: {test_result['return']:+.2f}% | "
-              f"{verdict}")
-
-    passed = [r for r in verified_results if r["verdict"] == "✅ PASS"]
-    weak = [r for r in verified_results if r["verdict"] == "⚠️ WEAK"]
-
-    if passed:
-        best = max(passed, key=lambda x: x["sharpe"])
-        status = "PASS"
-    elif weak:
-        best = max(weak, key=lambda x: x["return"])
-        status = "WEAK"
+    # ── BULL PASS: optimize longs on uptrend bars ──
+    bull_params, bull_status = None, "INSUFFICIENT_DATA"
+    if len(train_up) >= 2000:
+        bull_params, bull_status = _optimize_pass(
+            train_up, test_up, daily_regime, param_grid,
+            direction="long", label="BULL")
     else:
-        print(f"\n⚠️ No parameters passed for {STOCK}")
-        print(f"   Market conditions too different between train/test periods")
-        return None
+        print(f"  [BULL] Skipped — only {len(train_up)} uptrend bars (need 2000+)")
+        # Fallback: run bull pass on ALL bars (original behavior)
+        bull_params, bull_status = _optimize_pass(
+            train_bars, test_bars, daily_regime, param_grid,
+            direction="long", label="BULL-ALL")
 
-    best_p = best["params"]
+    # ── BEAR PASS: optimize shorts on downtrend bars ──
+    bear_params, bear_status = None, "NOT_SHORT_ELIGIBLE"
+    if STOCK in SHORT_ELIGIBLE:
+        if len(train_down) >= 1000:
+            bear_params, bear_status = _optimize_pass(
+                train_down, test_down, daily_regime, param_grid,
+                direction="short", label="BEAR")
+        else:
+            print(f"  [BEAR] Skipped — only {len(train_down)} downtrend bars (need 1000+)")
+            bear_status = "INSUFFICIENT_DATA"
+
+    # Build result dict
+    result = {
+        "bull_params": bull_params,
+        "bull_status": bull_status,
+        "bear_params": bear_params,
+        "bear_status": bear_status,
+        # Backward compat: top-level fields use bull params
+        "params": bull_params if bull_params else {"score_threshold": 4.0},
+        "status": bull_status,
+        "return": bull_params["test_return"] if bull_params else 0,
+        "sharpe": bull_params["test_sharpe"] if bull_params else 0,
+        "trades": bull_params["test_trades"] if bull_params else 0,
+        "win_rate": bull_params["test_win_rate"] if bull_params else 0,
+        "train_return": bull_params["train_return"] if bull_params else 0,
+    }
+
     print(f"\n{'='*80}")
-    print(f"🏆 BEST VERIFIED PARAMETERS FOR {STOCK} ({status}):")
+    print(f"WALK-FORWARD SUMMARY FOR {STOCK}:")
+    print(f"  Bull: {bull_status}" + (f" | threshold={bull_params['score_threshold']:.1f}" if bull_params else ""))
+    print(f"  Bear: {bear_status}" + (f" | threshold={bear_params['score_threshold']:.1f}" if bear_params else ""))
     print(f"{'='*80}")
-    print(f"   EMA Fast:    {best_p['fast']}")
-    print(f"   EMA Slow:    {best_p['slow']}")
-    print(f"   RSI Buy:     {best_p['rsi_buy']}")
-    print(f"   RSI Sell:    {best_p['rsi_sell']}")
-    print(f"   BB Period:   {best_p['bb_period']}")
-    print(f"   BB Std:      {best_p['bb_std']}")
-    print(f"   Score Thresh:{best_p['score_threshold']:.1f}")
-    print(f"   Train Return:{best['train_return']:+.2f}%")
-    print(f"   Test Return: {best['return']:+.2f}%")
-    print(f"   Test Sharpe: {best['sharpe']:.2f}")
-    print(f"   Win Rate:    {best['win_rate']:.1f}%")
 
-    best["status"] = status
-    return best
+    return result
 
 # ── Run all stocks ────────────────────────────────────────────────
 if __name__ == "__main__":
@@ -498,12 +630,17 @@ if __name__ == "__main__":
             result = run_walk_forward()
             if result:
                 all_verified[stock] = result
-                # Save per-stock JSON
+                # Save per-stock JSON (dual-regime format)
                 json_out = {
                     "stock": stock,
                     "status": result["status"],
+                    "bull_params": result["bull_params"],
+                    "bull_status": result["bull_status"],
+                    "bear_params": result["bear_params"],
+                    "bear_status": result["bear_status"],
+                    # Backward compat
                     "best_params": result["params"],
-                    "optimal_threshold": result["params"]["score_threshold"],
+                    "optimal_threshold": result["params"].get("score_threshold", 4.0),
                     "train_return": result["train_return"],
                     "test_return": result["return"],
                     "test_sharpe": result["sharpe"],
@@ -520,15 +657,15 @@ if __name__ == "__main__":
         print(f"{'='*80}")
 
         if all_verified:
-            print("✅ Stocks with verified parameters:")
+            print("Stocks with verified parameters:")
             for stock, result in all_verified.items():
-                p = result["params"]
-                print(f"  {stock}: EMA {p['fast']}/{p['slow']} | "
-                      f"RSI {p['rsi_buy']}/{p['rsi_sell']} | "
-                      f"BB {p['bb_period']}/{p['bb_std']} | "
-                      f"Thresh: {p['score_threshold']:.1f} | "
-                      f"Return: {result['return']:+.2f}% | "
-                      f"Sharpe: {result['sharpe']:.2f}")
+                bull = result.get("bull_params")
+                bear = result.get("bear_params")
+                bull_s = result.get("bull_status", "?")
+                bear_s = result.get("bear_status", "?")
+                bull_str = f"T:{bull['score_threshold']:.1f} ret:{bull['test_return']:+.2f}%" if bull else "N/A"
+                bear_str = f"T:{bear['score_threshold']:.1f} ret:{bear['test_return']:+.2f}%" if bear else "N/A"
+                print(f"  {stock}: Bull[{bull_s}] {bull_str} | Bear[{bear_s}] {bear_str}")
 
             # Find most common EMA settings across stocks
             ema_combos = [f"{r['params']['fast']}/{r['params']['slow']}"

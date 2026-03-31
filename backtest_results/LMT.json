@@ -1,0 +1,20 @@
+{
+  "stock": "LMT",
+  "total_return": 0.30585728234006093,
+  "profit_factor": 1.8577739775406148,
+  "sharpe": 3.9894617767489584,
+  "win_rate": 54.285714285714285,
+  "max_drawdown": 6.64902904230289,
+  "trades": 35,
+  "edge_survives_costs": true,
+  "best_params": {
+    "fast": 6,
+    "slow": 10,
+    "rsi_period": 7,
+    "rsi_buy": 30,
+    "rsi_sell": 60
+  },
+  "score_threshold": 4.5,
+  "threshold_source": "walk_forward",
+  "timestamp": "2026-03-31T01:15:36.834065"
+}

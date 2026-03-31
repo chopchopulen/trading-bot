@@ -1,11 +1,11 @@
 {
   "stock": "CVX",
-  "total_return": 0.017449652220035205,
-  "profit_factor": 1.3189321813322454,
-  "sharpe": 1.9941467517423213,
-  "win_rate": 57.14285714285714,
-  "max_drawdown": 1.8505459025447175,
-  "trades": 28,
+  "total_return": 0.016283057780048692,
+  "profit_factor": 1.3085592911971755,
+  "sharpe": 1.9491921602591074,
+  "win_rate": 57.692307692307686,
+  "max_drawdown": 1.8505912235613802,
+  "trades": 26,
   "edge_survives_costs": true,
   "best_params": {
     "fast": 2,
@@ -16,5 +16,5 @@
   },
   "score_threshold": 5.0,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T17:21:53.751879"
+  "timestamp": "2026-03-31T00:28:04.477589"
 }

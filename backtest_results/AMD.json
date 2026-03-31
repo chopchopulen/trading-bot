@@ -1,20 +1,20 @@
 {
   "stock": "AMD",
-  "total_return": 0.06242346486997848,
-  "profit_factor": 1.1143830464465154,
-  "sharpe": 0.5600269175137454,
-  "win_rate": 48.91304347826087,
-  "max_drawdown": 2.6590639699552043,
-  "trades": 92,
+  "total_return": 0.021938443009974436,
+  "profit_factor": 1.0418683529599477,
+  "sharpe": 0.2548181601333997,
+  "win_rate": 43.75,
+  "max_drawdown": 2.6278382495457957,
+  "trades": 64,
   "edge_survives_costs": true,
   "best_params": {
-    "fast": 2,
-    "slow": 22,
+    "fast": 6,
+    "slow": 7,
     "rsi_period": 7,
-    "rsi_buy": 25,
+    "rsi_buy": 35,
     "rsi_sell": 55
   },
-  "score_threshold": 4.0,
+  "score_threshold": 4.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T17:20:34.812851"
+  "timestamp": "2026-03-31T00:26:43.859889"
 }

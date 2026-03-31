@@ -1,20 +1,20 @@
 {
   "stock": "DDOG",
-  "total_return": -0.059080825990051385,
-  "profit_factor": 0.7909057753651078,
-  "sharpe": -1.5270983118614827,
-  "win_rate": 45.09803921568628,
-  "max_drawdown": 1.498920773044437,
-  "trades": 51,
+  "total_return": -0.03440175149010611,
+  "profit_factor": 0.9129225639978846,
+  "sharpe": -0.5307851533096002,
+  "win_rate": 46.98795180722892,
+  "max_drawdown": 1.466503194501923,
+  "trades": 83,
   "edge_survives_costs": false,
   "best_params": {
-    "fast": 6,
-    "slow": 10,
+    "fast": 8,
+    "slow": 13,
     "rsi_period": 7,
-    "rsi_buy": 40,
+    "rsi_buy": 35,
     "rsi_sell": 55
   },
-  "score_threshold": 5.0,
+  "score_threshold": 3.5,
   "threshold_source": "walk_forward",
-  "timestamp": "2026-03-17T18:06:42.534189"
+  "timestamp": "2026-03-31T01:13:50.660422"
 }

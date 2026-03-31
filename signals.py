@@ -77,6 +77,9 @@ SPREAD_ESTIMATES = {
     "NOW": 0.05, "ORCL": 0.03, "MS": 0.03,
     "BLK": 0.08, "SCHW": 0.02, "HD": 0.03,
     "MCD": 0.03, "SBUX": 0.02,
+    "SQQQ": 0.02, "UVXY": 0.03, "GLD": 0.02, "TLT": 0.02, "LMT": 0.03,
+    "IWM": 0.01, "SMCI": 0.08, "ARM": 0.05, "MSTR": 0.10,
+    "WFC": 0.02, "AXP": 0.03, "C": 0.02,
 }
 DEFAULT_SPREAD  = 0.03
 SLIPPAGE_MULT   = 0.5
