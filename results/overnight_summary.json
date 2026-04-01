@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-03-31T01:17:06.109890",
+  "timestamp": "2026-03-31T02:24:41.640766",
   "fisher_combined_p": 0.0,
   "tier1": [
     "AAPL",
@@ -83,10 +83,6 @@
       "bt_trades": 46,
       "bt_max_drawdown": 2.8026104125657256,
       "bt_edge_survives": true,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 0.001996007984031936,
       "perm_day_p": 0.001996007984031936,
       "perm_shift_p": 1.0
@@ -100,10 +96,6 @@
       "bt_trades": 54,
       "bt_max_drawdown": 4.829802093597475,
       "bt_edge_survives": true,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 0.001996007984031936,
       "perm_day_p": 0.001996007984031936,
       "perm_shift_p": 1.0
@@ -116,11 +108,7 @@
       "bt_win_rate": 51.80722891566265,
       "bt_trades": 83,
       "bt_max_drawdown": 1.9571206084625314,
-      "bt_edge_survives": true,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0
+      "bt_edge_survives": true
     },
     "GOOGL": {
       "stock": "GOOGL",
@@ -131,10 +119,6 @@
       "bt_trades": 50,
       "bt_max_drawdown": 3.402842613352012,
       "bt_edge_survives": true,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 1.0,
       "perm_day_p": 1.0,
       "perm_shift_p": 1.0
@@ -148,10 +132,6 @@
       "bt_trades": 25,
       "bt_max_drawdown": 2.476111728224093,
       "bt_edge_survives": true,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 0.001996007984031936,
       "perm_day_p": 0.001996007984031936,
       "perm_shift_p": 1.0
@@ -165,10 +145,6 @@
       "bt_trades": 92,
       "bt_max_drawdown": 4.537751948756959,
       "bt_edge_survives": false,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 1.0,
       "perm_day_p": 1.0,
       "perm_shift_p": 1.0
@@ -182,10 +158,6 @@
       "bt_trades": 86,
       "bt_max_drawdown": 7.21182511590807,
       "bt_edge_survives": true,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 0.001996007984031936,
       "perm_day_p": 0.001996007984031936,
       "perm_shift_p": 1.0
@@ -199,10 +171,6 @@
       "bt_trades": 64,
       "bt_max_drawdown": 2.6278382495457957,
       "bt_edge_survives": true,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 0.001996007984031936,
       "perm_day_p": 0.001996007984031936,
       "perm_shift_p": 1.0
@@ -216,10 +184,6 @@
       "bt_trades": 91,
       "bt_max_drawdown": 0.9241483436821802,
       "bt_edge_survives": false,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 0.001996007984031936,
       "perm_day_p": 0.001996007984031936,
       "perm_shift_p": 1.0
@@ -233,10 +197,6 @@
       "bt_trades": 49,
       "bt_max_drawdown": 2.648559761284744,
       "bt_edge_survives": false,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 0.005988023952095809,
       "perm_day_p": 0.005988023952095809,
       "perm_shift_p": 0.2874251497005988
@@ -266,11 +226,7 @@
       "bt_win_rate": 52.77777777777778,
       "bt_trades": 36,
       "bt_max_drawdown": 0.573,
-      "bt_edge_survives": false,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0
+      "bt_edge_survives": false
     },
     "GS": {
       "stock": "GS",
@@ -281,10 +237,6 @@
       "bt_trades": 25,
       "bt_max_drawdown": 9.625572855654857,
       "bt_edge_survives": true,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 0.001996007984031936,
       "perm_day_p": 0.001996007984031936,
       "perm_shift_p": 1.0
@@ -298,10 +250,6 @@
       "bt_trades": 77,
       "bt_max_drawdown": 3.6023710898585692,
       "bt_edge_survives": true,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 0.001996007984031936,
       "perm_day_p": 0.001996007984031936,
       "perm_shift_p": 0.1936127744510978
@@ -315,10 +263,6 @@
       "bt_trades": 42,
       "bt_max_drawdown": 7.010316694701077,
       "bt_edge_survives": true,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 0.5069860279441117,
       "perm_day_p": 1.0,
       "perm_shift_p": 0.5069860279441117
@@ -332,10 +276,6 @@
       "bt_trades": 43,
       "bt_max_drawdown": 6.3400173252908365,
       "bt_edge_survives": true,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 0.001996007984031936,
       "perm_day_p": 0.001996007984031936,
       "perm_shift_p": 0.2215568862275449
@@ -349,10 +289,6 @@
       "bt_trades": 36,
       "bt_max_drawdown": 1.5053844058409944,
       "bt_edge_survives": true,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 1.0,
       "perm_day_p": 1.0,
       "perm_shift_p": 1.0
@@ -366,10 +302,6 @@
       "bt_trades": 26,
       "bt_max_drawdown": 1.8505912235613802,
       "bt_edge_survives": true,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 1.0,
       "perm_day_p": 1.0,
       "perm_shift_p": 1.0
@@ -383,10 +315,6 @@
       "bt_trades": 75,
       "bt_max_drawdown": 2.5077719689321167,
       "bt_edge_survives": false,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 1.0,
       "perm_day_p": 1.0,
       "perm_shift_p": 1.0
@@ -399,11 +327,7 @@
       "bt_win_rate": 43.67816091954023,
       "bt_trades": 87,
       "bt_max_drawdown": 0.27688407916542757,
-      "bt_edge_survives": false,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0
+      "bt_edge_survives": false
     },
     "UNH": {
       "stock": "UNH",
@@ -414,10 +338,6 @@
       "bt_trades": 105,
       "bt_max_drawdown": 3.6737475394772074,
       "bt_edge_survives": false,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 0.001996007984031936,
       "perm_day_p": 0.001996007984031936,
       "perm_shift_p": 1.0
@@ -431,10 +351,6 @@
       "bt_trades": 77,
       "bt_max_drawdown": 1.3045068415535543,
       "bt_edge_survives": true,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 0.001996007984031936,
       "perm_day_p": 0.001996007984031936,
       "perm_shift_p": 0.29740518962075846
@@ -448,10 +364,6 @@
       "bt_trades": 65,
       "bt_max_drawdown": 10.092546460439857,
       "bt_edge_survives": false,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 0.001996007984031936,
       "perm_day_p": 0.001996007984031936,
       "perm_shift_p": 0.25948103792415167
@@ -465,10 +377,6 @@
       "bt_trades": 51,
       "bt_max_drawdown": 0.6701351467539017,
       "bt_edge_survives": false,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 0.001996007984031936,
       "perm_day_p": 0.001996007984031936,
       "perm_shift_p": 1.0
@@ -482,10 +390,6 @@
       "bt_trades": 78,
       "bt_max_drawdown": 0.5574560053101318,
       "bt_edge_survives": false,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 0.05588822355289421,
       "perm_day_p": 0.05588822355289421,
       "perm_shift_p": 0.3153692614770459
@@ -499,10 +403,6 @@
       "bt_trades": 79,
       "bt_max_drawdown": 1.8227446902643833,
       "bt_edge_survives": false,
-      "wf_status": "WEAK",
-      "wf_sharpe": 0,
-      "wf_return": 0.0,
-      "wf_trades": 0,
       "perm_p": 0.001996007984031936,
       "perm_day_p": 0.001996007984031936,
       "perm_shift_p": 1.0
@@ -990,11 +890,11 @@
       "bt_max_drawdown": 0.5866205561432585,
       "bt_edge_survives": true,
       "wf_status": "PASS",
-      "wf_sharpe": 6.318686344769753,
-      "wf_return": 0.01389588034998451,
-      "wf_trades": 4,
-      "perm_p": 0.36726546906187624,
-      "perm_day_p": 0.36726546906187624,
+      "wf_sharpe": 4.604876089210233,
+      "wf_return": 0.07883193571999436,
+      "wf_trades": 19,
+      "perm_p": 0.43912175648702595,
+      "perm_day_p": 0.43912175648702595,
       "perm_shift_p": 1.0
     },
     "GLD": {

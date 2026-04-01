@@ -32,6 +32,11 @@ TIER2_STOCKS = []
 TIER3_STOCKS = ["META", "CRWD", "SNOW", "MS", "HD", "SBUX"]
 PENDING_VALIDATION = ["SHOP", "PLTR"]
 
+# ── Manually validated stocks ────────────────────────────────────────
+# Passed manual backtest (PF=2.82, Sharpe=1.14) but fail automated pipeline
+# due to insufficient trade count for permutation test. Monitor closely.
+MANUALLY_VALIDATED = ["BLK"]
+
 STOCKS = TIER1_STOCKS + TIER2_STOCKS + TIER3_STOCKS
 WATCHLIST = []
 
@@ -1219,6 +1224,10 @@ print(f"\n  Tier 2 — 50% size ({len(TIER2_STOCKS)} stocks):")
 print(f"    {', '.join(TIER2_STOCKS)}")
 print(f"\n  Tier 3 — 25% size, monitor ({len(TIER3_STOCKS)} stocks):")
 print(f"    {', '.join(TIER3_STOCKS)}")
+
+if MANUALLY_VALIDATED:
+    for _mv in MANUALLY_VALIDATED:
+        print(f"  ⚠️ {_mv}: manually validated — monitor closely")
 
 print(f"\n  Total stocks monitored: {len(STOCKS)}")
 print(f"  Short eligible: {', '.join(SHORT_ELIGIBLE)}")

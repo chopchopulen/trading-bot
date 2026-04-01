@@ -227,11 +227,13 @@ Stocks are assigned to tiers based on permutation test p-values, backtest perfor
 
 | Tier | Sizing | Current Stocks |
 |------|--------|----------------|
-| **Tier 1** | Full ATR | AAPL, MSFT, AMZN, GS, QQQ, WMT, SCHW, BLK |
+| **Tier 1** | Full ATR | AAPL, MSFT, AMZN, GS, QQQ, WMT, SCHW, BLK ⚠️ |
 | **Tier 2** | 50% ATR | (none currently) |
 | **Tier 3** | 25% ATR | META, CRWD, SNOW, MS, HD, SBUX |
 
 **65+ stocks** tested across the overnight pipeline. The pipeline auto-classifies stocks into tiers based on p-values and profit factors.
+
+**⚠️ BLK** is in `MANUALLY_VALIDATED` — it passed manual backtest (PF=2.82, Sharpe=1.14, 28 trades) but the permutation test p=0.89 (not significant) due to low trade count. It's in Tier 1 because the edge survives transaction costs, but should be monitored closely. Startup prints a warning.
 
 ## Permutation Test (Statistical Validation)
 

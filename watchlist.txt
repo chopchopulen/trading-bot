@@ -1,7 +1,13 @@
 AAPL
-GS
-V
+MSFT
+AMZN
 QQQ
 WMT
-COST
-Last updated: Mar 30 2026, 02:58 PM
+SCHW
+BLK
+META
+SNOW
+MS
+HD
+SBUX
+Last updated: Mar 31 2026, 11:39 AM

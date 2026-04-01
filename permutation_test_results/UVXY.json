@@ -1,15 +1,15 @@
 {
   "stock": "UVXY",
-  "actual_sharpe": 6.318686344769753,
+  "actual_sharpe": 4.604876089210233,
   "wf_status": "PASS",
-  "wf_trades": 4,
-  "day_shuffle_p": 0.36726546906187624,
-  "day_shuffle_mean": 4.0161647604328925,
-  "day_shuffle_std": 103.36638041705265,
+  "wf_trades": 19,
+  "day_shuffle_p": 0.43912175648702595,
+  "day_shuffle_mean": 4.326716974892108,
+  "day_shuffle_std": 7.074809415379029,
   "signal_shift_p": 1.0,
   "signal_shift_mean": 0.0,
   "signal_shift_std": 0.0,
-  "combined_p": 0.36726546906187624,
-  "timestamp": "2026-03-31T01:17:05.866413",
+  "combined_p": 0.43912175648702595,
+  "timestamp": "2026-03-31T02:24:41.386532",
   "signal_mode": "gradient"
 }
