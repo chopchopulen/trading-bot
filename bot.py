@@ -240,7 +240,7 @@ def is_safe_trading_window():
     return True
 
 # ── Get minute bars ───────────────────────────────────────────────
-def get_bars(stock, lookback_hours=2):
+def get_bars(stock, lookback_hours=4):
     end = datetime.now()
     start = end - timedelta(hours=lookback_hours)
     bars = api.get_bars(
@@ -466,7 +466,7 @@ def get_sentiment(stock):
         return None  # API failed / rate-limited — caller includes with neutral score
 
 # ── Sentiment thresholds (for pre-market scan only) ──────────────
-SENTIMENT_THRESHOLD_BUY = 0.10
+SENTIMENT_THRESHOLD_BUY = 0.05
 
 # ── Pre-market scan ───────────────────────────────────────────────
 def run_premarket_scan():
@@ -807,7 +807,7 @@ def run_bot():
         if stock in MM_RESERVED:
             continue
         try:
-            bars = get_bars(stock)
+            bars = get_bars(stock, lookback_hours=4)
 
             # Get per-stock optimized parameters (regime-aware)
             regime = "bull" if uptrend else "bear"

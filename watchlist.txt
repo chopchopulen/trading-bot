@@ -1,13 +1,7 @@
 AAPL
-MSFT
 AMZN
+GS
 QQQ
 WMT
-SCHW
-BLK
-META
 SNOW
-MS
-HD
-SBUX
-Last updated: Mar 31 2026, 11:39 AM
+Last updated: Apr 01 2026, 10:54 AM
